@@ -1,0 +1,833 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <script type="text/javascript" src="jquery-2.1.4.js"></script>
+
+  <style type="text/css">
+    html, body {
+    height: 100%;
+    width: 100%;
+	margin: 0px;
+}
+
+	div {
+		margin: 0px;
+	}
+
+#crap {
+    background-color: #6600cc;
+    position: absolute;
+    width: 7px;
+    height: 2px;
+    left: 0px;
+    top: 0px;
+    z-index: 999;
+    visibility: hidden;
+}
+
+#top {
+  height: 100%;
+  width: 100%;
+  background-color: red;
+  position: relative;
+}
+
+#editor {
+    position: absolute;
+    width: 100%;
+    height: 80%;
+    overflow: scroll;
+    background-color: black;
+    color: #e7d6ed;
+    font-family: monospace;
+}
+
+#editable {
+    width: 100%;
+    height: 100%;
+    outline: none;
+}
+
+#console {
+    position: absolute;
+    width: 100%;
+    height: 20%;
+    top: 80%;
+    overflow: scroll;
+    font-family: monospace;
+    background-color: black;
+    color: #e7d6ed;
+}
+
+.special-form {
+    color: #cc99ff;
+}
+
+.def-name {
+    color: #99ccff;
+}
+
+.rest-args {
+    color: #ccff99;
+}
+
+.number {
+    color: #ff9999;
+}
+
+.arithmetic-op {
+    color: #ffff99;
+}
+
+.paren {
+    color: #c79ed6;
+}
+  </style>
+
+  <title>Syntax Highlighting by StasB</title>
+
+  
+    
+
+
+
+
+<script type='text/javascript'>//<![CDATA[
+window.onload=function(){
+// **************************
+// * Generic collection ops *
+// **************************
+
+function reduce(coll, rf, initial)
+{
+    return coll.reduce(rf, initial);
+}
+
+function map(coll, f)
+{
+    if("map" in coll)
+        return coll.map(f);
+    else
+    {
+        return {
+            reduce: function(rf, initial) {
+                return coll.reduce(function(accum, v) {
+                    return rf.call(this, accum, f(v));
+                }, initial);
+            }
+        };
+    }
+}
+
+function filter(coll, pred)
+{
+    if("filter" in coll)
+        return coll.filter(pred);
+    else
+    {
+        return {
+            reduce: function(rf, initial) {
+                return coll.reduce(function(accum, v) {
+                    return pred(v) ? rf.call(this, accum, v) : accum;
+                }, initial);
+            }
+        };
+    }
+}
+
+function first(coll)
+{
+    if("first" in coll)
+        return coll.first();
+    else
+    {
+        return coll.reduce(function(accum, v) {
+            return this.reduced(v);
+        }, undefined);
+    }
+}
+
+function last(coll)
+{
+    if("last" in coll)
+        return coll.last();
+    else
+    {
+        return coll.reduce(function(accum, v) {
+            return v;
+        }, undefined);
+    }
+}
+
+function count(coll)
+{
+    if("count" in coll)
+        return coll.count();
+    else
+    {
+        return coll.reduce(function(accum, v) {
+            return accum + 1;
+        }, 0);
+    }
+}
+
+function take(coll, n)
+{
+    if("take" in coll)
+        return coll.take(n);
+    else
+    {
+        return {
+            reduce: function(rf, initial) {
+                var rem = n;
+                
+                return coll.reduce.call(this, function(accum, v) {
+                    --rem;
+                    if(rem >= 0)
+                        return rf.call(this, accum, v);
+                    else
+                    	return this.reduced(accum);
+                }, initial);
+            }
+        };
+    }
+}
+
+function drop(coll, n)
+{
+    if("drop" in coll)
+        return coll.drop(n);
+    else
+    {
+        return {
+            reduce: function(rf, initial) {
+                var rem = n;
+                
+                return coll.reduce.call(this, function(accum, v) {
+                    --rem;
+                    if(rem >= 0)
+                        return accum;
+                    else
+                        return rf.call(this, accum, v);
+                }, initial);
+            }
+        };
+    }
+}
+
+function interpose(coll, x)
+{
+    if("interpose" in coll)
+        return coll.interpose(x);
+    else
+    {
+        return {
+            reduce: function(rf, initial) {
+                var fst = true;
+                
+                return coll.reduce.call(this, function(accum, v) {
+                    if(fst)
+                    {
+                        fst = false;
+                        return rf.call(this, accum, v);
+                    }
+                    else
+                        return rf.call(this, rf.call(this, accum, x), v);
+                }, initial);
+            }
+        };
+    }
+}
+
+function nth(coll, n)
+{
+    if("nth" in coll)
+        return coll.nth(n);
+    else
+    {
+        return coll.reduce(function(accum, v) {
+            if(n === 0)
+                return this.reduced(v);
+            else
+            {
+                --n;
+                return v;
+            }
+        }, undefined);
+    }
+}
+
+function takeWhile(coll, pred)
+{
+	return {
+    	reduce: function(rf, initial) {
+            return coll.reduce.call(this, function(accum, v) {
+            	if(pred(v))
+                	return rf.call(this, accum, v);
+				else
+					return this.reduced(accum);
+                }, initial);
+		}
+	};
+}
+
+function pipe(coll, ...stages)
+{
+	for(var i = 0; i < stages.length; ++i)
+    {
+    	var args = stages[i].slice(0);
+        args[0] = coll;
+    	coll = stages[i][0].apply(null, args);
+    }
+    
+    return coll;
+}
+
+// *****************
+// * DOM traversal *
+// *****************
+
+function childIterStart(root, dir)
+{
+	return dir ? root.firstChild : root.lastChild;
+}
+
+function advanceChildIter(iter, dir)
+{
+	return dir ? iter.nextSibling : iter.previousSibling;
+}
+
+function reduceDOMHelper(root, dir, ctx, rf, accum)
+{
+	if(dir)
+		accum = rf.call(ctx, accum, root);
+    
+    if(root.hasChildNodes())
+    	for(var child = childIterStart(root, dir); child !== null && !ctx.stop;
+        		child = advanceChildIter(child, dir))
+        	accum = reduceDOMHelper(child, dir, ctx, rf, accum);
+            
+    if(!dir && !ctx.stop)
+    	accum = rf.call(ctx, accum, root);
+            
+    return accum;
+}
+
+function reduceDOM(root, dir, rf, accum)
+{
+    var ctx = {
+    	stop: false,
+    	reduced: function(x) {
+        	this.stop = true;
+            return x;
+        }
+   	};
+    
+    return reduceDOMHelper(root, dir, ctx, rf, accum);
+}
+
+function reduceDOMFromBackwardHelper(node, root, ctx, rf, accum)
+{
+	accum = rf.call(ctx, accum, node);
+   	
+    if(node !== root)
+    {
+    	for(var t = advanceChildIter(node, false); t != null && !ctx.stop;
+    			t = advanceChildIter(t, false))
+        	accum = reduceDOMHelper(t, false, ctx, rf, accum);
+        
+    	if(!ctx.stop)
+    		accum = reduceDOMFromBackwardHelper(node.parentNode, root, ctx, rf, accum);
+    }
+    
+    return accum;
+}
+
+function reduceDOMFromForwardHelper(node, root, ctx, rf, accum)
+{
+	if(node !== root)
+    {
+		for(var t = advanceChildIter(node, true); t != null && !ctx.stop;
+    			t = advanceChildIter(t, true))
+       		accum = reduceDOMHelper(t, true, ctx, rf, accum);
+        
+    	if(!ctx.stop)
+    		accum = reduceDOMFromForwardHelper(node.parentNode, root, ctx, rf, accum);
+    }
+    
+    return accum;
+}
+
+function reduceDOMFrom(node, root, dir, rf, accum)
+{
+    var ctx = {
+    	stop: false,
+    	reduced: function(x) {
+        	this.stop = true;
+            return x;
+        }
+   	};
+    
+    if(dir)
+    {
+    	accum = reduceDOMHelper(node, true, ctx, rf, accum);
+        return  ctx.stop ? accum : reduceDOMFromForwardHelper(node, root, ctx, rf, accum);
+    }
+    else
+    	return reduceDOMFromBackwardHelper(node, root, ctx, rf, accum);
+}
+
+function domColl(root, dir)
+{
+    var obj = {};
+    
+    obj.reduce = function(rf, accum) {
+    	return reduceDOM(root, dir, rf, accum);
+    };
+    
+    return obj;
+}
+
+function domCollFrom(node, root, dir)
+{
+    var obj = {};
+    
+    obj.reduce = function(rf, accum) {
+    	return reduceDOMFrom(node, root, dir, rf, accum);
+    };
+    
+    return obj;
+}
+
+// *************
+// * Tokenizer *
+// *************
+
+var TokenType = {
+	ANY: 0,
+  	OBR: 1,
+  	CBR: 2,
+  	NUM: 3,
+  	SYM: 4,
+  	QUOTE: 5,
+  	BACKQUOTE: 6,
+    UNQUOTE: 7,
+    SPLICE: 8,
+  	END: 9
+};
+
+function Token(type, start, len)
+{
+	this.type = type;
+    this.start = start;
+    this.len = len;
+}
+
+Token.prototype.toString = function()
+{
+    var t = this.type;
+
+	return Object.keys(TokenType).filter(function(key) {
+    	return TokenType[key] === t;
+    })[0] + " " + this.start;
+}
+
+Token.prototype.text = function(str)
+{
+	return str.substr(this.start, this.len);
+}
+
+function tokenize(str)
+{                 
+    var spacePatt = /^\s+/;
+    var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
+    var obrPatt = /^\(/;
+    var cbrPatt = /^\)/;
+    var quotePatt = /^\'/;
+    var backQuotePatt = /^\`/;
+    var unquotePatt = /^\~/;
+    var splicePatt = /^\~@/;
+    var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
+    
+    var tokenTable = [{patt: spacePatt, type: -1},
+                      {patt: numberPatt, type: TokenType.NUM},
+                      {patt: obrPatt, type: TokenType.OBR},
+                      {patt: cbrPatt, type: TokenType.CBR},
+                      {patt: quotePatt, type: TokenType.QUOTE},
+                      {patt: backQuotePatt, type: TokenType.BACKQUOTE},
+                      {patt: splicePatt, type: TokenType.SPLICE},
+                      {patt: unquotePatt, type: TokenType.UNQUOTE},
+                      {patt: symPatt, type: TokenType.SYM}];
+    var toks = [];
+    var pos = 0;
+
+    while(str.length > 0)
+    {
+        var i = 0;
+    
+        for(i = 0; i < tokenTable.length; ++i)
+        {
+            var res = str.match(tokenTable[i].patt);
+        
+            if(res !== null)
+            {
+                str = str.substring(res[0].length);
+            
+                if(tokenTable[i].type !== -1)
+                    toks.push(new Token(tokenTable[i].type, pos, res[0].length));
+            
+            	pos += res[0].length;
+            
+                break;
+            }
+        }
+    
+        if(i == tokenTable.length)
+        {
+        	str = str.substring(1);
+            ++pos;
+            //throw "Unrecognized token: " + str;
+        }
+    }
+    
+    return toks;
+}
+
+function makeSpan(text, cls)
+{
+	var span = document.createElement("span");
+    span.appendChild(document.createTextNode(text));
+    span.className = cls;
+    return span;
+}
+
+var defForms = ["defun", "defmacro", "def"];
+var specialForms = ["if", "when", "let", "loop", "lambda"];
+var arithmeticOps = ["+", "-", "/", "*", ">", "<", ">=", "<="];
+
+function highlight(str, caretPos)
+{
+	var toks = tokenize(str);
+	var lastEnd = 0;
+	var textAccum = "";
+	var result = [];
+
+	for(var i = 0; i < toks.length; ++i)
+	{
+		var tok = toks[i];
+		var tokStr = str.substr(tok.start, tok.len);
+    
+    	textAccum += str.substr(lastEnd, tok.start - lastEnd);
+
+    	if(tok.type === TokenType.SYM)
+    	{
+        	if(tokStr[0] === "&" && tokStr.length > 1)
+            {
+            	result.push(document.createTextNode(textAccum));
+        		textAccum = "";
+            	result.push(makeSpan(tokStr, "rest-args"));
+            }
+        
+        	else if(i > 0 && toks[i - 1].type === TokenType.SYM 
+            	&& defForms.indexOf(toks[i - 1].text(str)) !== -1)
+            {
+            	result.push(document.createTextNode(textAccum));
+        		textAccum = "";
+            	result.push(makeSpan(tokStr, "def-name"));
+            }
+            
+            else if(defForms.indexOf(tokStr) !== -1 ||
+            		specialForms.indexOf(tokStr) !== -1)
+            {
+    			result.push(document.createTextNode(textAccum));
+        		textAccum = "";
+            	result.push(makeSpan(tokStr, "special-form"));
+            }
+            
+            else if(arithmeticOps.indexOf(tokStr) !== -1)
+            {
+    			result.push(document.createTextNode(textAccum));
+        		textAccum = "";
+            	result.push(makeSpan(tokStr, "arithmetic-op"));
+            }
+            
+            else
+            {
+            	textAccum += tokStr;
+            }
+    	}
+        
+    	else if(tok.type === TokenType.NUM)
+    	{
+    		result.push(document.createTextNode(textAccum));
+        	textAccum = "";
+            result.push(makeSpan(tokStr, "number"));
+    	}
+        
+        else if(tok.type === TokenType.OBR || tok.type === TokenType.CBR)
+        {
+        	result.push(document.createTextNode(textAccum));
+        	textAccum = "";
+            result.push(makeSpan(tokStr, "paren"));
+        }
+        
+    	else
+    		textAccum += tokStr;
+
+    	lastEnd = tok.start + tok.len;
+	}
+
+	result.push(document.createTextNode(textAccum + str.substr(lastEnd, str.length - lastEnd)));
+    
+    var pos = 0;
+    for(var i = 0; i < result.length; ++i)
+    {
+    	var len = result[i].textContent.length;
+        
+    	if(caretPos >= pos && caretPos <= pos + len)
+        {
+            return {
+            	elements: result,
+				newCaretPos: (caretPos - pos),
+                caretContainerIdx: i
+            };
+        }
+        
+        pos += len;
+    }
+    
+    throw "WTF IS GOING ON???";
+}
+
+function findSameLineSiblings(node)
+{
+	var start = node;
+    var end = node;
+    
+    while(start.previousSibling !== null &&
+		  (start.previousSibling.nodeType === 3 ||
+           start.previousSibling.tagName === "SPAN" ||
+           start.previousSibling.tagName === "FONT"))
+     {
+     	start = start.previousSibling;
+     }
+     
+     while(end !== null &&
+		  (end.nodeType === 3 ||
+           end.tagName === "SPAN" ||
+           end.tagName === "FONT"))
+     {
+     	end = end.nextSibling;
+     }
+     
+     return [start, end];
+}
+
+var editor = $("#editor");
+
+function getNodeIndex(node)
+{
+	var parent = node.parentNode;
+    var counter = 0;
+    
+    for(var n = parent.firstChild; n != null && n != node; n = n.nextSibling)
+    	++counter;
+    
+    return counter;
+}
+
+function getChildByIndex(node, idx)
+{
+	var n = node.firstChild;
+	for(var i = 0; i < idx; ++i)
+    	n = n.nextSibling;
+    return n;
+}
+
+function countChars(start, end)
+{
+	var len = 0;
+    for(var n = start; n != end && n != null; n = n.nextSibling)
+    	len += n.textContent.length;
+    return len;
+}
+
+function isParenNode(node)
+{
+	return node != null && node.tagName === "SPAN" && node.className === "paren";
+}
+
+function isTextNode(node)
+{
+	return node.nodeType === 3;
+}
+
+function isNonemptyTextNode(node)
+{
+	return node.nodeType === 3 && node.textContent.length !== 0;
+}
+
+function sameLine(node)
+{
+	return isTextNode(node) || node.tagName === "SPAN" || node.tagName === "FONT";
+}
+
+function stringifyNode(node)
+{
+	if(node.nodeType === 3)
+    	return "\"" + node.textContent + "\"";
+   	else
+       	return "<" + node.tagName + ">";
+}
+
+function arrPush(arr, v)
+{
+	arr.push(v);
+    return arr;
+}
+
+function deb(coll)
+{
+	console.log("coll: " + map(coll, stringifyNode).reduce(arrPush, []).toString());
+}
+
+function updateParenUnderline()
+{
+	var anchor = document.getSelection().anchorNode;
+    var crap = $("#crap");
+    
+    if(anchor.nodeType === 3)
+    {
+    	var editable = $("#editable")[0];
+    	var node;
+        
+        if(isParenNode(anchor.parentNode))
+        	node = anchor.parentNode;
+        
+        else
+        {
+        	var offs = document.getSelection().getRangeAt(0).startOffset;
+            var nextTextNode = pipe(domCollFrom(anchor, editable, true),
+            						[drop, 1],
+									[takeWhile, sameLine],
+            						[filter, isNonemptyTextNode],
+                            		[first]);
+                                    
+        	if(nextTextNode !== undefined && isParenNode(nextTextNode.parentNode) &&
+            		offs >= anchor.textContent.length)
+            	node = nextTextNode.parentNode;
+        }
+        
+        if(node !== undefined)
+        {
+        	var rect = $(node).position();
+    		var crap2 = $("#editable").position();
+    		var width = $(node).width();
+    		crap.css('visibility', 'visible');
+    		crap.css("width", width);
+    		crap.css("left", rect.left+1 + crap2.left);
+    		crap.css("top", rect.top - crap2.top+17);
+        }
+        
+        else
+        	crap.css('visibility', 'hidden');
+    }
+    
+    else
+    	crap.css('visibility', 'hidden');
+}
+
+editor.keyup(function(event) {
+
+
+	if([37, 38, 39, 40].indexOf(event.keyCode) > -1)
+    {
+        updateParenUnderline();
+    	return true;
+    }
+
+	var node = document.getSelection().anchorNode;
+    
+    if(node.nodeType !== 3)
+    {
+    	updateParenUnderline();
+    	return true;
+    }
+    
+    if(node.parentNode.tagName === "SPAN" || node.parentNode.tagName === "FONT")
+    	node = node.parentNode;
+    
+    var parent = node.parentNode;
+    var sibRange = findSameLineSiblings(node);
+    var text = "";
+	var n = sibRange[0];
+    text += n.textContent;
+    
+    var initialIdx = getNodeIndex(sibRange[0]);
+	var caretPos = document.getSelection().getRangeAt(0).startOffset +
+    countChars(sibRange[0], node);
+
+/*
+	for(n = sibRange[0]; n != sibRange[1];)
+    {
+    	console.log(n);
+        n = n.nextSibling;
+    }
+*/
+
+    for(n = sibRange[0].nextSibling; n != sibRange[1];)
+    {
+    	var tmp = n.nextSibling;
+        text += n.textContent;
+        n.remove();
+        n = tmp;
+    }
+    
+    var res = highlight(text, caretPos);
+    $(sibRange[0]).replaceWith(res.elements);
+    
+    var range = document.createRange();
+    var e = getChildByIndex(parent, initialIdx + res.caretContainerIdx);
+    var container = e.nodeType === 3 ? e : e.firstChild;
+    
+    range.setStart(container, res.newCaretPos);
+    range.setStart(container, res.newCaretPos);
+    
+    var sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    
+    updateParenUnderline();
+    
+    return true;
+});
+}//]]> 
+
+</script>
+
+  
+</head>
+
+<body>
+  <div id="top">
+
+    <div id="editor">
+         <div id="editable" contenteditable="true" spellcheck="false">
+        </div>
+        <div id="crap"></div>
+    </div>
+
+    <div id="console">
+        <button id="go">
+             GO!
+        </button>
+    </div>
+</div>
+
+  
+</body>
+
+</html>
+

@@ -1,0 +1,1166 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <script type="text/javascript" src="jquery-2.1.4.js"></script>
+
+
+  <style type="text/css">
+    .console-log-line {
+  font-family: monospace;
+  margin: 2px;
+}
+
+.console-error-line {
+  font-family: monospace;
+  margin: 2px;
+  color: #EF0000;
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+#cursor {
+  font-family: monospace;
+    color: white;
+    background-color:#970000;
+    display: table-cell;
+}
+#input {
+  font-family: monospace;
+  outline: none;
+  display: table-cell;
+  min-width: 10px;
+  width: 100%;
+}
+
+#input-row {
+    display: table-row;
+}
+
+
+#console {
+  height: 80%;
+  overflow:scroll;
+  background-color: white;
+}
+
+#editor {
+  font-family: monospace;
+  background-color: white;
+  height: 20%;
+  overflow:scroll;
+  outline: none;
+}
+
+#top {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+  </style>
+
+  <title>Lisp Compiler by StasB</title>
+
+  
+</head>
+
+ <body class="dark_ui">
+  <div id="top">
+
+<div id="editor" contenteditable>
+</div>
+
+  <div id="console">
+  <div id="console-log"></div>
+  <div id="input-row">
+    <div id="cursor"> >> </div>
+    <div id="input" contenteditable></div>
+  </div>
+    </div>
+  
+  </div>
+
+  
+
+
+
+
+<script type='text/javascript'>//<![CDATA[
+
+// ********
+// * Util *
+// ********
+
+function format()
+{
+    var rx = /%[0-9]+/gi;
+    var args = arguments;
+    
+    return args[0].replace(rx, function(match) {
+        return args[parseInt(match.substring(1)) + 1];
+    });
+}
+
+function argReducer(r, initial)
+{
+    return function() {
+    	if(arguments.length === 0)
+        	return initial;
+        else if(arguments.length === 1)
+        	return r(initial, arguments[0]);
+        else
+        {
+    		var accum = r(arguments[0], arguments[1]);
+        	for(var i = 2; i < arguments.length; i++)
+        		accum = r(accum, arguments[i]);
+        	return accum;
+        }
+    };
+}
+
+// *************
+// * Tokenizer *
+// *************
+
+var TokenType = {
+	ANY: 0,
+  	OBR: 1,
+  	CBR: 2,
+  	NUM: 3,
+  	SYM: 4,
+  	QUOTE: 5,
+  	BACKQUOTE: 6,
+    UNQUOTE: 7,
+    SPLICE: 8,
+  	END: 9
+};
+
+function GenericTok(res)
+{ 
+	this.type = TokenType.ANY;
+    this.val = res[0];
+}
+
+function ObrTok(res)
+{
+    this.type = TokenType.OBR;
+    this.val = null;
+}
+
+function CbrTok(res)
+{
+    this.type = TokenType.CBR;
+    this.val = null;
+}
+
+function QuoteTok(res)
+{
+    this.type = TokenType.QUOTE;
+    this.val = null;
+}
+
+function BackQuoteTok(res)
+{
+    this.type = TokenType.BACKQUOTE;
+    this.val = null;
+}
+
+function UnquoteTok(res)
+{
+    this.type = TokenType.UNQUOTE;
+    this.val = null;
+}
+
+function SpliceTok(res)
+{
+    this.type = TokenType.SPLICE;
+    this.val = null;
+}
+
+function NumberTok(res)
+{
+    this.type = TokenType.NUM;
+    this.val = parseFloat(res[0]);
+}
+
+function SymbolTok(res)
+{
+    this.type = TokenType.SYM;
+    this.val = res[0];
+}
+
+function tokenize(str)
+{                 
+    var spacePatt = /^\s+/;
+    var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
+    var obrPatt = /^\(/;
+    var cbrPatt = /^\)/;
+    var quotePatt = /^\'/;
+    var backQuotePatt = /^\`/;
+    var unquotePatt = /^\~/;
+    var splicePatt = /^\~@/;
+    var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
+
+    var tokenTable = [{patt: spacePatt, ctor: null},
+                      {patt: numberPatt, ctor: NumberTok},
+                      {patt: obrPatt, ctor: ObrTok},
+                      {patt: cbrPatt, ctor: CbrTok},
+                      {patt: quotePatt, ctor: QuoteTok},
+                      {patt: backQuotePatt, ctor: BackQuoteTok},
+                      {patt: splicePatt, ctor: SpliceTok},
+                      {patt: unquotePatt, ctor: UnquoteTok},
+                      {patt: symPatt, ctor: SymbolTok}];
+    var toks = [];
+
+    while(str.length > 0)
+    {
+        var i = 0;
+    
+        for(i = 0; i < tokenTable.length; ++i)
+        {
+            var res = str.match(tokenTable[i].patt);
+        
+            if(res !== null)
+            {
+                str = str.substring(res[0].length);
+            
+                if(tokenTable[i].ctor !== null)
+                    toks.push(new tokenTable[i].ctor(res));
+            
+                break;
+            }
+        }
+    
+        if(i == tokenTable.length)
+        {
+            throw "Unrecognized token: " + str;
+        }
+    }
+    
+    toks.push({type: TokenType.END, val: null});
+    
+    return toks;
+}
+
+// **************
+// * Primitives *
+// **************
+
+function Symbol(name)
+{
+    this.name = name;
+}
+
+Symbol.prototype.toString = function()
+{
+    return this.name;
+};
+
+function null__QM(x)
+{
+    return x === null;
+}
+
+function number__QM(x)
+{
+    return typeof x === "number" || x instanceof Number;
+}
+
+function symbol__QM(x)
+{
+    return x instanceof Symbol;
+}
+
+function atom__QM(x)
+{
+    return null__QM(x) ||
+           number__QM(x) ||
+           symbol__QM(x);
+}
+
+// ********
+// * List *
+// ********
+
+function Cons(car, cdr)
+{
+    this.car = car;
+    this.cdr = cdr;
+}
+
+function cons(car, cdr)
+{
+    return new Cons(car, cdr);
+}
+
+function car(lst)
+{
+    return lst.car;
+}
+
+function cdr(lst)
+{
+    return lst.cdr;
+}
+
+function cddr(lst)
+{
+    return lst.cdr.cdr;
+}
+
+function first(lst)
+{
+    return lst.car;
+}
+
+function second(lst)
+{
+    return lst.cdr.car;
+}
+
+function list__QM(lst)
+{
+    return lst === null || lst instanceof Cons && list__QM(cdr(lst));
+}
+
+function reverse__BANG(lst)
+{
+    var node = lst;
+    var prev = null;
+    
+    while(node != null)
+    {
+        var next = cdr(node);
+        node.cdr = prev;
+        prev = node;
+        node = next;
+    }
+    
+    return prev;
+}
+
+function arrayToList(arr)
+{
+	var lst = null;
+    
+	for(var i = arr.length - 1; i >= 0; --i)
+    	lst = cons(arr[i], lst);
+    
+    return lst;
+}
+
+function list(...args)
+{
+    return arrayToList(args);
+}
+
+function reduce(lst, rf, accum)
+{
+    var stop = false;
+    var ctx = {
+        reduced: function(x) {
+            stop = true;
+            return x;
+        }
+    };
+    
+    for(var node = lst; node !== null && !stop; node = cdr(node))
+        accum = rf.call(ctx, accum, car(node));
+    
+    return accum; 
+}
+
+
+function map(lst, f)
+{
+    return reverse__BANG(reduce(lst, function(accum, v) {
+        return cons(f(v), accum);
+    }, null));
+}
+
+function filter(lst, pred)
+{
+    return reverse__BANG(reduce(lst, function(accum, v) {
+        return pred(v) ? cons(v, accum) : accum;
+    }, null));
+}
+
+function first(lst)
+{
+    return lst.car;
+}
+
+function last(lst)
+{
+    return reduce(lst, function(accum, v) {
+        return v;
+    }, undefined);
+}
+
+function count(lst)
+{
+    return reduce(lst, function(accum, v) {
+        return accum + 1;
+    }, 0);
+}
+
+function take(lst, n)
+{
+    return reverse__BANG(reduce(lst, function(accum, v) {
+        --n;
+        if(n >= 0)
+            return cons(v, accum);
+        else
+            return this.reduced(accum);
+    }, null));
+}
+
+function drop(lst, n)
+{
+    return reverse__BANG(reduce(lst, function(accum, v) {
+        --n;
+        if(n >= 0)
+            return accum;
+        else
+            return cons(v, accum);
+    }, null));
+}
+
+function rest(coll)
+{
+    return drop(coll, 1);
+}
+
+function interpose(lst, x)
+{
+    var fst = true;
+                
+    return reverse__BANG(reduce(lst, function(accum, v) {
+        if(fst)
+        {
+            fst = false;
+            return cons(v, accum);
+        }
+        else
+            return cons(v, cons(x, accum));
+    }, null));
+}
+
+function nth(lst, n)
+{
+    return reduce(lst, function(accum, v) {
+        if(n === 0)
+            return this.reduced(v);
+        else
+        {
+            --n;
+            return v;
+        }
+    }, undefined);
+}
+
+function every__MINUSnth(lst, n)
+{
+	var counter = 0;
+
+	return reverse__BANG(reduce(lst, function(accum, v) {
+        return (counter++) % n === 0 ? cons(v, accum) : accum;
+    }, null));
+}
+
+function butlast(coll, n)
+{
+    return take(coll, count(coll) - n);
+}
+
+function join(coll, sep)
+{
+    return reduce(interpose(coll, sep), str, "");
+}
+
+function concat(...args)
+{
+	var i;
+    
+    for(i = 0; args[i] === null; ++i);
+	
+    if(args.length - i === 0)
+    	return null;
+    else if(args.length - i === 1)
+    	return args[i];
+    else
+    {
+    	var start = cons(null, null);
+        var end = start;
+        
+		for(; i < args.length - 1; ++i)
+    	{
+    		for(var node = args[i]; node != null; node = node.cdr)
+    		{
+    			var tmp = cons(node.car, null);
+    			end.cdr = tmp;
+        		end = tmp;
+    		}
+        }
+    
+    	end.cdr = args[i];
+    	return start.cdr;
+	}
+}
+
+// ********************
+// * Standard Library *
+// ********************
+
+__PLUS = argReducer(function(a, b) { return a + b; }, 0);
+__MINUS = argReducer(function(a, b) { return a - b; }, 0);
+__STAR = argReducer(function(a, b) { return a * b; }, 1);
+__SLASH = argReducer(function(a, b) { return a / b }, 1);
+str = argReducer(function(a, b) { return a.toString() + b.toString() }, "");
+
+function __EQL(x, y) { return x === y; }
+function __LT(x, y) { return x < y; }
+function __GT(x, y) { return x > y; }
+function __LT__EQL(x, y) { return x <= y; }
+function __GT__EQL(x, y) { return x >= y; }
+function mod(x, y) { return x % y; }
+
+function identity(x)
+{
+	return x;
+}
+
+function get(key, x)
+{
+    return x[key];
+}
+
+function getter(key)
+{
+    return function(x) {
+        return x[key];
+    };
+}
+
+function partial()
+{
+    var args1 = new Array(arguments.length);
+    for(var i = 0; i < args1.length; ++i)
+        args1[i] = arguments[i];
+    
+    return function() {
+        var args2 = new Array(arguments.length);
+        for(var i = 0; i < args2.length; ++i)
+            args2[i] = arguments[i];
+        
+        return args1[0].apply(this, args1.slice(1).concat(args2));
+    };
+}
+
+Cons.prototype.toString = function()
+{
+    if(list__QM(this))
+        return format("(%0)", join(this, " "));
+    else
+        return format("(%0.%1)", this.car, this.cdr);
+};
+
+function dolist(f, lst)
+{
+    for(var node = lst; node != null; node = cdr(node))
+        f(car(node));
+}
+
+function validName(x)
+{
+	return x !== null && x !== undefined && x !== "";
+}
+
+function print(x)
+{
+	if(x === null)
+   		console.log("null");
+    else if(x === undefined)
+    	console.log("undefined");
+    else if(typeof(x) === "function")
+    	console.log((x.isMacro ? "Macro " : "Function ") + 
+        			(validName(x.name) ? x.name : "[Anonymous]"));
+    else
+    	console.log(x.toString());
+}
+
+// **********
+// * Parser *
+// **********
+
+function Parser(toks)
+{
+    this.toks = toks;
+    this.curr = 0;
+}
+
+Parser.prototype.peekTok = function()
+{
+    return this.toks[this.curr];
+};
+
+Parser.prototype.consumeTok = function()
+{
+    var tok = this.toks[this.curr];
+    ++this.curr;
+    return tok;
+};
+
+Parser.prototype.parseExpr = function()
+{
+    var tok = this.consumeTok();
+    
+    switch(tok.type)
+    {
+        case TokenType.OBR:
+            return this.parseList();
+        case TokenType.NUM:
+            return tok.val;
+        case TokenType.QUOTE:
+            return cons(new Symbol("quote"), cons(this.parseExpr(), null));
+        case TokenType.BACKQUOTE:
+        	return this.parseBackquote();
+        case TokenType.SYM:
+            return new Symbol(tok.val);
+        case TokenType.END:
+            return null;
+        default:
+            throw "Unexpected token: " + this.peekTok().type;
+    }
+};
+
+Parser.prototype.parseList = function()
+{
+    var lst = null;
+
+    while(this.peekTok().type != TokenType.CBR && 
+          this.peekTok().type != TokenType.END)
+    {
+        lst = cons(this.parseExpr(), lst);
+    }
+    
+    if(this.consumeTok().type == TokenType.CBR)
+        return reverse__BANG(lst);
+    else
+        throw "Unclosed list!";
+};
+
+Parser.prototype.parseBackquote = function()
+{
+	if(this.peekTok().type != TokenType.OBR)
+    	return cons(new Symbol("quote"), cons(this.parseExpr(), null));
+	else
+   	{
+    	var tok = this.consumeTok();
+        return this.parseBackquotedList();
+    }
+};
+
+Parser.prototype.parseBackquotedList = function()
+{
+    var lst = null;
+
+    while(this.peekTok().type != TokenType.CBR && 
+          this.peekTok().type != TokenType.END)
+    {
+    	if(this.peekTok().type === TokenType.UNQUOTE)
+        {
+        	this.consumeTok();
+            lst = cons(list(new Symbol("list"), this.parseExpr()), lst);
+        }
+        
+        else if(this.peekTok().type === TokenType.SPLICE)
+        {
+        	this.consumeTok();
+            lst = cons(this.parseExpr(), lst);
+        }
+        
+        else
+        {
+        	var quotedMember = this.parseBackquote(); //list(new Symbol("quote"), this.parseExpr());
+        	lst = cons(list(new Symbol("list"), quotedMember), lst);
+            
+        }
+    }
+    
+    if(this.consumeTok().type == TokenType.CBR)
+        return cons(new Symbol("concat"), reverse__BANG(lst));
+    else
+        throw "Unclosed list!";
+};
+
+
+
+function parse(toks)
+{
+    var p = new Parser(toks);
+    var forms = [];
+
+    while(1)
+    {
+        var res = p.parseExpr();
+        if(res === null)
+            break;
+        else
+            forms.push(res);
+            //print(res);
+    }
+    
+    return forms;
+}
+
+// ************
+// * Compiler *
+// ************
+
+var manglingTable = {
+    "<" : "__LT",
+    ">" : "__GT",
+    "?" : "__QM",
+    "+" : "__PLUS",
+    "-" : "__MINUS",
+    "=" : "__EQL",
+    "!" : "__BANG",
+    "@" : "__AT",
+    "#" : "__HASH",
+    "$" : "__USD",
+    "%" : "__PCNT",
+    "^" : "__CARET",
+    "&" : "__AMP",
+    "*" : "__STAR",
+    "/" : "__SLASH"
+};
+
+var manglingRx = new RegExp("\\" + Object.keys(manglingTable).join("|\\"), "gi");
+
+function mangle(x)
+{
+    return manglingTable[x];
+}
+
+function mangleName(name)
+{
+    return name.replace(manglingRx, mangle);
+}
+
+var nextVarSuffix = 0;
+
+function genVarName()
+{
+    var out = "$$TMP" + nextVarSuffix;
+    ++nextVarSuffix;
+    return out;
+};
+
+function compileAtom(x)
+{
+	if(symbol__QM(x))
+    	return [mangleName(x.toString()), ""];
+    else
+    	return [x.toString(), ""];
+}
+
+function compileFuncall(lst)
+{
+    var compiledArgs = map(cdr(lst), compile);
+    var compiledFun = compile(car(lst));
+    
+    return [format("%0(%1)",
+                    compiledFun[0],
+                    join(map(compiledArgs, getter(0)), ",")),
+            compiledFun[1] + join(map(compiledArgs, getter(1)), "")];
+}
+
+function compileBodyHelper(lst, targetVarName)
+{
+    var compiledBody = map(lst, compile);
+    
+    var reducer = function(accum, v) {
+        return accum + v[1] + v[0] + ";";
+    };
+    
+    return reduce(butlast(compiledBody, 1), reducer, "") + 
+            last(compiledBody)[1] + 
+            targetVarName + "=" + last(compiledBody)[0] + ";";
+}
+
+function processArgs(args)
+{
+	var revArgs = reduce(args, function(accum, v) {
+    	return cons(v.name[0] == "&" ?
+        			"&" + mangleName(v.name.slice(1)) : mangleName(v.name),
+                    accum);
+    }, null);
+    
+    if(revArgs !== null && revArgs.car[0] == "&")
+    {
+    	var varargCompilerName = genVarName();
+        
+        return {
+        	args: reverse__BANG(cons("..." + varargCompilerName, revArgs.cdr)),
+        	varargUserName: revArgs.car.slice(1),
+            varargCompilerName: varargCompilerName
+        };
+    }
+    else
+    	return {
+        	args: reverse__BANG(revArgs),
+        };
+}
+
+function compileDefun(lst)
+{
+    var name = mangleName(second(lst).toString());
+    var retVarName = genVarName();
+    var compiledBody = compileBodyHelper(lst.cdr.cdr.cdr, retVarName);
+    var r = processArgs(lst.cdr.cdr.car);
+    var argStr = join(r.args, ",");
+    var varargInit = "";
+    
+    if("varargUserName" in r) 
+    	varargInit = format("var %0=arrayToList(%1);", r.varargUserName, r.varargCompilerName);
+    
+    return [name,
+    		format("function %0(%1)"+
+                    "{"+
+                        "var %2;"+
+						"%3"+
+                        "%4"+
+                        "return %5;"+
+                    "}",
+                    name, argStr, retVarName,
+                    varargInit, compiledBody, retVarName)];
+}
+
+function compileLambda(lst)
+{
+    var retVarName = genVarName();
+    var compiledBody = compileBodyHelper(lst.cdr.cdr, retVarName);
+    var r = processArgs(lst.cdr.car);
+    var argStr = join(r.args, ",");
+    var varargInit = "";
+    
+    if("varargUserName" in r) 
+    	varargInit = format("var %0=arrayToList(%1);", r.varargUserName, r.varargCompilerName);
+    
+    return [format("(function (%0)"+
+                    "{"+
+                        "var %1;"+
+                        "%2" +
+                        "%3" +
+                        "return %4;"+
+                    "})",
+                    argStr,
+                    retVarName,
+                    varargInit,
+                    compiledBody,
+                    retVarName), ""];
+}
+
+function compileDefmacro(lst)
+{
+	var name = mangleName(second(lst).toString());
+	var t = compileDefun(lst);
+    t[1] += format("%0.isMacro=true;", name);
+    return t;
+}
+
+function compileIf(lst)
+{
+    var cond = lst.cdr.car;
+    var t = lst.cdr.cdr.car;
+    var f = lst.cdr.cdr.cdr.car;
+    
+    var valueVarName = genVarName();
+    
+    var compiledCond = compile(cond);
+    var compiledT = compile(t);
+    var compiledF = compile(f);
+    
+    return [valueVarName,
+            format("var %0;"        +
+                   "%1"             +
+                    "if(%2){"       +
+                        "%3"        +
+                        "%0=%4;"    +
+                    "}"             +
+                    "else{"         +
+                        "%5"        +
+                        "%0=%6;"    +
+                    "}",
+                    valueVarName,
+                    compiledCond[1],
+                    compiledCond[0],
+                    compiledT[1],
+                    compiledT[0],
+                    compiledF[1],
+                    compiledF[0])];
+}
+
+
+function compileProgn(lst)
+{
+    var valueVarName = genVarName();
+    
+    return [valueVarName,
+            "var " + valueVarName + ";" +
+            compileBodyHelper(lst.cdr, valueVarName)];
+}
+
+function compileQuotedAtom(x)
+{
+    if(null__QM(x))
+        return "null";
+    else if(symbol__QM(x))
+        return "(new Symbol(\"" + x.name + "\"))";
+    else if(number__QM(x))
+        return x;
+    else
+        throw "Unknown atom type: " + x;
+}
+
+function compileQuotedList(x)
+{
+    var r = function(accum, v) {
+        return [accum[0] + "cons(" + compileQuoted(v) + ",", accum[1] + ")"];
+    };
+    
+    return reduce(x, r, ["", "null"]).join("");
+}
+
+function compileQuoted(x)
+{
+    if(atom__QM(x))
+        return compileQuotedAtom(x);
+    else
+        return compileQuotedList(x);
+}
+
+function macroexpandUnsafe(expr)
+{
+	var withQuotedArgs = cons(expr.car, map(expr.cdr, function(x) {
+    	return list(new Symbol("quote"), x);
+    }));
+    
+    var tmp = compileFuncall(withQuotedArgs);
+    return geval(tmp[1] + tmp[0]);
+}
+
+function macroexpand(expr)
+{
+	if(list__QM(expr) && expr != null && evalisp(car(expr))["isMacro"])
+    	return macroexpandUnsafe(expr);
+    
+    else
+    	throw "macroexpand argument is not a macro!";
+}
+
+function compile(expr)
+{
+    if(list__QM(expr) && expr != null)
+    {
+        var first = car(expr);
+        
+        if(first.name === "defun")
+            return compileDefun(expr);
+        else if(first.name === "defmacro")
+        	return compileDefmacro(expr);
+        else if(first.name === "lambda")
+        	return compileLambda(expr);
+        else if(first.name === "if")
+            return compileIf(expr);
+        else if(first.name === "progn")
+            return compileProgn(expr);
+        else if(first.name === "quote")
+            return [compileQuoted(second(expr)), ""];
+        else
+        {
+        	if(evalisp(car(expr))["isMacro"])
+            	return compile(macroexpandUnsafe(expr));
+            else
+            	return compileFuncall(expr);
+        }
+    }
+    
+    else
+        return compileAtom(expr);
+}
+
+function formatCode(str)
+{
+    var toks = str.split(/(;|{|})/);
+    var out = "";
+    var ind = [];
+    
+    for(var i = 0; i < Math.floor(toks.length / 2); ++i)
+    {
+        if(toks[i * 2 + 1] === "}")
+            ind.pop();
+        
+        out += ind.join("") + toks[i * 2] + toks[i * 2 + 1] + "\n";
+
+        if(toks[i * 2 + 1] === "{")
+            ind.push("   ");
+    }
+    
+    return out + toks[toks.length - 1];
+}
+
+// *************
+// * Evaluator *
+// *************
+
+
+/*
+var i = 0;
+start: while(true) {
+  if(i < 5)
+  {
+     console.log("Hello, world!");
+     i++;
+    continue start;
+  }
+  break;
+}*/
+//console.log("\n" + formatCode(compile(forms[0])[0]));
+
+var geval = eval;
+
+function evalisp(expr)
+{
+	var tmp = compile(expr);
+    //console.log(tmp[1] + tmp[0]);
+    return geval(tmp[1] + tmp[0]);
+}
+
+function evalispstr(str)
+{
+	var toks = tokenize(str);
+    var forms = parse(toks);
+
+	for(var i = 0; i < forms.length; ++i)
+	{
+    	print(evalisp(forms[i]));
+	}
+}
+
+function compiler__MINUSoutput(expr)
+{
+	var tmp = compile(expr);
+	return formatCode(tmp[1] + tmp[0]);
+}
+
+// **********
+// * Editor *
+// **********
+
+crap = [1, 2, 3, 4, 5];
+
+var originalConsole = console;
+
+function consoleLine(text, cls)
+{
+	var pre = format('<pre class="%0"></pre>', cls);
+	$("#console-log").append($(pre).html(text));
+}
+
+console = {
+  log: function(text) {
+  	originalConsole.log(text);
+    consoleLine(text, "console-log-line");
+  },
+  error: function(text) {
+  	originalConsole.error(text);
+    consoleLine(text, "console-error-line");
+  }
+};
+
+console.debug = console.info = console.log;
+
+window.onerror = function(msg, url, line, col, err) {
+	consoleLine(msg, "console-error-line");
+}
+
+var inputField = $("#input");
+					
+inputField.keypress(function(event) {
+	if(event.keyCode == 13 && !event.shiftKey)
+	{
+  		console.log(">>" + inputField.html());
+        evalispstr(inputField.text());
+		inputField.html("");
+	}
+});
+
+
+function resetCursor(el, start) {
+    el.focus();
+    if (typeof window.getSelection != "undefined"
+            && typeof document.createRange != "undefined") {
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(start);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else if (typeof document.body.createTextRange != "undefined") {
+        var textRange = document.body.createTextRange();
+        textRange.moveToElementText(el);
+        textRange.collapse(start);
+        textRange.select();
+    }
+}
+
+
+inputField.click(function() {
+	return false;
+});
+
+
+$("#console-log").click(function() {
+	return false;
+});
+
+$("#cursor").click(function() {
+	resetCursor(inputField.get(0), true);
+	return false;
+});
+
+$("#console").click(function() {
+	inputField.focus();
+    resetCursor(inputField.get(0), false);
+    return true;
+});
+
+evalispstr(`
+	(defmacro let (bindings &body)
+     \`((lambda ~(every-nth bindings 2) ~@body) ~@(every-nth (cdr bindings) 2)))
+`);
+
+/*
+var toks = tokenize(`((getter 0) kaka)`);
+var forms = parse(toks);
+
+for(var i = 0; i < forms.length; ++i)
+{
+    print(forms[i]);
+}
+
+console.log(comprev(forms[0]));*/
+
+//]]> 
+
+</script>
+
+</body>
+
+</html>
+
