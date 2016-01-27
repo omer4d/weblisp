@@ -56,6 +56,15 @@ QUnit.test( "Math", function( assert ) {
 });
 
 QUnit.test( "Comparison", function( assert ) {
+	assert.deepEqual(ev("(= 0 0)"), true);
+	assert.deepEqual(ev("(= 0 1)"), false);
+	assert.deepEqual(ev("(= 2 (+ 1 1) 2 (+ 1 1))"), true);
+	assert.deepEqual(ev("(= '(1) '(1))"), false);
+	
+	assert.deepEqual(ev("(not= 0 0)"), false);
+	assert.deepEqual(ev("(not= 0 1)"), true);
+	assert.deepEqual(ev("(not= '(1) '(1))"), true);
+	
 	assert.deepEqual(ev("(> 1 0)"), true);
 	assert.deepEqual(ev("(> 0 1)"), false);
 	
@@ -158,6 +167,31 @@ QUnit.test( "Defun", function( assert ) {
 					x)`));
 	assert.deepEqual(ev("(testf7 10)"), 10);
 	assert.deepEqual(globalCounter, 5);
+	
+	assert.ok(ev(`(defun testf8 (n)
+					(if (not= n 0)
+						(* n (testf8 (- n 1)))
+						1))`));
+	
+	assert.deepEqual(ev("(testf8 5)"), 1*2*3*4*5);
 });
 
-
+QUnit.test( "Defmacro", function( assert ) {
+	assert.ok(ev("(defmacro testmac1 () 5)"));
+	assert.deepEqual(ev("(+ (testmac1) 5)"), 10);
+	
+	assert.ok(ev("(defmacro testmac2 () 'baz)"));
+	assert.deepEqual(ev("((lambda (baz) (+ (testmac2) 5)) 5)"), 10);
+	
+	assert.ok(ev("(defmacro testmac3 (x) (cons '+ x))"));
+	assert.deepEqual(ev("(testmac3 (1 2 3 4))"), 10);
+	
+	assert.ok(ev(`(defmacro testmac4 (x) 
+					 (if (atom? x)
+						  x` +
+						  "`(~(second x) (testmac4 ~(first x)) (testmac4 ~(third x)))))"));
+	
+	assert.deepEqual(ev("(testmac4 1)"), 1);
+	assert.deepEqual(ev("(testmac4 (1 + 1))"), 2);
+	assert.deepEqual(ev("(testmac4 ((2 * 3) + (4 * (5 + 6))))"), ((2 * 3) + (4 * (5 + 6))));
+});

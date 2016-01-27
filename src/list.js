@@ -34,6 +34,11 @@ function second(lst)
     return lst.cdr.car;
 }
 
+function third(lst)
+{
+	return lst.cdr.cdr.car;
+}
+
 function list__QM(lst)
 {
     return lst === null || lst instanceof Cons && list__QM(cdr(lst));
@@ -187,11 +192,6 @@ function every__MINUSnth(lst, n)
 function butlast(coll, n)
 {
     return take(coll, count(coll) - n);
-}
-
-function join(coll, sep)
-{
-    return reduce(interpose(coll, sep), str, "");
 }
 
 function concat(...args)
