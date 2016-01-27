@@ -155,7 +155,7 @@ inputField.keypress(function(event) {
 	if(event.keyCode == 13 && !event.shiftKey)
 	{
   		console.log(">>" + inputField.html());
-        evalispstr(inputField.text());
+        replStep(inputField.text());
 		inputField.html("");
 	}
 });
