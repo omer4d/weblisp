@@ -3,8 +3,10 @@ true atom - done
 false atom - done
 undefined atom - done
 
-var set operator
-field set operator
+var set operator (setv!)
+field set operator (seti!)
+generic set macro (set!)
+
 field access operator
 new operator
 loop special form (ala clojure)

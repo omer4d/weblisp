@@ -6,19 +6,19 @@ QUnit.test( "Atoms (sans symbol)", function( assert ) {
 	assert.deepEqual(ev("1"), 1);
 	assert.deepEqual(ev("'baz"), new Symbol("baz"));
 	assert.deepEqual(ev("null"), null);
-	//assert.deepEqual(ev("true"), true);
-	//assert.deepEqual(ev("false"), false);
-	//assert.deepEqual(ev("undefined"), undefined);
+	assert.deepEqual(ev("true"), true);
+	assert.deepEqual(ev("false"), false);
+	assert.deepEqual(ev("undefined"), undefined);
 });
 
 QUnit.test( "Quote", function( assert ) {
 	assert.deepEqual(ev("'1"), 1);
 	assert.deepEqual(ev("'baz"), new Symbol("baz"));
 
-	//assert.deepEqual(ev("'null"), null);
-	//assert.deepEqual(ev("'true"), true);
-	//assert.deepEqual(ev("'false"), false);
-	//assert.deepEqual(ev("'undefined"), undefined);
+	assert.deepEqual(ev("'null"), null);
+	assert.deepEqual(ev("'true"), true);
+	assert.deepEqual(ev("'false"), false);
+	assert.deepEqual(ev("'undefined"), undefined);
 	
 	assert.deepEqual(ev("'()"), null);
 	assert.deepEqual(ev("'(1 2 3)"), list(1, 2, 3));

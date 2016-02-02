@@ -52,7 +52,7 @@ function compileAtom(x)
         return ["null", ""];
     else if(x === undefined)
         return ["undefined", ""];
-    else
+    else // string or number
     	return [x.toString(), ""];
 }
 
@@ -204,23 +204,19 @@ function compileProgn(lst)
 
 function compileQuotedAtom(x)
 {
-    if(null__QM(x))
-        return "null";
-    else if(symbol__QM(x))
-        return "(new Symbol(\"" + x.name + "\"))";
-    else if(number__QM(x))
-        return x;
+    if(symbol__QM(x))
+        return ["(new Symbol(\"" + x.name + "\"))", ""];
     else
-        throw "Unknown atom type: " + x;
+        return compileAtom(x);
 }
 
 function compileQuotedList(x)
 {
     var r = function(accum, v) {
-        return [accum[0] + "cons(" + compileQuoted(v) + ",", accum[1] + ")"];
+        return [accum[0] + "cons(" + compileQuoted(v)[0] + ",", accum[1] + ")"];
     };
     
-    return reduce(x, r, ["", "null"]).join("");
+    return [reduce(x, r, ["", "null"]).join(""), ""];
 }
 
 function compileQuoted(x)
@@ -269,7 +265,7 @@ function compile(expr)
 			else if(first.name === "progn")
 				return compileProgn(expr);
 			else if(first.name === "quote")
-				return [compileQuoted(second(expr)), ""];
+				return compileQuoted(second(expr));
 			else if(global[first.name] !== undefined && global[first.name]["isMacro"])
 				return compile(macroexpandUnsafe(expr));
 			else
