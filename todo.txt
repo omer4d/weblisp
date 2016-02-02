@@ -3,8 +3,9 @@ true atom - done
 false atom - done
 undefined atom - done
 var set operator (setv!) - done
+field set operator (seti!) - done
 
-field set operator (seti!)
+
 generic set macro (set!)
 
 field access operator

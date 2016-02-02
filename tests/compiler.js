@@ -198,6 +198,28 @@ QUnit.test( "Setv", function( assert ) {
 	assert.deepEqual(ev("((lambda (x y z) (setv z (setv y (setv x 3))) (+ x y z)) 0 0 0)"), 9);
 });
 
+var globalTestObj = {};
+
+function getGlobalTestObj__STAR(..._)
+{
+	return globalTestObj;
+}
+
+QUnit.test( "Seti", function( assert ) {
+	assert.deepEqual(ev("(seti globalTestObj 'baz 777)"), 777);
+	assert.deepEqual(globalTestObj.baz, 777);
+	
+	assert.deepEqual(ev("(seti globalTestObj 'baz (+ 7 7))"), 14);
+	assert.deepEqual(globalTestObj.baz, 14);
+	
+	assert.deepEqual(ev("(seti globalTestObj (+ 3 3) (+ 7 8))"), 15);
+	assert.deepEqual(globalTestObj[6], 15);
+	
+	assert.deepEqual(ev("(seti (getGlobalTestObj* 1 2 3) '? (+ 8 8))"), 16);
+	assert.deepEqual(globalTestObj["?"], 16);
+});
+
+
 QUnit.test( "Defmacro", function( assert ) {
 	assert.ok(ev("(defmacro testmac1 () 5)"));
 	assert.deepEqual(ev("(+ (testmac1) 5)"), 10);

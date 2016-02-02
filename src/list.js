@@ -39,6 +39,16 @@ function third(lst)
 	return lst.cdr.cdr.car;
 }
 
+function fourth(lst)
+{
+    return lst.cdr.cdr.cdr.car;
+}
+
+function fifth(lst)
+{
+    return lst.cdr.cdr.cdr.cdr.car;
+}
+
 function list__QM(lst)
 {
     return lst === null || lst instanceof Cons && list__QM(cdr(lst));

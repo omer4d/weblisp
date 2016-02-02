@@ -245,7 +245,18 @@ function compileSetv(lst)
 
 function compileSeti(lst)
 {
+    var compiledObjExpr = compile(second(lst));
+    var compiledIdxExpr = compile(third(lst));
+    var compiledValExpr = compile(fourth(lst));
+    var valueVarName = genVarName();
     
+    return [valueVarName, compiledObjExpr[1] +
+                          compiledIdxExpr[1] +
+                          compiledValExpr[1] +
+                          format("var %0=%1;" + 
+                                 "(%2)[%3]=%0;",
+                                 valueVarName, compiledValExpr[0],
+                                 compiledObjExpr[0], compiledIdxExpr[0])];
 }
 
 function macroexpandUnsafe(expr)
