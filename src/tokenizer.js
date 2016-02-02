@@ -11,61 +11,29 @@ var TokenType = {
   	END: 9
 };
 
-function GenericTok(res)
-{ 
-	this.type = TokenType.ANY;
-    this.val = res[0];
-}
-
-function ObrTok(res)
+function Token(src, type, start, len)
 {
-    this.type = TokenType.OBR;
-    this.val = null;
+    this.src = src;
+	this.type = type;
+    this.start = start;
+    this.len = len;
 }
 
-function CbrTok(res)
+Token.prototype.toString = function()
 {
-    this.type = TokenType.CBR;
-    this.val = null;
-}
+    var t = this.type;
 
-function QuoteTok(res)
+	return Object.keys(TokenType).filter(function(key) {
+    	return TokenType[key] === t;
+    })[0] + " " + this.start;
+};
+
+Token.prototype.text = function()
 {
-    this.type = TokenType.QUOTE;
-    this.val = null;
-}
+	return this.src.substr(this.start, this.len);
+};
 
-function BackQuoteTok(res)
-{
-    this.type = TokenType.BACKQUOTE;
-    this.val = null;
-}
-
-function UnquoteTok(res)
-{
-    this.type = TokenType.UNQUOTE;
-    this.val = null;
-}
-
-function SpliceTok(res)
-{
-    this.type = TokenType.SPLICE;
-    this.val = null;
-}
-
-function NumberTok(res)
-{
-    this.type = TokenType.NUM;
-    this.val = parseFloat(res[0]);
-}
-
-function SymbolTok(res)
-{
-    this.type = TokenType.SYM;
-    this.val = res[0];
-}
-
-function tokenize(str)
+function tokenize(src)
 {                 
     var spacePatt = /^\s+/;
     var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
@@ -76,17 +44,19 @@ function tokenize(str)
     var unquotePatt = /^\~/;
     var splicePatt = /^\~@/;
     var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
-
-    var tokenTable = [{patt: spacePatt, ctor: null},
-                      {patt: numberPatt, ctor: NumberTok},
-                      {patt: obrPatt, ctor: ObrTok},
-                      {patt: cbrPatt, ctor: CbrTok},
-                      {patt: quotePatt, ctor: QuoteTok},
-                      {patt: backQuotePatt, ctor: BackQuoteTok},
-                      {patt: splicePatt, ctor: SpliceTok},
-                      {patt: unquotePatt, ctor: UnquoteTok},
-                      {patt: symPatt, ctor: SymbolTok}];
+    
+    var tokenTable = [{patt: spacePatt, type: -1},
+                      {patt: numberPatt, type: TokenType.NUM},
+                      {patt: obrPatt, type: TokenType.OBR},
+                      {patt: cbrPatt, type: TokenType.CBR},
+                      {patt: quotePatt, type: TokenType.QUOTE},
+                      {patt: backQuotePatt, type: TokenType.BACKQUOTE},
+                      {patt: splicePatt, type: TokenType.SPLICE},
+                      {patt: unquotePatt, type: TokenType.UNQUOTE},
+                      {patt: symPatt, type: TokenType.SYM}];
     var toks = [];
+    var pos = 0;
+    var str = src;
 
     while(str.length > 0)
     {
@@ -100,8 +70,10 @@ function tokenize(str)
             {
                 str = str.substring(res[0].length);
             
-                if(tokenTable[i].ctor !== null)
-                    toks.push(new tokenTable[i].ctor(res));
+                if(tokenTable[i].type !== -1)
+                    toks.push(new Token(src, tokenTable[i].type, pos, res[0].length));
+            
+            	pos += res[0].length;
             
                 break;
             }
@@ -113,7 +85,7 @@ function tokenize(str)
         }
     }
     
-    toks.push({type: TokenType.END, val: null});
+    toks.push({type: TokenType.END});
     
     return toks;
 }
