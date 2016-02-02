@@ -1,0 +1,22 @@
+null atom - done
+true atom - done
+false atom - done
+undefined atom - done
+
+var set operator
+field set operator
+field access operator
+new operator
+loop special form (ala clojure)
+
+array literals
+object literals
+simple string literals
+escaped string literals
+multiline string literals
+
+case macro
+def special form
+function naming issue
+macrolet
+

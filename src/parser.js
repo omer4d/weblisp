@@ -24,6 +24,14 @@ Parser.prototype.parseExpr = function()
     {
         case TokenType.OBR:
             return this.parseList();
+        case TokenType.TRUE:
+            return true;
+        case TokenType.FALSE:
+            return false;
+        case TokenType.NULL:
+            return null;
+        case TokenType.UNDEF:
+            return undefined;
         case TokenType.NUM:
             return parseFloat(tok.text());
         case TokenType.QUOTE:

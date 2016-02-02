@@ -7,6 +7,10 @@ QUnit.module( "Parser" );
 QUnit.test( "Atoms", function( assert ) {
 	assert.deepEqual(pt("10"), 10);
 	assert.deepEqual(pt("baz"), new Symbol("baz"));
+	assert.deepEqual(pt("true"), true);
+	assert.deepEqual(pt("false"), false);
+	assert.deepEqual(pt("null"), null);
+	assert.deepEqual(pt("undefined"), undefined);
 	
 	//assert.deepEqual(pt("null"), null);
 	//assert.deepEqual(pt("true"), true);

@@ -44,6 +44,14 @@ function compileAtom(x)
 {
 	if(symbol__QM(x))
     	return [mangleName(x.toString()), ""];
+    else if(x === true)
+        return ["true", ""];
+    else if(x === false)
+        return ["false", ""];
+    else if(x === null)
+        return ["null", ""];
+    else if(x === undefined)
+        return ["undefined", ""];
     else
     	return [x.toString(), ""];
 }

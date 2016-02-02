@@ -44,7 +44,26 @@ QUnit.test("Symbols", function( assert ) {
 
 });
 
-QUnit.test("Misc.", function( assert ) {
+QUnit.test("Other atoms", function( assert ) {
+	assert.deepEqual(tk("true"), [TokenType.TRUE, TokenType.END]);
+	assert.deepEqual(tk("123true"), [TokenType.NUM, TokenType.TRUE, TokenType.END]);
+	assert.deepEqual(tk("true123"), [TokenType.SYM, TokenType.END]);
+	
+	assert.deepEqual(tk("false"), [TokenType.FALSE, TokenType.END]);
+	assert.deepEqual(tk("123false"), [TokenType.NUM, TokenType.FALSE, TokenType.END]);
+	assert.deepEqual(tk("false123"), [TokenType.SYM, TokenType.END]);
+	
+	assert.deepEqual(tk("null"), [TokenType.NULL, TokenType.END]);
+	assert.deepEqual(tk("123null"), [TokenType.NUM, TokenType.NULL, TokenType.END]);
+	assert.deepEqual(tk("null123"), [TokenType.SYM, TokenType.END]);
+	
+	assert.deepEqual(tk("undefined"), [TokenType.UNDEF, TokenType.END]);
+	assert.deepEqual(tk("123undefined"), [TokenType.NUM, TokenType.UNDEF, TokenType.END]);
+	assert.deepEqual(tk("undefined123"), [TokenType.SYM, TokenType.END]);
+});
+
+
+QUnit.test("Syntactic", function( assert ) {
 	assert.deepEqual(tk("("), [TokenType.OBR, TokenType.END]);
 	assert.deepEqual(tk(")"), [TokenType.CBR, TokenType.END]);
 	assert.deepEqual(tk("'"), [TokenType.QUOTE, TokenType.END]);

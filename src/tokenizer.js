@@ -1,15 +1,5 @@
-var TokenType = {
-	ANY: 0,
-  	OBR: 1,
-  	CBR: 2,
-  	NUM: 3,
-  	SYM: 4,
-  	QUOTE: 5,
-  	BACKQUOTE: 6,
-    UNQUOTE: 7,
-    SPLICE: 8,
-  	END: 9
-};
+var TokenType = makeEnum("OBR", "CBR", "TRUE", "FALSE", "NULL", "UNDEF", "NUM", "SYM", 
+                            "QUOTE", "BACKQUOTE", "UNQUOTE", "SPLICE", "END");
 
 function Token(src, type, start, len)
 {
@@ -46,6 +36,10 @@ function tokenize(src)
     var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
     
     var tokenTable = [{patt: spacePatt, type: -1},
+                      {patt: /^true$/, type: TokenType.TRUE},
+                      {patt: /^false$/, type: TokenType.FALSE},
+                      {patt: /^null$/, type: TokenType.NULL},
+                      {patt: /^undefined$/, type: TokenType.UNDEF},
                       {patt: numberPatt, type: TokenType.NUM},
                       {patt: obrPatt, type: TokenType.OBR},
                       {patt: cbrPatt, type: TokenType.CBR},
