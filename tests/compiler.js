@@ -176,6 +176,28 @@ QUnit.test( "Defun", function( assert ) {
 	assert.deepEqual(ev("(testf8 5)"), 1*2*3*4*5);
 });
 
+var globalTestV = 0;
+
+QUnit.test( "Setv", function( assert ) {
+	assert.deepEqual(ev("(setv globalTestV 777)"), 777);
+	assert.deepEqual(globalTestV, 777);
+	
+	assert.deepEqual(ev("(setv globalTestV (+ 7 7))"), 14);
+	assert.deepEqual(globalTestV, 14);
+	
+	assert.deepEqual(ev("(setv globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
+	assert.deepEqual(globalTestV, 12);
+	
+	assert.deepEqual(ev("(setv globalTestV (+ 7 7))"), 14);
+	assert.deepEqual(globalTestV, 14);
+	
+	assert.deepEqual(ev("((lambda (x) (setv x (+ 7 8)) x) 0)"), 15);
+	
+	assert.deepEqual(ev("((lambda (x) (if (> (setv x 6) 0) x 0)) 0)"), 6);
+	
+	assert.deepEqual(ev("((lambda (x y z) (setv z (setv y (setv x 3))) (+ x y z)) 0 0 0)"), 9);
+});
+
 QUnit.test( "Defmacro", function( assert ) {
 	assert.ok(ev("(defmacro testmac1 () 5)"));
 	assert.deepEqual(ev("(+ (testmac1) 5)"), 10);

@@ -40,6 +40,15 @@ function genVarName()
     return out;
 };
 
+// Each compileXXXX function must return a pair [v:String, s:String] such that:
+// - v is a javascript expression that yields the value of the source lisp expression
+// - v does not contain any statements (and mustn't end on a semicolon)
+// - s contains zero or more javascript statements to be executed before evaluating v
+// - Given a result [_, s2] of another compilation, s+s2 must be valid javascript
+//   i.e. do not rely on automatic semicolon insertion
+///       do not rely on consumers to insert necessary separators before concat.
+
+
 function compileAtom(x)
 {
 	if(symbol__QM(x))
@@ -227,12 +236,14 @@ function compileQuoted(x)
         return compileQuotedList(x);
 }
 
-function compileSeti(x)
+function compileSetv(lst)
 {
-    
+    var varName = mangleName(second(lst).toString());
+    var compiledVal = compile(third(lst));
+    return [varName, compiledVal[1] + varName + "=" + compiledVal[0] + ";"];
 }
 
-function compileSetv(x)
+function compileSeti(lst)
 {
     
 }

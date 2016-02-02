@@ -64,10 +64,10 @@ QUnit.test("Syntactic", function( assert ) {
 });
 
 QUnit.test("Compound", function( assert ) {
-	assert.deepEqual(tk("`'((0 baz12 3)(~~@+.4))"),
+	assert.deepEqual(tk("`'((0 baz12 3)(~~@+.4)true)"),
 		[TokenType.BACKQUOTE, TokenType.QUOTE, TokenType.OBR, TokenType.OBR, TokenType.NUM, TokenType.SYM,
 		 TokenType.NUM, TokenType.CBR, TokenType.OBR, TokenType.UNQUOTE, TokenType.SPLICE, TokenType.NUM,
-		 TokenType.CBR, TokenType.CBR, TokenType.END]);
+		 TokenType.CBR, TokenType.TRUE, TokenType.CBR, TokenType.END]);
 });
 
 QUnit.test("Invalid", function( assert ) {

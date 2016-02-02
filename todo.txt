@@ -2,8 +2,8 @@ null atom - done
 true atom - done
 false atom - done
 undefined atom - done
+var set operator (setv!) - done
 
-var set operator (setv!)
 field set operator (seti!)
 generic set macro (set!)
 
