@@ -39,27 +39,18 @@ QUnit.test("Symbols", function( assert ) {
 					[TokenType.SYM, TokenType.END]);
 	assert.deepEqual(tk("<>?+-=!@#$%^&*/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
 					[TokenType.SYM, TokenType.END]);
-	assert.deepEqual(tk("0baz"),
-					[TokenType.NUM, TokenType.SYM, TokenType.END]);
-
+	
+	pairs(["true", "false", "null", "undefined", "baz"]).forEach(function(pair) {
+		assert.deepEqual(tk(pair[0] + pair[1]), [TokenType.SYM, TokenType.END]);
+		assert.deepEqual(tk(pair[0] + "123"), [TokenType.SYM, TokenType.END]);
+	});
 });
 
 QUnit.test("Other atoms", function( assert ) {
 	assert.deepEqual(tk("true"), [TokenType.TRUE, TokenType.END]);
-	assert.deepEqual(tk("123true"), [TokenType.NUM, TokenType.TRUE, TokenType.END]);
-	assert.deepEqual(tk("true123"), [TokenType.SYM, TokenType.END]);
-	
 	assert.deepEqual(tk("false"), [TokenType.FALSE, TokenType.END]);
-	assert.deepEqual(tk("123false"), [TokenType.NUM, TokenType.FALSE, TokenType.END]);
-	assert.deepEqual(tk("false123"), [TokenType.SYM, TokenType.END]);
-	
 	assert.deepEqual(tk("null"), [TokenType.NULL, TokenType.END]);
-	assert.deepEqual(tk("123null"), [TokenType.NUM, TokenType.NULL, TokenType.END]);
-	assert.deepEqual(tk("null123"), [TokenType.SYM, TokenType.END]);
-	
 	assert.deepEqual(tk("undefined"), [TokenType.UNDEF, TokenType.END]);
-	assert.deepEqual(tk("123undefined"), [TokenType.NUM, TokenType.UNDEF, TokenType.END]);
-	assert.deepEqual(tk("undefined123"), [TokenType.SYM, TokenType.END]);
 });
 
 
@@ -73,8 +64,16 @@ QUnit.test("Syntactic", function( assert ) {
 });
 
 QUnit.test("Compound", function( assert ) {
-	assert.deepEqual(tk("`'((0baz12 3)(~~@+.4))"),
+	assert.deepEqual(tk("`'((0 baz12 3)(~~@+.4))"),
 		[TokenType.BACKQUOTE, TokenType.QUOTE, TokenType.OBR, TokenType.OBR, TokenType.NUM, TokenType.SYM,
 		 TokenType.NUM, TokenType.CBR, TokenType.OBR, TokenType.UNQUOTE, TokenType.SPLICE, TokenType.NUM,
 		 TokenType.CBR, TokenType.CBR, TokenType.END]);
+});
+
+QUnit.test("Invalid", function( assert ) {
+	["true", "false", "null", "undefined", "baz"].forEach(function(x) {
+	 	assert.throws(function() {
+	 		tk("123" + x);
+	 	}, /Unrecognized token/);
+	});
 });

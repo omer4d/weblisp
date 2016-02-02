@@ -227,6 +227,16 @@ function compileQuoted(x)
         return compileQuotedList(x);
 }
 
+function compileSeti(x)
+{
+    
+}
+
+function compileSetv(x)
+{
+    
+}
+
 function macroexpandUnsafe(expr)
 {
 	var withQuotedArgs = cons(expr.car, map(expr.cdr, function(x) {
@@ -254,22 +264,30 @@ function compile(expr)
         
 		if(first instanceof Symbol)
 		{
-			if(first.name === "defun")
-				return compileDefun(expr);
-			else if(first.name === "defmacro")
-				return compileDefmacro(expr);
-			else if(first.name === "lambda")
-				return compileLambda(expr);
-			else if(first.name === "if")
-				return compileIf(expr);
-			else if(first.name === "progn")
-				return compileProgn(expr);
-			else if(first.name === "quote")
-				return compileQuoted(second(expr));
-			else if(global[first.name] !== undefined && global[first.name]["isMacro"])
-				return compile(macroexpandUnsafe(expr));
-			else
-				return compileFuncall(expr);
+		    switch(first.name)
+		    {
+		        case "defun":
+				    return compileDefun(expr);
+			    case "defmacro":
+				    return compileDefmacro(expr);
+			    case "lambda":
+				    return compileLambda(expr);
+			    case "if":
+				    return compileIf(expr);
+			    case "progn":
+				    return compileProgn(expr);
+			    case "quote":
+				    return compileQuoted(second(expr));
+			    case "setv":
+			        return compileSetv(expr);
+			    case "seti":
+			        return compileSeti(expr);
+			    default:
+			        if(global[first.name] !== undefined && global[first.name]["isMacro"])
+				        return compile(macroexpandUnsafe(expr));
+			        else
+				        return compileFuncall(expr);
+		    }
 		}
 		
 		else
