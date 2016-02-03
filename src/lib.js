@@ -40,6 +40,8 @@ function str1(x)
     	return "undefined";
     else if(typeof(x) === "function")
     	return (x.isMacro ? "Macro " : "Function ") + (validName(x.namestr) ? x.namestr : "[Anonymous]");
+    else if(Array.isArray(x))
+        return "[" + x.map(str1).join(" ") + "]";
     else
     	return x.toString();
 }
@@ -117,6 +119,22 @@ function atom__QM(x)
            bool__QM(x) ||
            undefined__QM(x) ||
            string__QM(x);
+}
+
+function conj(coll, item)
+{
+    if(Array.isArray(coll))
+    {
+        coll.push(item);
+        return coll;
+    }
+    else
+        return cons(item, coll);
+}
+
+function listToArray(lst)
+{
+    return reduce(lst, conj, []);
 }
 
 function identity(x)

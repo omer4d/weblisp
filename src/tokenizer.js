@@ -1,5 +1,13 @@
-var TokenType = makeEnum("OBR", "CBR", "TRUE", "FALSE", "NULL", "UNDEF", "NUM", "SYM", 
+var TokenType = makeEnum("LIST_OPEN", "LIST_CLOSE", "ARR_OPEN", "ARR_CLOSE", "OBJ_OPEN", "OBJ_CLOSE",
+                            "TRUE", "FALSE", "NULL", "UNDEF", "NUM", "SYM", 
                             "QUOTE", "BACKQUOTE", "UNQUOTE", "SPLICE", "END");
+
+function tokenTypeStr(t)
+{
+    return Object.keys(TokenType).filter(function(key) {
+    	return TokenType[key] === t;
+    })[0];
+}
 
 function Token(src, type, start, len)
 {
@@ -11,11 +19,7 @@ function Token(src, type, start, len)
 
 Token.prototype.toString = function()
 {
-    var t = this.type;
-
-	return Object.keys(TokenType).filter(function(key) {
-    	return TokenType[key] === t;
-    })[0] + " " + this.start;
+	return tokenTypeStr(this.type) + " " + this.start;
 };
 
 Token.prototype.text = function()
@@ -29,30 +33,34 @@ function wordOrNum(tokType)
             TokenType.SYM, TokenType.NUM].indexOf(tokType) != -1;
 }
 
+function matchLiterally(str)
+{
+  return new RegExp("^" + str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+}
+
 function tokenize(src)
 {                 
     var spacePatt = /^\s+/;
     var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
-    var obrPatt = /^\(/;
-    var cbrPatt = /^\)/;
-    var quotePatt = /^\'/;
-    var backQuotePatt = /^\`/;
-    var unquotePatt = /^\~/;
-    var splicePatt = /^\~@/;
     var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
+    var lit = matchLiterally;
     
     var tokenTable = [{patt: spacePatt, type: -1},
-                      {patt: /^true/, type: TokenType.TRUE},
-                      {patt: /^false/, type: TokenType.FALSE},
-                      {patt: /^null/, type: TokenType.NULL},
-                      {patt: /^undefined/, type: TokenType.UNDEF},
+                      {patt: lit("true"), type: TokenType.TRUE},
+                      {patt: lit("false"), type: TokenType.FALSE},
+                      {patt: lit("null"), type: TokenType.NULL},
+                      {patt: lit("undefined"), type: TokenType.UNDEF},
                       {patt: numberPatt, type: TokenType.NUM},
-                      {patt: obrPatt, type: TokenType.OBR},
-                      {patt: cbrPatt, type: TokenType.CBR},
-                      {patt: quotePatt, type: TokenType.QUOTE},
-                      {patt: backQuotePatt, type: TokenType.BACKQUOTE},
-                      {patt: splicePatt, type: TokenType.SPLICE},
-                      {patt: unquotePatt, type: TokenType.UNQUOTE},
+                      {patt: lit("("), type: TokenType.LIST_OPEN},
+                      {patt: lit(")"), type: TokenType.LIST_CLOSE},
+                      {patt: lit("["), type: TokenType.ARR_OPEN},
+                      {patt: lit("]"), type: TokenType.ARR_CLOSE},
+                      {patt: lit("{"), type: TokenType.OBJ_OPEN},
+                      {patt: lit("}"), type: TokenType.OBJ_CLOSE},
+                      {patt: lit("'"), type: TokenType.QUOTE},
+                      {patt: lit("`"), type: TokenType.BACKQUOTE},
+                      {patt: lit("~@"), type: TokenType.SPLICE},
+                      {patt: lit("~"), type: TokenType.UNQUOTE},
                       {patt: symPatt, type: TokenType.SYM}];
     var toks = [];
     var pos = 0;

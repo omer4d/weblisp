@@ -76,6 +76,13 @@ function compileFuncall(lst)
             compiledFun[1] + join(map(compiledArgs, getter(1)), "")];
 }
 
+function compileArrayLiteral(arr)
+{
+    var compiledElements = arr.map(compile);
+    return ["[" + compiledElements.map(getter(0)).join(",") + "]",
+            compiledElements.map(getter(1)).join("")];
+}
+
 function compileBodyHelper(lst, targetVarName)
 {
     var compiledBody = map(lst, compile);
@@ -228,10 +235,17 @@ function compileQuotedList(x)
     return [reduce(x, r, ["", "null"]).join(""), ""];
 }
 
+function compileQuotedArrayLiteral(x)
+{
+    return ["[" + x.map(function(e) { return compileQuoted(e)[0]; }).join(",") + "]", ""]; 
+}
+
 function compileQuoted(x)
 {
     if(atom__QM(x))
         return compileQuotedAtom(x);
+    else if(Array.isArray(x))
+        return compileQuotedArrayLiteral(x);
     else
         return compileQuotedList(x);
 }
@@ -245,6 +259,10 @@ function compileSetv(lst)
 
 function compileSeti(lst)
 {
+    var idxExpr = third(lst);
+    var direct = list__QM(idxExpr) && first(idxExpr) == "quote" && symbol__QM(second(idxExpr)) &&
+                    mangleName(second(idxExpr).toString()) == second(idxExpr).toString();
+    
     var compiledObjExpr = compile(second(lst));
     var compiledIdxExpr = compile(third(lst));
     var compiledValExpr = compile(fourth(lst));
@@ -254,9 +272,9 @@ function compileSeti(lst)
                           compiledIdxExpr[1] +
                           compiledValExpr[1] +
                           format("var %0=%1;" + 
-                                 "(%2)[%3]=%0;",
+                                 (direct ? "(%2).%3=%0;" : "(%2)[%3]=%0;"),
                                  valueVarName, compiledValExpr[0],
-                                 compiledObjExpr[0], compiledIdxExpr[0])];
+                                 compiledObjExpr[0], direct ? "baz" : compiledIdxExpr[0])];
 }
 
 function macroexpandUnsafe(expr)
@@ -300,9 +318,9 @@ function compile(expr)
 				    return compileProgn(expr);
 			    case "quote":
 				    return compileQuoted(second(expr));
-			    case "setv":
+			    case "setv!":
 			        return compileSetv(expr);
-			    case "seti":
+			    case "seti!":
 			        return compileSeti(expr);
 			    default:
 			        if(global[first.name] !== undefined && global[first.name]["isMacro"])
@@ -317,7 +335,12 @@ function compile(expr)
     }
     
     else
-        return compileAtom(expr);
+    {
+        if(Array.isArray(expr))
+            return compileArrayLiteral(expr);
+        else
+            return compileAtom(expr);
+    }
 }
 
 function evalisp(expr)

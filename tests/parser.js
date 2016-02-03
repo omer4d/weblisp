@@ -29,11 +29,20 @@ QUnit.test( "Lists", function( assert ) {
 	assert.deepEqual(pt("(foo bar 5)"), list(new Symbol("foo"), new Symbol("bar"), 5));
 });
 
+QUnit.test( "Array Literals", function( assert ) {
+	assert.deepEqual(pt("[]"), []);
+	assert.deepEqual(pt("[[]]"), [[]]);
+	assert.deepEqual(pt("[1 2 3]"), [1, 2, 3]);
+	assert.deepEqual(pt("[1 [2 3 4] 5 6]"), [1, [2, 3, 4], 5, 6]);
+	assert.deepEqual(pt("[foo bar 5]"), [new Symbol("foo"), new Symbol("bar"), 5]);
+});
+
 QUnit.test( "Quote", function( assert ) {
 	assert.deepEqual(pt("'1"), pt("(quote 1)"));
 	assert.deepEqual(pt("'foo"), pt("(quote foo)"));
 	assert.deepEqual(pt("''1"), pt("(quote (quote 1))"));
 	assert.deepEqual(pt("'(1 2 (3 4) 5)"), pt("(quote (1 2 (3 4) 5))"));
+	assert.deepEqual(pt("'[1 2 [3 4] 5]"), pt("(quote [1 2 [3 4] 5])"));
 });
 
 QUnit.test( "Backquote", function( assert ) {

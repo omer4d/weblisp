@@ -1,73 +1,72 @@
 function tk(str) {
 	return tokenize(str).map(function(tok) {
-		return tok.type;
+		return tokenTypeStr(tok.type);
 	});
 }
 
 QUnit.module( "Tokenizer" );
 
 QUnit.test("Numbers", function( assert ) {
-	assert.deepEqual(tk("10"), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("10."), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("10.23"), [TokenType.NUM, TokenType.END]);
+	assert.deepEqual(tk("10"), ["NUM", "END"]);
+	assert.deepEqual(tk("10."), ["NUM", "END"]);
+	assert.deepEqual(tk("10.23"), ["NUM", "END"]);
 	
-	assert.deepEqual(tk("-10"), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("-10."), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("-10.23"), [TokenType.NUM, TokenType.END]);
+	assert.deepEqual(tk("-10"), ["NUM", "END"]);
+	assert.deepEqual(tk("-10."), ["NUM", "END"]);
+	assert.deepEqual(tk("-10.23"), ["NUM", "END"]);
 	
-	assert.deepEqual(tk("+10"), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("+10."), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("+10.23"), [TokenType.NUM, TokenType.END]);
+	assert.deepEqual(tk("+10"), ["NUM", "END"]);
+	assert.deepEqual(tk("+10."), ["NUM", "END"]);
+	assert.deepEqual(tk("+10.23"), ["NUM", "END"]);
 	
-	assert.deepEqual(tk(".3"), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("+.3"), [TokenType.NUM, TokenType.END]);
-	assert.deepEqual(tk("-.3"), [TokenType.NUM, TokenType.END]);
+	assert.deepEqual(tk(".3"), ["NUM", "END"]);
+	assert.deepEqual(tk("+.3"), ["NUM", "END"]);
+	assert.deepEqual(tk("-.3"), ["NUM", "END"]);
 	
-	assert.deepEqual(tk("003.000"), [TokenType.NUM, TokenType.END]);
+	assert.deepEqual(tk("003.000"), ["NUM", "END"]);
 });
 
 QUnit.test("Symbols", function( assert ) {
-	assert.deepEqual(tk("a"),
-					[TokenType.SYM, TokenType.END]);
-	assert.deepEqual(tk("+"),
-					[TokenType.SYM, TokenType.END]);
-	assert.deepEqual(tk("baz"),
-					[TokenType.SYM, TokenType.END]);
-	assert.deepEqual(tk("-baz"),
-					[TokenType.SYM, TokenType.END]);
-	assert.deepEqual(tk("+baz"),
-					[TokenType.SYM, TokenType.END]);
+	assert.deepEqual(tk("a"), ["SYM", "END"]);
+	assert.deepEqual(tk("+"), ["SYM", "END"]);
+	assert.deepEqual(tk("baz"), ["SYM", "END"]);
+	assert.deepEqual(tk("-baz"), ["SYM", "END"]);
+	assert.deepEqual(tk("+baz"), ["SYM", "END"]);
 	assert.deepEqual(tk("<>?+-=!@#$%^&*/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
-					[TokenType.SYM, TokenType.END]);
+					["SYM", "END"]);
 	
 	pairs(["true", "false", "null", "undefined", "baz"]).forEach(function(pair) {
-		assert.deepEqual(tk(pair[0] + pair[1]), [TokenType.SYM, TokenType.END]);
-		assert.deepEqual(tk(pair[0] + "123"), [TokenType.SYM, TokenType.END]);
+		assert.deepEqual(tk(pair[0] + pair[1]), ["SYM", "END"]);
+		assert.deepEqual(tk(pair[0] + "123"), ["SYM", "END"]);
 	});
 });
 
 QUnit.test("Other atoms", function( assert ) {
-	assert.deepEqual(tk("true"), [TokenType.TRUE, TokenType.END]);
-	assert.deepEqual(tk("false"), [TokenType.FALSE, TokenType.END]);
-	assert.deepEqual(tk("null"), [TokenType.NULL, TokenType.END]);
-	assert.deepEqual(tk("undefined"), [TokenType.UNDEF, TokenType.END]);
+	assert.deepEqual(tk("true"), ["TRUE", "END"]);
+	assert.deepEqual(tk("false"), ["FALSE", "END"]);
+	assert.deepEqual(tk("null"), ["NULL", "END"]);
+	assert.deepEqual(tk("undefined"), ["UNDEF", "END"]);
 });
 
 
 QUnit.test("Syntactic", function( assert ) {
-	assert.deepEqual(tk("("), [TokenType.OBR, TokenType.END]);
-	assert.deepEqual(tk(")"), [TokenType.CBR, TokenType.END]);
-	assert.deepEqual(tk("'"), [TokenType.QUOTE, TokenType.END]);
-	assert.deepEqual(tk("`"), [TokenType.BACKQUOTE, TokenType.END]);
-	assert.deepEqual(tk("~"), [TokenType.UNQUOTE, TokenType.END]);
-	assert.deepEqual(tk("~@"), [TokenType.SPLICE, TokenType.END]);
+	assert.deepEqual(tk("("), ["LIST_OPEN", "END"]);
+	assert.deepEqual(tk(")"), ["LIST_CLOSE", "END"]);
+	assert.deepEqual(tk("["), ["ARR_OPEN", "END"]);
+	assert.deepEqual(tk("]"), ["ARR_CLOSE", "END"]);
+	assert.deepEqual(tk("{"), ["OBJ_OPEN", "END"]);
+	assert.deepEqual(tk("}"), ["OBJ_CLOSE", "END"]);
+	assert.deepEqual(tk("'"), ["QUOTE", "END"]);
+	assert.deepEqual(tk("`"), ["BACKQUOTE", "END"]);
+	assert.deepEqual(tk("~"), ["UNQUOTE", "END"]);
+	assert.deepEqual(tk("~@"), ["SPLICE", "END"]);
 });
 
 QUnit.test("Compound", function( assert ) {
 	assert.deepEqual(tk("`'((0 baz12 3)(~~@+.4)true)"),
-		[TokenType.BACKQUOTE, TokenType.QUOTE, TokenType.OBR, TokenType.OBR, TokenType.NUM, TokenType.SYM,
-		 TokenType.NUM, TokenType.CBR, TokenType.OBR, TokenType.UNQUOTE, TokenType.SPLICE, TokenType.NUM,
-		 TokenType.CBR, TokenType.TRUE, TokenType.CBR, TokenType.END]);
+		["BACKQUOTE", "QUOTE", "LIST_OPEN", "LIST_OPEN", "NUM", "SYM",
+		 "NUM", "LIST_CLOSE", "LIST_OPEN", "UNQUOTE", "SPLICE", "NUM",
+		 "LIST_CLOSE", "TRUE", "LIST_CLOSE", "END"]);
 });
 
 QUnit.test("Invalid", function( assert ) {

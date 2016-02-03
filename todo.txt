@@ -5,6 +5,9 @@ undefined atom - done
 var set operator (setv!) - done
 field set operator (seti!) - done
 
+logical and
+logical or
+logical not
 
 generic set macro (set!)
 
@@ -23,3 +26,4 @@ def special form
 function naming issue
 macrolet
 
+optimize math operators

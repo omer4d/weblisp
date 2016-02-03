@@ -22,8 +22,10 @@ Parser.prototype.parseExpr = function()
     
     switch(tok.type)
     {
-        case TokenType.OBR:
+        case TokenType.LIST_OPEN:
             return this.parseList();
+        case TokenType.ARR_OPEN:
+            return this.parseArrayLiteral();
         case TokenType.TRUE:
             return true;
         case TokenType.FALSE:
@@ -37,7 +39,7 @@ Parser.prototype.parseExpr = function()
         case TokenType.QUOTE:
             return cons(new Symbol("quote"), cons(this.parseExpr(), null));
         case TokenType.BACKQUOTE:
-        	return this.parseBackquote();
+        	return this.parseBackquotedExpr();
         case TokenType.SYM:
             return new Symbol(tok.text());
         //case TokenType.END:
@@ -47,64 +49,77 @@ Parser.prototype.parseExpr = function()
     }
 };
 
-Parser.prototype.parseList = function()
+function reduceExprSequence(p, terminator, accum, r)
 {
-    var lst = null;
-
-    while(this.peekTok().type != TokenType.CBR && 
-          this.peekTok().type != TokenType.END)
+    while(p.peekTok().type != terminator && 
+          p.peekTok().type != TokenType.END)
     {
-        lst = cons(this.parseExpr(), lst);
+        accum = r(accum, p.parseExpr());
     }
     
-    if(this.consumeTok().type == TokenType.CBR)
-        return reverse__BANG(lst);
+    if(p.consumeTok().type == terminator)
+        return accum;
     else
-        throw "Unclosed list!";
-};
+        throw "Unmatched paren!";
+}
 
-Parser.prototype.parseBackquote = function()
-{
-	if(this.peekTok().type != TokenType.OBR)
-    	return cons(new Symbol("quote"), cons(this.parseExpr(), null));
-	else
-   	{
-    	var tok = this.consumeTok();
-        return this.parseBackquotedList();
-    }
-};
-
-Parser.prototype.parseBackquotedList = function()
+function parseBackquotedSequence(p, terminator)
 {
     var lst = null;
 
-    while(this.peekTok().type != TokenType.CBR && 
-          this.peekTok().type != TokenType.END)
+    while(p.peekTok().type != terminator && 
+          p.peekTok().type != TokenType.END)
     {
-    	if(this.peekTok().type === TokenType.UNQUOTE)
+    	if(p.peekTok().type === TokenType.UNQUOTE)
         {
-        	this.consumeTok();
-            lst = cons(list(new Symbol("list"), this.parseExpr()), lst);
+        	p.consumeTok();
+            lst = cons(list(new Symbol("list"), p.parseExpr()), lst);
         }
         
-        else if(this.peekTok().type === TokenType.SPLICE)
+        else if(p.peekTok().type === TokenType.SPLICE)
         {
-        	this.consumeTok();
-            lst = cons(this.parseExpr(), lst);
+        	p.consumeTok();
+            lst = cons(p.parseExpr(), lst);
         }
         
         else
         {
-        	var quotedMember = this.parseBackquote(); //list(new Symbol("quote"), this.parseExpr());
+        	var quotedMember = p.parseBackquotedExpr(); //list(new Symbol("quote"), this.parseExpr());
         	lst = cons(list(new Symbol("list"), quotedMember), lst);
             
         }
     }
     
-    if(this.consumeTok().type == TokenType.CBR)
+    if(p.consumeTok().type == terminator)
         return cons(new Symbol("concat"), reverse__BANG(lst));
     else
         throw "Unclosed list!";
+};
+
+
+Parser.prototype.parseList = function()
+{
+    return reverse__BANG(reduceExprSequence(this, TokenType.LIST_CLOSE, null, conj));
+};
+
+Parser.prototype.parseArrayLiteral = function()
+{
+    return reduceExprSequence(this, TokenType.ARR_CLOSE, [], conj);
+}
+
+Parser.prototype.parseBackquotedExpr = function()
+{
+	switch(this.peekTok().type)
+    {
+        case TokenType.LIST_OPEN:
+    	    this.consumeTok();
+            return parseBackquotedSequence(this, TokenType.LIST_CLOSE);
+        case TokenType.ARR_OPEN:
+            this.consumeTok();
+            return list(new Symbol("listToArray"), parseBackquotedSequence(this, TokenType.ARR_CLOSE));
+        default:
+   	        return cons(new Symbol("quote"), cons(this.parseExpr(), null));
+    }
 };
 
 function parse(toks)

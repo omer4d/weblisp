@@ -26,6 +26,7 @@ QUnit.test( "Quote", function( assert ) {
 	assert.deepEqual(ev("'(1 (2 3) 4)"), list(1, list(2, 3), 4));
 });
 
+
 QUnit.test( "Simple calls", function( assert ) {
 	assert.deepEqual(ev("(cons 1 2)"), cons(1, 2));
 	assert.deepEqual(ev("(cons 1 (cons 2 null))"), cons(1, cons(2, null)));
@@ -179,23 +180,23 @@ QUnit.test( "Defun", function( assert ) {
 var globalTestV = 0;
 
 QUnit.test( "Setv", function( assert ) {
-	assert.deepEqual(ev("(setv globalTestV 777)"), 777);
+	assert.deepEqual(ev("(setv! globalTestV 777)"), 777);
 	assert.deepEqual(globalTestV, 777);
 	
-	assert.deepEqual(ev("(setv globalTestV (+ 7 7))"), 14);
+	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
 	assert.deepEqual(globalTestV, 14);
 	
-	assert.deepEqual(ev("(setv globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
+	assert.deepEqual(ev("(setv! globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
 	assert.deepEqual(globalTestV, 12);
 	
-	assert.deepEqual(ev("(setv globalTestV (+ 7 7))"), 14);
+	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
 	assert.deepEqual(globalTestV, 14);
 	
-	assert.deepEqual(ev("((lambda (x) (setv x (+ 7 8)) x) 0)"), 15);
+	assert.deepEqual(ev("((lambda (x) (setv! x (+ 7 8)) x) 0)"), 15);
 	
-	assert.deepEqual(ev("((lambda (x) (if (> (setv x 6) 0) x 0)) 0)"), 6);
+	assert.deepEqual(ev("((lambda (x) (if (> (setv! x 6) 0) x 0)) 0)"), 6);
 	
-	assert.deepEqual(ev("((lambda (x y z) (setv z (setv y (setv x 3))) (+ x y z)) 0 0 0)"), 9);
+	assert.deepEqual(ev("((lambda (x y z) (setv! z (setv! y (setv! x 3))) (+ x y z)) 0 0 0)"), 9);
 });
 
 var globalTestObj = {};
@@ -206,19 +207,42 @@ function getGlobalTestObj__STAR(..._)
 }
 
 QUnit.test( "Seti", function( assert ) {
-	assert.deepEqual(ev("(seti globalTestObj 'baz 777)"), 777);
+	assert.deepEqual(ev("(seti! globalTestObj 'baz 777)"), 777);
 	assert.deepEqual(globalTestObj.baz, 777);
 	
-	assert.deepEqual(ev("(seti globalTestObj 'baz (+ 7 7))"), 14);
+	assert.deepEqual(ev("(seti! globalTestObj 'baz (+ 7 7))"), 14);
 	assert.deepEqual(globalTestObj.baz, 14);
 	
-	assert.deepEqual(ev("(seti globalTestObj (+ 3 3) (+ 7 8))"), 15);
+	assert.deepEqual(ev("(seti! globalTestObj (+ 3 3) (+ 7 8))"), 15);
 	assert.deepEqual(globalTestObj[6], 15);
 	
-	assert.deepEqual(ev("(seti (getGlobalTestObj* 1 2 3) '? (+ 8 8))"), 16);
+	assert.deepEqual(ev("(seti! (getGlobalTestObj* 1 2 3) '? (+ 8 8))"), 16);
 	assert.deepEqual(globalTestObj["?"], 16);
 });
 
+QUnit.test( "Array Literals", function( assert ) {
+	assert.deepEqual(ev("[]"), []);
+	assert.deepEqual(ev("[1 2 3]"), [1, 2, 3]);
+	assert.deepEqual(ev("[1 (+ 1 1) 3]"), [1, 2, 3]);
+	assert.deepEqual(ev("[1 [2 3] 4]"), [1, [2, 3], 4]);
+	assert.deepEqual(ev("[1 (if (> 1 0) 2 -2) 3]"), [1, 2, 3]);
+	
+	assert.deepEqual(ev("'[]"), []);
+	assert.deepEqual(ev("'[[]]"), [[]]);
+	assert.deepEqual(ev("'[1 2 3]"), [1, 2, 3]);
+	assert.deepEqual(ev("'[1 2 baz]"), [1, 2, new Symbol("baz")]);
+	assert.deepEqual(ev("'[1 2 (3 4)]"), [1, 2, list(3, 4)]);
+	assert.deepEqual(ev("'[1 2 [baz]]"), [1, 2, [new Symbol("baz")]]);
+	
+	assert.deepEqual(ev("`[]"), []);
+	assert.deepEqual(ev("`[1 2 3]"), [1, 2, 3]);
+	assert.deepEqual(ev("`[1 2 [3 4]]"), [1, 2, [3, 4]]);
+	assert.deepEqual(ev("`[1 2 (3 4)]"), [1, 2, list(3, 4)]);
+	assert.deepEqual(ev("`[1 2 ~[3 4]]"), [1, 2, [3, 4]]);
+	assert.deepEqual(ev("`[1 2 ~(+ 3 4)]"), [1, 2, 7]);
+	assert.deepEqual(ev("`[1 2 [3 ~(+ 3 4)]]"), [1, 2, [3, 7]]);
+	assert.deepEqual(ev("`[1 2 ~@'(3 4)]"), [1, 2, 3, 4]);
+});
 
 QUnit.test( "Defmacro", function( assert ) {
 	assert.ok(ev("(defmacro testmac1 () 5)"));
