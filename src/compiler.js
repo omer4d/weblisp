@@ -40,7 +40,7 @@ function genVarName()
     return out;
 };
 
-// Each compileXXXX function must return a pair [v:String, s:String] such that:
+// Each compile____ function must return a pair [v:String, s:String] such that:
 // - v is a javascript expression that yields the value of the source lisp expression
 // - v does not contain any statements (and mustn't end on a semicolon)
 // - s contains zero or more javascript statements to be executed before evaluating v
