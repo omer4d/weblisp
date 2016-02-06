@@ -1,4 +1,45 @@
-var test = require('tape');
+var _test = require('tape');
+const NodeAssert = require('assert');
+
+function formatCode(str)
+{
+    var toks = str.split(/(;|{|})/);
+    var out = "";
+    var ind = [];
+    
+    for(var i = 0; i < Math.floor(toks.length / 2); ++i)
+    {
+        if(toks[i * 2 + 1] === "}")
+            ind.pop();
+        
+        out += ind.join("") + toks[i * 2] + toks[i * 2 + 1] + "\n";
+
+        if(toks[i * 2 + 1] === "{")
+            ind.push("   ");
+    }
+    
+    return out + toks[toks.length - 1];
+}
+
+function evalisp(expr) {
+    var tmp = wl.compile({}, expr);
+    return tmp[1] + tmp[0];
+}
+
+function compileAll(str) {
+    var forms = wl.parse(wl.tokenize(str)), r = "";
+
+    for (var i = 0; i < forms.length; ++i) {
+        r += evalisp(forms[i]);
+    }
+
+    return r;
+}
+
+var test = function(title, f) {
+	_test("[Compiler] " + title, f);
+}
+
 var wl = require('../weblisp.js');
 
 var cons = wl.cons;
@@ -97,10 +138,10 @@ test( "Comparison", function( assert ) {
 
 
 
-wl.sandbox.globalCounter = 0;
-wl.sandbox.for__MINUSside__MINUSeffect = function(x) {
-	wl.sandbox.globalCounter += x;
-	return wl.sandbox.globalCounter;
+wl.sandbox.$$root.globalCounter = 0;
+wl.sandbox.$$root.for__MINUSside__MINUSeffect = function(x) {
+	wl.sandbox.$$root.globalCounter += x;
+	return wl.sandbox.$$root.globalCounter;
 };
 
 /*
@@ -122,17 +163,17 @@ test( "If", function( assert ) {
 	assert.deepEqual(ev("(+ (if (> 1 0) 5 0) 5)"), 10);
 	assert.deepEqual(ev("(+ (if (< 1 0) 5 0) 5)"), 5);
 		
-	wl.sandbox.globalCounter = 0;
+	wl.sandbox.$$root.globalCounter = 0;
 	assert.deepEqual(ev(`(if (> 1 0) 
 							 ((lambda () (for-side-effect 5) -6))
 							 ((lambda () (for-side-effect 100) 6)))`), -6);
-	assert.deepEqual(wl.sandbox.globalCounter, 5);
+	assert.deepEqual(wl.sandbox.$$root.globalCounter, 5);
 	
-	wl.sandbox.globalCounter = 0;
+	wl.sandbox.$$root.globalCounter = 0;
 	assert.deepEqual(ev(`(if (< 1 0) 
 							 ((lambda () (for-side-effect 5) -6))
 							 ((lambda () (for-side-effect 100) 6)))`), 6);
-	assert.deepEqual(wl.sandbox.globalCounter, 100);
+	assert.deepEqual(wl.sandbox.$$root.globalCounter, 100);
 	
 	assert.deepEqual(ev("(+ (if (if (> 1 0) false true) 0 (if (> 1 0) 5 0)) 5)"), 10);
 		
@@ -147,13 +188,13 @@ test( "Lambda", function( assert ) {
 	assert.deepEqual(ev("(apply (lambda (&etc) (apply + etc)) '(1 2 3))"), 6);
 	assert.deepEqual(ev("(apply (lambda (x &etc) (+ x (apply + etc))) '(1 2 3 4))"), 10);
 	
-	wl.sandbox.globalCounter = 0;
+	wl.sandbox.$$root.globalCounter = 0;
 	assert.deepEqual(ev(`(apply (lambda (x) 
 									(for-side-effect 2)
 									(for-side-effect 3)
 									x)
 								'(111))`), 111);
-	assert.deepEqual(wl.sandbox.globalCounter, 5);
+	assert.deepEqual(wl.sandbox.$$root.globalCounter, 5);
 		
 	assert.end();
 });
@@ -166,20 +207,20 @@ test( "Function expression call", function( assert ) {
 });
 
 
-wl.sandbox.globalTestV = 0;
+wl.sandbox.$$root.globalTestV = 0;
 
 test( "Setv", function( assert ) {
 	assert.deepEqual(ev("(setv! globalTestV 777)"), 777);
-	assert.deepEqual(wl.sandbox.globalTestV, 777);
+	assert.deepEqual(wl.sandbox.$$root.globalTestV, 777);
 	
 	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
-	assert.deepEqual(wl.sandbox.globalTestV, 14);
+	assert.deepEqual(wl.sandbox.$$root.globalTestV, 14);
 	
 	assert.deepEqual(ev("(setv! globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
-	assert.deepEqual(wl.sandbox.globalTestV, 12);
+	assert.deepEqual(wl.sandbox.$$root.globalTestV, 12);
 	
 	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
-	assert.deepEqual(wl.sandbox.globalTestV, 14);
+	assert.deepEqual(wl.sandbox.$$root.globalTestV, 14);
 	
 	assert.deepEqual(ev("((lambda (x) (setv! x (+ 7 8)) x) 0)"), 15);
 	

@@ -1,4 +1,9 @@
-var test = require('tape');
+var _test = require('tape');
+
+var test = function(title, f) {
+	_test("[Tokenizer] " + title, f);
+}
+
 var wl = require('../weblisp.js');
 
 function pairs(arr)

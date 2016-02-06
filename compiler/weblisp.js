@@ -25,6 +25,12 @@ function argReducer(name, r, initial) {
     };
 }
 
+function partial(f, ...args1) {
+    return function(...args2) {
+        return f.apply(null, args1.concat(args2));
+    };
+}
+
 function cons(e, lst) {
     return ((lst = lst.slice(0)).unshift(e), lst);
 }
@@ -283,17 +289,18 @@ function genVarName() {
     return out;
 };
 
-function compileAtom(x) {
+function compileAtom(lexenv, x) {
          if(x === true)         return ["true", ""];
     else if(x === false)        return ["false", ""];
     else if(null__QM(x))        return ["[]", ""];
     else if(x === undefined)    return ["undefined", ""];
-    else                        return [symbol__QM(x) ? mangleName(x.name) : x.toString(), ""]
+    else if(symbol__QM(x))      return [(x.name in lexenv ? "" : "$$root.") + mangleName(x.name), ""];
+    else                        return [ x.toString(), ""];
 }
 
-function compileFuncall(lst) {
-    var compiledArgs = cdr(lst).map(compile);
-    var compiledFun = compile(car(lst));
+function compileFuncall(lexenv, lst) {
+    var compiledArgs = cdr(lst).map(partial(compile, lexenv));
+    var compiledFun = compile(lexenv, car(lst));
 
     return [format("%0(%1)",
             compiledFun[0],
@@ -301,8 +308,8 @@ function compileFuncall(lst) {
             compiledFun[1] + compiledArgs.map(second).join("")];
 }
 
-function compileBodyHelper(lst, targetVarName) {
-    var compiledBody = lst.map(compile);
+function compileBodyHelper(lexenv, lst, targetVarName) {
+    var compiledBody = lst.map(partial(compile, lexenv));
 
     var reducer = function(accum, v) {
         return accum + v[1] + v[0] + ";";
@@ -323,9 +330,14 @@ function processArgs(args) {
     return (revArgs.reverse(), revArgs.join(","));
 }
 
-function compileLambda(lst) {
+function compileLambda(lexenv, lst) {
+    var args = car(cdr(lst));
+    var lexenv2 = Object.create(lexenv, args.reduce(function(accum, v) {
+        var name = v.name[0] === "&" ? v.name.slice(1) : v.name;
+        return (accum[name] = {value: true}, accum);
+    }, {}));
     var retVarName = genVarName();
-    var compiledBody = compileBodyHelper(cdr(cdr(lst)), retVarName);
+    var compiledBody = compileBodyHelper(lexenv2, cdr(cdr(lst)), retVarName);
 
     return [format("(function (%0)" +
                     "{" +
@@ -333,16 +345,16 @@ function compileLambda(lst) {
                         "%2" +
                         "return %1;" +
                     "})",
-        processArgs(car(cdr(lst))),
+        processArgs(args),
         retVarName,
         compiledBody), ""];
 }
 
-function compileIf(lst) {
+function compileIf(lexenv, lst) {
     var valueVarName = genVarName();
-    var compiledCond = compile(lst[1]);
-    var compiledT = compile(lst[2]);
-    var compiledF = compile(lst[3]);
+    var compiledCond = compile(lexenv, lst[1]);
+    var compiledT = compile(lexenv, lst[2]);
+    var compiledF = compile(lexenv, lst[3]);
 
     return [valueVarName,
             format("var %0;" +
@@ -363,75 +375,75 @@ function compileIf(lst) {
             compiledF[0])];
 }
 
-function compileQuotedAtom(x) {
+function compileQuotedAtom(lexenv, x) {
     if (symbol__QM(x))
-        return ["(new Symbol(\"" + x.name + "\"))", ""];
+        return ["(new $$root.Symbol(\"" + x.name + "\"))", ""];
     else
-        return compileAtom(x);
+        return compileAtom(lexenv, x);
 }
 
-function compileQuotedList(x) {
+function compileQuotedList(lexenv, x) {
     var r = function(accum, v) {
-        return [accum[0] + "cons(" + compileQuoted(v)[0] + ",", accum[1] + ")"];
+        return [accum[0] + "$$root.cons(" + compileQuoted(lexenv, v)[0] + ",", accum[1] + ")"];
     };
 
     return [x.reduce(r, ["", "[]"]).join(""), ""];
 }
 
-function compileQuoted(x) {
+function compileQuoted(lexenv, x) {
     if (atom__QM(x))
-        return compileQuotedAtom(x);
+        return compileQuotedAtom(lexenv, x);
     else
-        return compileQuotedList(x);
+        return compileQuotedList(lexenv, x);
 }
 
-function compileSetv(lst) {
-    var varName = mangleName(lst[1].toString());
-    var compiledVal = compile(lst[2]);
+function compileSetv(lexenv, lst) {
+    var varName = (lst[1].name in lexenv ? "" : "$$root.") + mangleName(lst[1].name);
+    var compiledVal = compile(lexenv, lst[2]);
     return [varName, compiledVal[1] + varName + "=" + compiledVal[0] + ";"];
 }
 
-function macroexpandUnsafe(expr) {
+function macroexpandUnsafe(lexenv, expr) {
     var withQuotedArgs = cons(car(expr), cdr(expr).map(function(x) {
         return list(new Symbol("quote"), x);
     }));
 
-    var tmp = compileFuncall(withQuotedArgs);
+    var tmp = compileFuncall(lexenv, withQuotedArgs);
     return geval(tmp[1] + tmp[0]);
 }
 
 function macroexpand(expr) {
-    if (list__QM(expr) && !null__QM(expr) && sandbox[car(expr)] !== undefined && sandbox[car(expr)].isMacro)
-        return macroexpandUnsafe(expr);
+    if (list__QM(expr) && !null__QM(expr) && sandbox.$$root[car(expr)] !== undefined && sandbox.$$root[car(expr)].isMacro)
+        return macroexpandUnsafe({}, expr);
 
     else
         throw "macroexpand argument is not a macro!";
 }
 
-function compile(expr) {
+function compile(lexenv, expr) {
     if (list__QM(expr) && !null__QM(expr)) {
         var first = car(expr);
 
         if (first instanceof Symbol) {
             switch (first.name) {
-                case "lambda":      return compileLambda(expr);
-                case "if":          return compileIf(expr);
-                case "quote":       return compileQuoted(car(cdr(expr)));
-                case "setv!":       return compileSetv(expr);
+                case "lambda":      return compileLambda(lexenv, expr);
+                case "if":          return compileIf(lexenv, expr);
+                case "quote":       return compileQuoted(lexenv, car(cdr(expr)));
+                case "setv!":       return compileSetv(lexenv, expr);
                 default:
-                    if (sandbox[first.name] !== undefined && sandbox[first.name]["isMacro"])
-                        return compile(macroexpandUnsafe(expr));
+                    if (sandbox.$$root[first.name] !== undefined && sandbox.$$root[first.name]["isMacro"])
+                        return compile(lexenv, macroexpandUnsafe(lexenv, expr));
                     else
-                        return compileFuncall(expr);
+                        return compileFuncall(lexenv, expr);
             }
         }
 
         else
-            return compileFuncall(expr);
+            return compileFuncall(lexenv, expr);
     }
 
     else
-        return compileAtom(expr);
+        return compileAtom(lexenv, expr);
 }
 
 function __EQL(...args) {
@@ -445,31 +457,33 @@ function __EQL(...args) {
 }
 
 var sandbox = {
-    Symbol          :   Symbol,
-    apply           :   function(fun, args) { return fun.apply(null, args); },
-    cons            :   cons,
-    car             :   car,
-    cdr             :   cdr,
-    list            :   list,
-    concat          :   concat,
-    symbol__QM      :   symbol__QM,
-    null__QM        :   null__QM,
-    number__QM      :   number__QM,
-    atom__QM        :   atom__QM,
-    list__QM        :   list__QM,
-    __PLUS          :   argReducer("+", function(a, b) { return a + b; }, 0),
-    __MINUS         :   argReducer("-", function(a, b) { return a - b; }, 0),
-    __STAR          :   argReducer("*", function(a, b) { return a * b; }, 1),
-    __SLASH         :   argReducer("/", function(a, b) { return a / b }, 1),
-    __EQL           :   __EQL,
-    not__EQL        :   function(x, y) { return x !== y; },
-    __LT            :   function(x, y) { return x < y; },
-    __GT            :   function(x, y) { return x > y; },
-    __LT__EQL       :   function(x, y) { return x <= y; },
-    __GT__EQL       :   function(x, y) { return x >= y; },
-    mod             :   function(x, y) { return x % y; },
-    setmac__BANG    :   function(x) { return x.isMacro = true; },
-    macroexpand     :   macroexpand
+    $$root: {
+        Symbol          :   Symbol,
+        apply           :   function(fun, args) { return fun.apply(null, args); },
+        cons            :   cons,
+        car             :   car,
+        cdr             :   cdr,
+        list            :   list,
+        concat          :   concat,
+        symbol__QM      :   symbol__QM,
+        null__QM        :   null__QM,
+        number__QM      :   number__QM,
+        atom__QM        :   atom__QM,
+        list__QM        :   list__QM,
+        __PLUS          :   argReducer("+", function(a, b) { return a + b; }, 0),
+        __MINUS         :   argReducer("-", function(a, b) { return a - b; }, 0),
+        __STAR          :   argReducer("*", function(a, b) { return a * b; }, 1),
+        __SLASH         :   argReducer("/", function(a, b) { return a / b }, 1),
+        __EQL           :   __EQL,
+        not__EQL        :   function(x, y) { return x !== y; },
+        __LT            :   function(x, y) { return x < y; },
+        __GT            :   function(x, y) { return x > y; },
+        __LT__EQL       :   function(x, y) { return x <= y; },
+        __GT__EQL       :   function(x, y) { return x >= y; },
+        mod             :   function(x, y) { return x % y; },
+        setmac__BANG    :   function(x) { return x.isMacro = true; },
+        macroexpand     :   macroexpand
+    }
 };
 
 VM.createContext(sandbox);
@@ -479,7 +493,7 @@ function geval(str) {
 }
 
 function evalisp(expr) {
-    var tmp = compile(expr);
+    var tmp = compile({}, expr);
     return geval(tmp[1] + tmp[0]);
 }
 
@@ -503,6 +517,7 @@ module.exports.concat = concat;
 module.exports.Symbol = Symbol;
 module.exports.evalispstr = evalispstr;
 module.exports.sandbox = sandbox;
+module.exports.compile = compile;
 
 console.log(evalispstr("'true"));
 
