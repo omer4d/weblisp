@@ -21,6 +21,8 @@ test( "Atoms", function( assert ) {
 	assert.deepEqual(pt("false"), false);
 	assert.deepEqual(pt("null"), []);
 	assert.deepEqual(pt("undefined"), undefined);
+	assert.deepEqual(pt('"zaza"'), '"zaza"');
+	assert.deepEqual(pt('"za\\"za"'), '"za\\"za"');
 	assert.end();
 });
 
@@ -39,12 +41,14 @@ test( "Quote", function( assert ) {
 	assert.deepEqual(pt("'foo"), pt("(quote foo)"));
 	assert.deepEqual(pt("''1"), pt("(quote (quote 1))"));
 	assert.deepEqual(pt("'(1 2 (3 4) 5)"), pt("(quote (1 2 (3 4) 5))"));
+	assert.deepEqual(pt("'\"bazbaz\""), pt('(quote "bazbaz")'));
 	assert.end();
 });
 
 test( "Backquote", function( assert ) {
 	assert.deepEqual(pt("`1"), pt("(quote 1)"));
 	assert.deepEqual(pt("`foo"), pt("(quote foo)"));
+	assert.deepEqual(pt('`"foo"'), pt('(quote "foo")'));
 	assert.deepEqual(pt("``foo"), pt("(quote (quote foo))"));
 	assert.deepEqual(pt("`()"), pt("(concat)"));
 	assert.deepEqual(pt("`(1 baz)"), pt("(concat (list (quote 1)) (list (quote baz)))"));

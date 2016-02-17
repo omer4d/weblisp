@@ -80,12 +80,17 @@ function number__QM(x) {
     return typeof x === "number" || x instanceof Number;
 }
 
+function string__QM(x) {
+    return typeof x === "string" || x instanceof String;
+}
+
 function null__QM(x) {
     return Array.isArray(x) && x.length === 0;
 }
 
 function atom__QM(x) {
-    return x === true || x === false || null__QM(x) || x === undefined || number__QM(x) || symbol__QM(x);
+    return x === true || x === false || null__QM(x) || x === undefined ||
+            number__QM(x) || string__QM(x) || symbol__QM(x);
 }
 
 function list__QM(x) {
@@ -110,7 +115,7 @@ function makeEnum(...args) {
     return e;
 }
 
-var TokenType = makeEnum("LIST_OPEN", "LIST_CLOSE", "TRUE", "FALSE", "NULL", "UNDEF", "NUM", "SYM",
+var TokenType = makeEnum("LIST_OPEN", "LIST_CLOSE", "TRUE", "FALSE", "NULL", "UNDEF", "NUM", "SYM", "STR",
     "QUOTE", "BACKQUOTE", "UNQUOTE", "SPLICE", "END");
 
 function Token(src, type, start, len) {
@@ -131,6 +136,7 @@ function lit(str) {
 var spacePatt = /^\s+/;
 var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
 var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
+var strPatt = /^"(?:(?:\\")|[^"])*"/;
 
 var tokenTable = [{patt: spacePatt, type: -1},
                   {patt: lit("true"), type: TokenType.TRUE},
@@ -138,6 +144,7 @@ var tokenTable = [{patt: spacePatt, type: -1},
                   {patt: lit("null"), type: TokenType.NULL},
                   {patt: lit("undefined"), type: TokenType.UNDEF},
                   {patt: numberPatt, type: TokenType.NUM},
+                  {patt: strPatt, type: TokenType.STR},
                   {patt: lit("("), type: TokenType.LIST_OPEN},
                   {patt: lit(")"), type: TokenType.LIST_CLOSE},
                   {patt: lit("'"), type: TokenType.QUOTE},
@@ -200,6 +207,7 @@ Parser.prototype.parseExpr = function() {
         case TokenType.NULL:        return [];
         case TokenType.UNDEF:       return undefined;
         case TokenType.NUM:         return parseFloat(tok.text());
+        case TokenType.STR:         return tok.text();
         case TokenType.QUOTE:       return cons(new Symbol("quote"), cons(this.parseExpr(), []));
         case TokenType.BACKQUOTE:   return this.parseBackquotedExpr();
         case TokenType.SYM:         return new Symbol(tok.text());

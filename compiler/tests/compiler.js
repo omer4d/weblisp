@@ -60,6 +60,10 @@ test( "Atoms (sans symbol)", function( assert ) {
 	assert.deepEqual(ev("true"), true);
 	assert.deepEqual(ev("false"), false);
 	assert.deepEqual(ev("undefined"), undefined);
+	assert.deepEqual(ev('""'), "");
+	assert.deepEqual(ev('"abcd"'), "abcd");
+	assert.deepEqual(ev('"abcd\\n\\\\"'), "abcd\n\\");
+	assert.deepEqual(ev('"ab\\"cd"'), "ab\"cd");
 	
 	assert.end();
 });
@@ -72,6 +76,7 @@ test( "Quote", function( assert ) {
 	assert.deepEqual(ev("'true"), true);
 	assert.deepEqual(ev("'false"), false);
 	assert.deepEqual(ev("'undefined"), undefined);
+	assert.deepEqual(ev("'\"baz\""), "baz");
 	
 	assert.deepEqual(ev("'()"), []);
 	assert.deepEqual(ev("'(1 2 3)"), list(1, 2, 3));

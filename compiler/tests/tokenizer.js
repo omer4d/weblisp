@@ -68,6 +68,15 @@ test("Symbols", function( assert ) {
 	assert.end();
 });
 
+test("Strings", function(assert) {
+	assert.deepEqual(tk('""'), ["STR", "END"]);
+	assert.deepEqual(tk('"abcd"'), ["STR", "END"]);
+	assert.deepEqual(tk('"abcd\\n\\\\"'), ["STR", "END"]);
+	assert.deepEqual(tk('"abcd\\""'), ["STR", "END"]);
+	assert.deepEqual(tk('"abcd\\"efg"'), ["STR", "END"]);
+	assert.end();
+});
+
 test("Other atoms", function( assert ) {
 	assert.deepEqual(tk("true"), ["TRUE", "END"]);
 	assert.deepEqual(tk("false"), ["FALSE", "END"]);
@@ -90,10 +99,10 @@ test("Syntactic", function( assert ) {
 });
 
 test("Compound", function( assert ) {
-	assert.deepEqual(tk("`'((0 baz12 3)(~~@+.4)true)"),
+	assert.deepEqual(tk("`'((0 baz12 3)(~~@+.4)\"abcd\\\"\"true)"),
 		["BACKQUOTE", "QUOTE", "LIST_OPEN", "LIST_OPEN", "NUM", "SYM",
 		 "NUM", "LIST_CLOSE", "LIST_OPEN", "UNQUOTE", "SPLICE", "NUM",
-		 "LIST_CLOSE", "TRUE", "LIST_CLOSE", "END"]);
+		 "LIST_CLOSE", "STR", "TRUE", "LIST_CLOSE", "END"]);
 	
 	assert.end();
 });
