@@ -97,3 +97,4 @@ var $$root = {
 // * 
 // *
 
+$$root.id=(function (x){var $$TMP0;$$TMP0=x;return $$TMP0;});$$root.id;

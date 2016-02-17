@@ -1,5 +1,7 @@
 const VM = require('vm');
 const Reflect = require('harmony-reflect');
+var fs = require('fs');
+var argv = require('minimist')(process.argv.slice(2));
 
 function format(...args) {
     var rx = /%[0-9]+/gi;
@@ -463,17 +465,6 @@ Compiler.prototype.compile = function(lexenv, expr) {
         return this.compileAtom(lexenv, expr);
 };
 
-function macroexpander(compiler) {
-    return function macroexpand(expr) {
-        var fname = car(expr).name;
-    
-        if (list__QM(expr) && !null__QM(expr) && fname in compiler.root && compiler.root[fname].isMacro)
-            return compiler.macroexpandUnsafe({}, expr);
-        else
-            throw "macroexpand argument is not a macro!";
-    };
-}
-
 var rootProto = {
     Symbol          :   Symbol,
     apply           :   function(fun, args) { return fun.apply(null, args); },
@@ -594,6 +585,11 @@ StaticCompiler.prototype.compileUnit = function(str) {
 
     return r;
 };
+
+var comp = new StaticCompiler();
+var output = fs.readFileSync("bootstrap.js", "utf8") + comp.compileUnit(fs.readFileSync(argv.in, "utf8"));
+
+fs.writeFileSync(argv.in.slice(0, argv.in.indexOf(".")) + ".js", output);
 
 module.exports.tokenize = tokenize;
 module.exports.parse = parse;
