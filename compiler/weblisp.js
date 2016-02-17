@@ -1,9 +1,8 @@
 const VM = require('vm');
 const Reflect = require('harmony-reflect');
 
-function format() {
+function format(...args) {
     var rx = /%[0-9]+/gi;
-    var args = arguments;
     
     return args[0].replace(rx, function(match) {
         return args[parseInt(match.substring(1)) + 1];
@@ -25,9 +24,13 @@ function argReducer(name, r, initial) {
     };
 }
 
-function partial(f, ...args1) {
+function partial(...stuff) {
+    var target  =   (typeof stuff[0] === "function") ? null : stuff[0];
+    var f       =   (typeof stuff[0] === "function") ? stuff[0] : stuff[1];
+    var args1   =   (typeof stuff[0] === "function") ? stuff.slice(1) : stuff.slice(2);
+    
     return function(...args2) {
-        return f.apply(null, args1.concat(args2));
+        return f.apply(target, args1.concat(args2));
     };
 }
 
@@ -87,6 +90,16 @@ function atom__QM(x) {
 
 function list__QM(x) {
     return Array.isArray(x);
+}
+
+function __EQL(...args) {
+    var v = args[0];
+
+    for (var i = 1; i < args.length; ++i)
+        if (args[i] !== v && !(null__QM(args[i]) && null__QM(v)))
+            return false;
+
+    return true;
 }
 
 function makeEnum(...args) {
@@ -281,35 +294,38 @@ function mangleName(name) {
     return name.replace(manglingRx, mangle);
 }
 
-var nextVarSuffix = 0;
+function Compiler(root) {
+    this.root = root;
+    this.nextVarSuffix = 0;
+}
 
-function genVarName() {
-    var out = "$$TMP" + nextVarSuffix;
-    ++nextVarSuffix;
+Compiler.prototype.genVarName = function() {
+    var out = "$$TMP" + this.nextVarSuffix;
+    ++this.nextVarSuffix;
     return out;
 };
 
-function compileAtom(lexenv, x) {
+Compiler.prototype.compileAtom = function(lexenv, x) { 
          if(x === true)         return ["true", ""];
     else if(x === false)        return ["false", ""];
     else if(null__QM(x))        return ["[]", ""];
     else if(x === undefined)    return ["undefined", ""];
     else if(symbol__QM(x))      return [(x.name in lexenv ? "" : "$$root.") + mangleName(x.name), ""];
     else                        return [ x.toString(), ""];
-}
+};
 
-function compileFuncall(lexenv, lst) {
-    var compiledArgs = cdr(lst).map(partial(compile, lexenv));
-    var compiledFun = compile(lexenv, car(lst));
+Compiler.prototype.compileFuncall = function(lexenv, lst) {
+    var compiledArgs = cdr(lst).map(partial(this, this.compile, lexenv));
+    var compiledFun = this.compile(lexenv, car(lst));
 
     return [format("%0(%1)",
             compiledFun[0],
             compiledArgs.map(car).join(",")),
             compiledFun[1] + compiledArgs.map(second).join("")];
-}
+};
 
-function compileBodyHelper(lexenv, lst, targetVarName) {
-    var compiledBody = lst.map(partial(compile, lexenv));
+Compiler.prototype.compileBodyHelper = function(lexenv, lst, targetVarName) {
+    var compiledBody = lst.map(partial(this, this.compile, lexenv));
 
     var reducer = function(accum, v) {
         return accum + v[1] + v[0] + ";";
@@ -318,7 +334,7 @@ function compileBodyHelper(lexenv, lst, targetVarName) {
     return compiledBody.slice(0, -1).reduce(reducer, "") +
         last(compiledBody)[1] +
         targetVarName + "=" + last(compiledBody)[0] + ";";
-}
+};
 
 function processArgs(args) {
     var revArgs = args.reduce(function(accum, v) {
@@ -330,14 +346,14 @@ function processArgs(args) {
     return (revArgs.reverse(), revArgs.join(","));
 }
 
-function compileLambda(lexenv, lst) {
+Compiler.prototype.compileLambda = function(lexenv, lst) {
     var args = car(cdr(lst));
     var lexenv2 = Object.create(lexenv, args.reduce(function(accum, v) {
         var name = v.name[0] === "&" ? v.name.slice(1) : v.name;
         return (accum[name] = {value: true}, accum);
     }, {}));
-    var retVarName = genVarName();
-    var compiledBody = compileBodyHelper(lexenv2, cdr(cdr(lst)), retVarName);
+    var retVarName = this.genVarName();
+    var compiledBody = this.compileBodyHelper(lexenv2, cdr(cdr(lst)), retVarName);
 
     return [format("(function (%0)" +
                     "{" +
@@ -348,13 +364,13 @@ function compileLambda(lexenv, lst) {
         processArgs(args),
         retVarName,
         compiledBody), ""];
-}
+};
 
-function compileIf(lexenv, lst) {
-    var valueVarName = genVarName();
-    var compiledCond = compile(lexenv, lst[1]);
-    var compiledT = compile(lexenv, lst[2]);
-    var compiledF = compile(lexenv, lst[3]);
+Compiler.prototype.compileIf = function(lexenv, lst) {
+    var valueVarName = this.genVarName();
+    var compiledCond = this.compile(lexenv, lst[1]);
+    var compiledT = this.compile(lexenv, lst[2]);
+    var compiledF = this.compile(lexenv, lst[3]);
 
     return [valueVarName,
             format("var %0;" +
@@ -373,140 +389,203 @@ function compileIf(lexenv, lst) {
             compiledT[0],
             compiledF[1],
             compiledF[0])];
-}
+};
 
-function compileQuotedAtom(lexenv, x) {
+Compiler.prototype.compileQuotedAtom = function(lexenv, x) {
     if (symbol__QM(x))
         return ["(new $$root.Symbol(\"" + x.name + "\"))", ""];
     else
-        return compileAtom(lexenv, x);
-}
+        return this.compileAtom(lexenv, x);
+};
 
-function compileQuotedList(lexenv, x) {
-    var r = function(accum, v) {
-        return [accum[0] + "$$root.cons(" + compileQuoted(lexenv, v)[0] + ",", accum[1] + ")"];
+Compiler.prototype.compileQuotedList = function(lexenv, x) {
+    var self = this, r = function(accum, v) {
+        return [accum[0] + "$$root.cons(" + self.compileQuoted(lexenv, v)[0] + ",", accum[1] + ")"];
     };
 
     return [x.reduce(r, ["", "[]"]).join(""), ""];
-}
+};
 
-function compileQuoted(lexenv, x) {
+Compiler.prototype.compileQuoted = function(lexenv, x) {
     if (atom__QM(x))
-        return compileQuotedAtom(lexenv, x);
+        return this.compileQuotedAtom(lexenv, x);
     else
-        return compileQuotedList(lexenv, x);
-}
+        return this.compileQuotedList(lexenv, x);
+};
 
-function compileSetv(lexenv, lst) {
+Compiler.prototype.compileSetv = function(lexenv, lst) {
     var varName = (lst[1].name in lexenv ? "" : "$$root.") + mangleName(lst[1].name);
-    var compiledVal = compile(lexenv, lst[2]);
+    var compiledVal = this.compile(lexenv, lst[2]);
     return [varName, compiledVal[1] + varName + "=" + compiledVal[0] + ";"];
-}
+};
 
-function macroexpandUnsafe(lexenv, expr) {
+Compiler.prototype.macroexpandUnsafe = function(lexenv, expr) {
     var withQuotedArgs = cons(car(expr), cdr(expr).map(function(x) {
         return list(new Symbol("quote"), x);
     }));
 
-    var tmp = compileFuncall(lexenv, withQuotedArgs);
-    return geval(tmp[1] + tmp[0]);
-}
+    var tmp = this.compileFuncall(lexenv, withQuotedArgs);
+    return this.root.jeval(tmp[1] + tmp[0]);
+};
 
-function macroexpand(expr) {
-    if (list__QM(expr) && !null__QM(expr) && sandbox.$$root[car(expr)] !== undefined && sandbox.$$root[car(expr)].isMacro)
-        return macroexpandUnsafe({}, expr);
-
-    else
-        throw "macroexpand argument is not a macro!";
-}
-
-function compile(lexenv, expr) {
+Compiler.prototype.compile = function(lexenv, expr) {
     if (list__QM(expr) && !null__QM(expr)) {
         var first = car(expr);
 
         if (first instanceof Symbol) {
             switch (first.name) {
-                case "lambda":      return compileLambda(lexenv, expr);
-                case "if":          return compileIf(lexenv, expr);
-                case "quote":       return compileQuoted(lexenv, car(cdr(expr)));
-                case "setv!":       return compileSetv(lexenv, expr);
+                case "lambda":      return this.compileLambda(lexenv, expr);
+                case "if":          return this.compileIf(lexenv, expr);
+                case "quote":       return this.compileQuoted(lexenv, car(cdr(expr)));
+                case "setv!":       return this.compileSetv(lexenv, expr);
+                case "def":         return this.compileSetv(lexenv, expr);
                 default:
-                    if (sandbox.$$root[first.name] !== undefined && sandbox.$$root[first.name]["isMacro"])
-                        return compile(lexenv, macroexpandUnsafe(lexenv, expr));
+                    if (first.name in this.root && this.root[first.name]["isMacro"])
+                        return this.compile(lexenv, this.macroexpandUnsafe(lexenv, expr));
                     else
-                        return compileFuncall(lexenv, expr);
+                        return this.compileFuncall(lexenv, expr);
             }
         }
 
         else
-            return compileFuncall(lexenv, expr);
+            return this.compileFuncall(lexenv, expr);
     }
 
     else
-        return compileAtom(lexenv, expr);
-}
-
-function __EQL(...args) {
-    var v = args[0];
-
-    for (var i = 1; i < args.length; ++i)
-        if (args[i] !== v && !(null__QM(args[i]) && null__QM(v)))
-            return false;
-
-    return true;
-}
-
-var sandbox = {
-    $$root: {
-        Symbol          :   Symbol,
-        apply           :   function(fun, args) { return fun.apply(null, args); },
-        cons            :   cons,
-        car             :   car,
-        cdr             :   cdr,
-        list            :   list,
-        concat          :   concat,
-        symbol__QM      :   symbol__QM,
-        null__QM        :   null__QM,
-        number__QM      :   number__QM,
-        atom__QM        :   atom__QM,
-        list__QM        :   list__QM,
-        __PLUS          :   argReducer("+", function(a, b) { return a + b; }, 0),
-        __MINUS         :   argReducer("-", function(a, b) { return a - b; }, 0),
-        __STAR          :   argReducer("*", function(a, b) { return a * b; }, 1),
-        __SLASH         :   argReducer("/", function(a, b) { return a / b }, 1),
-        __EQL           :   __EQL,
-        not__EQL        :   function(x, y) { return x !== y; },
-        __LT            :   function(x, y) { return x < y; },
-        __GT            :   function(x, y) { return x > y; },
-        __LT__EQL       :   function(x, y) { return x <= y; },
-        __GT__EQL       :   function(x, y) { return x >= y; },
-        mod             :   function(x, y) { return x % y; },
-        setmac__BANG    :   function(x) { return x.isMacro = true; },
-        macroexpand     :   macroexpand
-    }
+        return this.compileAtom(lexenv, expr);
 };
 
-VM.createContext(sandbox);
-
-function geval(str) {
-    return VM.runInContext(str, sandbox);
+function macroexpander(compiler) {
+    return function macroexpand(expr) {
+        var fname = car(expr).name;
+    
+        if (list__QM(expr) && !null__QM(expr) && fname in compiler.root && compiler.root[fname].isMacro)
+            return compiler.macroexpandUnsafe({}, expr);
+        else
+            throw "macroexpand argument is not a macro!";
+    };
 }
 
-function evalisp(expr) {
-    var tmp = compile({}, expr);
-    return geval(tmp[1] + tmp[0]);
+var rootProto = {
+    Symbol          :   Symbol,
+    apply           :   function(fun, args) { return fun.apply(null, args); },
+    cons            :   cons,
+    car             :   car,
+    cdr             :   cdr,
+    list            :   list,
+    concat          :   concat,
+    symbol__QM      :   symbol__QM,
+    null__QM        :   null__QM,
+    number__QM      :   number__QM,
+    atom__QM        :   atom__QM,
+    list__QM        :   list__QM,
+    __PLUS          :   argReducer("+", function(a, b) { return a + b; }, 0),
+    __MINUS         :   argReducer("-", function(a, b) { return a - b; }, 0),
+    __STAR          :   argReducer("*", function(a, b) { return a * b; }, 1),
+    __SLASH         :   argReducer("/", function(a, b) { return a / b }, 1),
+    __EQL           :   __EQL,
+    not__EQL        :   function(x, y) { return x !== y; },
+    __LT            :   function(x, y) { return x < y; },
+    __GT            :   function(x, y) { return x > y; },
+    __LT__EQL       :   function(x, y) { return x <= y; },
+    __GT__EQL       :   function(x, y) { return x >= y; },
+    mod             :   function(x, y) { return x % y; },
+    setmac__BANG    :   function(x) { return x.isMacro = true; },
+};
+
+function NodeEvaluator() {
+    this.root = Object.create(rootProto);
+    this.compiler = new Compiler(this.root);
+    
+    var sandbox = {
+        $$root: this.root
+    };
+    
+    VM.createContext(sandbox);
+    
+    this.root.jeval = function(str) {
+        return VM.runInContext(str, sandbox);
+    };
 }
 
-function evalispstr(str) {
+NodeEvaluator.prototype.eval = function(expr) {
+    var tmp = this.compiler.compile({}, expr);
+    return this.root.jeval(tmp[1] + tmp[0]);
+};
+
+NodeEvaluator.prototype.evalStr = function(str) {
     var forms = parse(tokenize(str)), r;
 
+    for (var i = 0; i < forms.length; ++i)
+        r = this.eval(forms[i]);
+        
+    return r;
+};
+
+function LazyDef(initJstr, valJstr) {
+    this.initJstr = initJstr;
+    this.valJstr = valJstr;
+}
+
+function StaticCompiler() {
+    var root = Object.create(rootProto);
+    Compiler.call(this, root);
+    
+    var handler = {
+        get: function(target, name) {
+            var r = target[name];
+        
+            console.log("Looking up: " + name);
+        
+            if(r instanceof LazyDef)
+            {
+                r = root.jeval(r.initJstr + r.valJstr);
+                target[name] = r;
+            }
+        
+            return r;
+        }
+    };
+
+    var sandbox = {
+        $$root: new Proxy(root, handler)
+    };
+    
+    VM.createContext(sandbox);
+    
+    root.jeval = function(str) {
+        return VM.runInContext(str, sandbox);
+    };
+    
+}
+
+StaticCompiler.prototype = Object.create(Compiler.prototype);
+
+StaticCompiler.prototype.compileUnit = function(str) {
+    var forms = parse(tokenize(str)), r = "";
+
     for (var i = 0; i < forms.length; ++i) {
-        r = evalisp(forms[i]);
+        var e = forms[i];
+        var tmp = this.compile({}, e);
+        
+        if(list__QM(e) && !null__QM(e))
+        {
+            if(car(e).name === "def")
+            {
+                var name = mangleName(second(e).name);
+                this.root[name] = new LazyDef(tmp[1], tmp[0]);
+            }
+            else if(car(e).name === "setmac!")
+            {
+                this.root.jeval(tmp[1] + tmp[0]);
+            }
+        }
+
+        r += tmp[1] + tmp[0] + ";";
     }
 
     return r;
-}
-
+};
 
 module.exports.tokenize = tokenize;
 module.exports.parse = parse;
@@ -515,37 +594,7 @@ module.exports.cons = cons;
 module.exports.list = list;
 module.exports.concat = concat;
 module.exports.Symbol = Symbol;
-module.exports.evalispstr = evalispstr;
-module.exports.sandbox = sandbox;
-module.exports.compile = compile;
-
-console.log(evalispstr("'true"));
-
-/*
-var handler = {
-    get: function(target, name){
-        return name in target?
-            target[name] :
-            37;
-    }
-};
-
-var p = new Proxy({}, handler);
-var obj = {a: 1, b: 2};
-
-vm.createContext(obj);
-
-obj.__proto__ = p;
-
-console.log(obj.a, obj.b); // 1, undefined
-console.log('c' in obj, eval("obj.c")); // false, 37
-
-vm.runInContext('function baz () { return 5; }', obj);
-
-console.log("Hax: " + obj.baz());*/
-
-//for (var i = 0; i < 10; ++i) {
-//    vm.runInContext('globalVar *= 2;', sandbox);
-//}
-
-//console.log(util.inspect(sandbox));
+module.exports.Compiler = Compiler;
+module.exports.StaticCompiler = StaticCompiler;
+module.exports.NodeEvaluator = NodeEvaluator;
+module.exports.LazyDef = LazyDef;

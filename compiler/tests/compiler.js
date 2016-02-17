@@ -1,5 +1,6 @@
 var _test = require('tape');
 const NodeAssert = require('assert');
+const VM = require('vm');
 
 function formatCode(str)
 {
@@ -46,7 +47,11 @@ var cons = wl.cons;
 var list = wl.list;
 var Symbol = wl.Symbol;
 
-var ev = wl.evalispstr;
+
+var evaluator = new wl.NodeEvaluator();
+function ev(str) {
+	return evaluator.evalStr(str);
+}
 
 test( "Atoms (sans symbol)", function( assert ) {
 	assert.deepEqual(ev("1"), 1);
@@ -138,10 +143,10 @@ test( "Comparison", function( assert ) {
 
 
 
-wl.sandbox.$$root.globalCounter = 0;
-wl.sandbox.$$root.for__MINUSside__MINUSeffect = function(x) {
-	wl.sandbox.$$root.globalCounter += x;
-	return wl.sandbox.$$root.globalCounter;
+evaluator.root.globalCounter = 0;
+evaluator.root.for__MINUSside__MINUSeffect = function(x) {
+	evaluator.root.globalCounter += x;
+	return evaluator.root.globalCounter;
 };
 
 /*
@@ -163,17 +168,17 @@ test( "If", function( assert ) {
 	assert.deepEqual(ev("(+ (if (> 1 0) 5 0) 5)"), 10);
 	assert.deepEqual(ev("(+ (if (< 1 0) 5 0) 5)"), 5);
 		
-	wl.sandbox.$$root.globalCounter = 0;
+	evaluator.root.globalCounter = 0;
 	assert.deepEqual(ev(`(if (> 1 0) 
 							 ((lambda () (for-side-effect 5) -6))
 							 ((lambda () (for-side-effect 100) 6)))`), -6);
-	assert.deepEqual(wl.sandbox.$$root.globalCounter, 5);
+	assert.deepEqual(evaluator.root.globalCounter, 5);
 	
-	wl.sandbox.$$root.globalCounter = 0;
+	evaluator.root.globalCounter = 0;
 	assert.deepEqual(ev(`(if (< 1 0) 
 							 ((lambda () (for-side-effect 5) -6))
 							 ((lambda () (for-side-effect 100) 6)))`), 6);
-	assert.deepEqual(wl.sandbox.$$root.globalCounter, 100);
+	assert.deepEqual(evaluator.root.globalCounter, 100);
 	
 	assert.deepEqual(ev("(+ (if (if (> 1 0) false true) 0 (if (> 1 0) 5 0)) 5)"), 10);
 		
@@ -188,13 +193,13 @@ test( "Lambda", function( assert ) {
 	assert.deepEqual(ev("(apply (lambda (&etc) (apply + etc)) '(1 2 3))"), 6);
 	assert.deepEqual(ev("(apply (lambda (x &etc) (+ x (apply + etc))) '(1 2 3 4))"), 10);
 	
-	wl.sandbox.$$root.globalCounter = 0;
+	evaluator.root.globalCounter = 0;
 	assert.deepEqual(ev(`(apply (lambda (x) 
 									(for-side-effect 2)
 									(for-side-effect 3)
 									x)
 								'(111))`), 111);
-	assert.deepEqual(wl.sandbox.$$root.globalCounter, 5);
+	assert.deepEqual(evaluator.root.globalCounter, 5);
 		
 	assert.end();
 });
@@ -207,20 +212,20 @@ test( "Function expression call", function( assert ) {
 });
 
 
-wl.sandbox.$$root.globalTestV = 0;
+evaluator.root.globalTestV = 0;
 
 test( "Setv", function( assert ) {
 	assert.deepEqual(ev("(setv! globalTestV 777)"), 777);
-	assert.deepEqual(wl.sandbox.$$root.globalTestV, 777);
+	assert.deepEqual(evaluator.root.globalTestV, 777);
 	
 	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
-	assert.deepEqual(wl.sandbox.$$root.globalTestV, 14);
+	assert.deepEqual(evaluator.root.globalTestV, 14);
 	
 	assert.deepEqual(ev("(setv! globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
-	assert.deepEqual(wl.sandbox.$$root.globalTestV, 12);
+	assert.deepEqual(evaluator.root.globalTestV, 12);
 	
 	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
-	assert.deepEqual(wl.sandbox.$$root.globalTestV, 14);
+	assert.deepEqual(evaluator.root.globalTestV, 14);
 	
 	assert.deepEqual(ev("((lambda (x) (setv! x (+ 7 8)) x) 0)"), 15);
 	
@@ -278,6 +283,8 @@ test( "Defmacro", function( assert ) {
 	
 	assert.ok(ev("(setv! testmac2 (lambda () 'baz))"));
 	assert.ok(ev("(setmac! testmac2)"));
+	assert.ok(evaluator.root.testmac2);
+	assert.ok(evaluator.root.testmac2.isMacro);
 	assert.deepEqual(ev("((lambda (baz) (+ (testmac2) 5)) 5)"), 10);
 	
 	assert.ok(ev("(setv! testmac3 (lambda (x) (cons '+ x)))"));

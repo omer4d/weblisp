@@ -1,0 +1,178 @@
+function formatCode(str)
+{
+    var toks = str.split(/(;|{|})/);
+    var out = "";
+    var ind = [];
+    
+    for(var i = 0; i < Math.floor(toks.length / 2); ++i)
+    {
+        if(toks[i * 2 + 1] === "}")
+            ind.pop();
+        
+        out += ind.join("") + toks[i * 2] + toks[i * 2 + 1] + "\n";
+
+        if(toks[i * 2 + 1] === "{")
+            ind.push("   ");
+    }
+    
+    return out + toks[toks.length - 1];
+}
+
+function format(...args) {
+    var rx = /%[0-9]+/gi;
+    
+    return args[0].replace(rx, function(match) {
+        return args[parseInt(match.substring(1)) + 1];
+    });
+}
+
+function first(x) {
+    return x[0];
+}
+
+function second(x) {
+    return x[1];
+}
+
+function compose(a, b) {
+    return function(...args) {
+        return a(b.apply(null, args));
+    };
+}
+
+function conv(x) {
+    return Array.isArray(x) ? x : ["", x];
+}
+
+
+// fmap:   (a->b) -> f a -> f b
+// fapp:  f(a->b) -> f(a) -> f(b)
+// bind:  m a -> (a -> m b) -> m b
+
+function inc(x) {
+    return format("(%0+1)", x);
+}
+
+function pls(a) {
+    return function(b) {
+        return format("(%0+%1)", a, b);
+    };
+}
+
+function add3(a) {
+    return function(b) {
+        return function(c) {
+            return format("(%0+%1+%2)", a, b, c);
+        };
+    };
+}
+
+
+
+function fmap(f, x) {
+    return [x[0], f(x[1])];
+}
+
+function pure(x) {
+    return ["", x];
+}
+
+function fapp(fboxed, box) {
+    return [fboxed[0] + box[0], fboxed[1](box[1])];
+}
+
+
+
+fapp(fapp(fmap(add3, ["var r=10;", "r"]), pure(2)), ["var x=20;", "x"]);
+
+
+
+function app(f, ...args) {
+    var args2 = args.map(conv);
+    var res = conv(f.apply(null, args2.map(second)));
+    return [args2.map(first).join("") + res[0], res[1]];
+}
+
+function collapse(x) {
+    return x[0] + x[1];
+}
+
+var nextVarSuffix = 0;
+
+function genvar() {
+    return "$tmp" + (nextVarSuffix++);
+}
+
+function cond(c, t, f) {
+    var v = genvar();
+    var tt = collapse(app(format, "%0=%1", v, t));
+    var ff = collapse(app(format, "%0=%1", v, f));
+    var cc = collapse(app(format, "if(%0)", c));
+    return [format("var %0;%1{%2}else{%3}", v, cc, tt, ff), v];
+}
+
+
+
+
+
+function Div(t1, t2) {
+    this.t1 = t1;
+    this.t2 = t2;
+}
+
+function div(t1, t2) {
+    return new Div(t1, t2);
+}
+
+function Con(val) {
+    this.val = val;
+}
+
+function con(val) {
+    return new Con(val);
+}
+
+function Ret(val) {
+    this.val = val;
+}
+
+function ret(val) {
+    return new Ret(val);
+}
+
+function Raise(msg) {
+    this.msg = msg;
+}
+
+function raise(msg) {
+    return new Raise(msg);
+}
+
+
+function unit(x) {
+    return ret(x);
+}
+
+function mapply(x, f) {
+    if(x instanceof Ret)
+        return f(x.val);
+    else
+        return x;
+}
+
+function ev(x) {
+    if(x instanceof Con)
+        return unit(x.val);
+    else
+        return mapply(ev(x.t1), function(a) {
+            return mapply(ev(x.t2), function(b) {
+                if(b === 0)
+                    return raise("Division by zero!");
+                else
+                    return unit(a / b);
+            });
+        });
+}
+
+
+ev(div( div(con(5), con(0)), con(3))   );
