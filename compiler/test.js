@@ -97,4 +97,26 @@ var $$root = {
 // * 
 // *
 
-$$root.id=(function (x){var $$TMP0;$$TMP0=x;return $$TMP0;});$$root.id;
+$$root.defmacro=(function(name,args,...body){
+   var $$TMP0;
+   $$TMP0=$$root.concat($$root.list($$root.concat($$root.list((new $$root.Symbol("lambda"))),$$root.list($$root.concat()),$$root.list($$root.concat($$root.list((new $$root.Symbol("def"))),$$root.list(name),$$root.list($$root.concat($$root.list((new $$root.Symbol("lambda"))),$$root.list(args),body)))),$$root.list($$root.concat($$root.list((new $$root.Symbol("setmac!"))),$$root.list(name))))));
+   return $$TMP0;
+}
+);
+$$root.defmacro;
+$$root.setmac__BANG($$root.defmacro);
+$$root.defun=(function(name,args,...body){
+   var $$TMP1;
+   $$TMP1=$$root.concat($$root.list((new $$root.Symbol("def"))),$$root.list(name),$$root.list($$root.concat($$root.list((new $$root.Symbol("lambda"))),$$root.list(args),body)));
+   return $$TMP1;
+}
+);
+$$root.defun;
+$$root.setmac__BANG($$root.defun);
+$$root.baz=(function(x,...more){
+   var $$TMP2;
+   $$TMP2=more;
+   return $$TMP2;
+}
+);
+$$root.baz;

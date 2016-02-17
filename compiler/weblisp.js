@@ -365,7 +365,7 @@ Compiler.prototype.compileLambda = function(lexenv, lst) {
     var retVarName = this.genVarName();
     var compiledBody = this.compileBodyHelper(lexenv2, cdr(cdr(lst)), retVarName);
 
-    return [format("(function (%0)" +
+    return [format("(function(%0)" +
                     "{" +
                         "var %1;" +
                         "%2" +
@@ -438,6 +438,10 @@ Compiler.prototype.macroexpandUnsafe = function(lexenv, expr) {
     return this.root.jeval(tmp[1] + tmp[0]);
 };
 
+Compiler.prototype.isMacro = function(name) {
+    return name in this.root && this.root[name]["isMacro"];
+}
+
 Compiler.prototype.compile = function(lexenv, expr) {
     if (list__QM(expr) && !null__QM(expr)) {
         var first = car(expr);
@@ -450,7 +454,7 @@ Compiler.prototype.compile = function(lexenv, expr) {
                 case "setv!":       return this.compileSetv(lexenv, expr);
                 case "def":         return this.compileSetv(lexenv, expr);
                 default:
-                    if (first.name in this.root && this.root[first.name]["isMacro"])
+                    if (this.isMacro(first.name))
                         return this.compile(lexenv, this.macroexpandUnsafe(lexenv, expr));
                     else
                         return this.compileFuncall(lexenv, expr);
@@ -534,7 +538,7 @@ function StaticCompiler() {
         get: function(target, name) {
             var r = target[name];
         
-            console.log("Looking up: " + name);
+            //console.log("Looking up: " + name);
         
             if(r instanceof LazyDef)
             {
@@ -560,36 +564,80 @@ function StaticCompiler() {
 
 StaticCompiler.prototype = Object.create(Compiler.prototype);
 
+function isIIFE(e) {
+    if(list__QM(e) && !null__QM(e) && null__QM(cdr(e))) {
+        var lam = car(e);
+        return list__QM(lam) && !null__QM(lam) && car(lam).name === "lambda" && null__QM(car(cdr(lam)));
+    }
+    else
+        return false;
+}
+
+StaticCompiler.prototype.compileToplevel = function(e) {
+    var tmp;
+    
+    if(list__QM(e) && !null__QM(e)) {
+        if(car(e).name === "def") {
+            tmp = this.compile({}, e);
+            var name = mangleName(second(e).name);
+            this.root[name] = new LazyDef(tmp[1], tmp[0]);
+            return tmp[1] + tmp[0] + ";";
+        }
+        
+        else if(car(e).name === "setmac!") {
+            tmp = this.compile({}, e);
+            this.root.jeval(tmp[1] + tmp[0]);
+            return tmp[1] + tmp[0] + ";";
+        }
+        
+        else if(isIIFE(e)) {
+            return cdr(cdr(car(e))).map(partial(this, this.compileToplevel)).join("");
+        }
+        
+        else if(this.isMacro(car(e).name)) {
+            return this.compileToplevel(this.macroexpandUnsafe({}, e));
+        }
+        
+        else {
+            tmp = this.compile({}, e);
+            return tmp[1] + tmp[0] + ";";
+        }
+    }
+};
+
 StaticCompiler.prototype.compileUnit = function(str) {
     var forms = parse(tokenize(str)), r = "";
 
     for (var i = 0; i < forms.length; ++i) {
-        var e = forms[i];
-        var tmp = this.compile({}, e);
-        
-        if(list__QM(e) && !null__QM(e))
-        {
-            if(car(e).name === "def")
-            {
-                var name = mangleName(second(e).name);
-                this.root[name] = new LazyDef(tmp[1], tmp[0]);
-            }
-            else if(car(e).name === "setmac!")
-            {
-                this.root.jeval(tmp[1] + tmp[0]);
-            }
-        }
-
-        r += tmp[1] + tmp[0] + ";";
+        r += this.compileToplevel(forms[i]);
     }
 
     return r;
 };
 
-var comp = new StaticCompiler();
-var output = fs.readFileSync("bootstrap.js", "utf8") + comp.compileUnit(fs.readFileSync(argv.in, "utf8"));
+function formatCode(str) {
+    var toks = str.split(/(;|{|})/);
+    var out = "";
+    var ind = [];
+    
+    for(var i = 0; i < Math.floor(toks.length / 2); ++i) {
+        if(toks[i * 2 + 1] === "}")
+            ind.pop();
+        
+        out += ind.join("") + toks[i * 2] + toks[i * 2 + 1] + "\n";
 
-fs.writeFileSync(argv.in.slice(0, argv.in.indexOf(".")) + ".js", output);
+        if(toks[i * 2 + 1] === "{")
+            ind.push("   ");
+    }
+    
+    return out + toks[toks.length - 1];
+}
+
+if("in" in argv) {
+    var comp = new StaticCompiler();
+    var output = fs.readFileSync("bootstrap.js", "utf8") + formatCode(comp.compileUnit(fs.readFileSync(argv.in, "utf8")));
+    fs.writeFileSync(argv.in.slice(0, argv.in.indexOf(".")) + ".js", output);
+}
 
 module.exports.tokenize = tokenize;
 module.exports.parse = parse;

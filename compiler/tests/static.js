@@ -73,5 +73,33 @@ test("Misc.", function( assert ) {
     assert.equal(sandbox.$$root.foo3, 5 + 5 + 5 + 5);
     assert.equal(sandbox.$$root.invisible, 12345);
     
+    
+    comp(`(def testmac3
+                (lambda ()
+                    '(def id2 (lambda (x) x))))
+            (setmac! testmac3)
+            (testmac3)`);
+                     
+    assert.ok(staticCompiler.root.testmac3);
+    assert.ok(typeof staticCompiler.root.testmac3 === "function");
+    assert.ok(staticCompiler.root.id2);
+    assert.ok(staticCompiler.root.id2 instanceof wl.LazyDef);
+    
+    
+    comp(`(def testmac4
+                (lambda ()
+                    '((lambda ()
+                        (def id3 (lambda (x) x))
+                        (def id4 (lambda (x) x))))))
+            (setmac! testmac4)
+            (testmac4)`);
+                     
+    assert.ok(staticCompiler.root.testmac4);
+    assert.ok(typeof staticCompiler.root.testmac4 === "function");
+    assert.ok(staticCompiler.root.id3);
+    assert.ok(staticCompiler.root.id3 instanceof wl.LazyDef);
+    assert.ok(staticCompiler.root.id4);
+    assert.ok(staticCompiler.root.id4 instanceof wl.LazyDef);
+    
 	assert.end();
 });
