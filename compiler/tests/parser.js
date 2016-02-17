@@ -21,8 +21,8 @@ test( "Atoms", function( assert ) {
 	assert.deepEqual(pt("false"), false);
 	assert.deepEqual(pt("null"), []);
 	assert.deepEqual(pt("undefined"), undefined);
-	assert.deepEqual(pt('"zaza"'), '"zaza"');
-	assert.deepEqual(pt('"za\\"za"'), '"za\\"za"');
+	assert.deepEqual(pt('"zaza"'), "zaza");
+	assert.deepEqual(pt('"za\\"za"'), 'za\"za');
 	assert.end();
 });
 

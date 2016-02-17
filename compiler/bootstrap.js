@@ -13,6 +13,19 @@ function argReducer(name, r, initial) {
     };
 }
 
+function str1(x) {
+	if(Array.isArray(x) && x.length === 0)
+   		return "null";
+    else if(x === undefined)
+    	return "undefined";
+    else if(typeof(x) === "function")
+    	return (x.isMacro ? "Macro " : "Function ") + (x.name || "[Anonymous]");
+    else if(Array.isArray(x))
+        return "(" + x.map(str1).join(" ") + ")";
+    else
+    	return x.toString();
+}
+
 function Symbol(name) {
     this.name = name;
 }
@@ -57,6 +70,10 @@ var $$root = {
     number__QM: function number__QM(x) {
         return typeof x === "number" || x instanceof Number;
     },
+    
+    string__QM: function number__QM(x) {
+        return typeof x === "string" || x instanceof String;
+    },
 
     null__QM: function null__QM(x) {
         return Array.isArray(x) && x.length === 0;
@@ -91,6 +108,20 @@ var $$root = {
     __GT__EQL       :   function(x, y) { return x >= y; },
     mod             :   function(x, y) { return x % y; },
     setmac__BANG    :   function(x) { return x.isMacro = true; },
+    str             :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
+    print           :   function print(x) { console.log($$root.str(x)); },
+    regex           :   function regex(str, flags) { return new RegExp(str, flags); },
+    
+    object          :   function object(proto) { return Object.create(proto || {}); },
+    geti            :   function geti(obj, idx) { return obj[idx]; },
+    seti__BANG      :   function seti__BANG(obj, idx, val) { obj[idx] = val },
+    
+    apply__MINUSmethod  :   function apply__MINUSmethod(method, target, args) {
+        return method.apply(target, args);
+    },
+    call__MINUSmethod   :   function call__MINUSmethod(method, target, ...args) {
+        return method.apply(target, args);
+    },
 };
 
 // *

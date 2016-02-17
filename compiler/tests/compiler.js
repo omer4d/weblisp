@@ -285,6 +285,10 @@ test( "Defmacro", function( assert ) {
 	assert.ok(ev("(setv! testmac1 (lambda () 5))"));
 	assert.ok(ev("(setmac! testmac1)"));
 	assert.deepEqual(ev("(+ (testmac1) 5)"), 10);
+
+	assert.ok(ev("(setv! **testmac1** (lambda () 5))"));
+	assert.ok(ev("(setmac! **testmac1**)"));
+	assert.deepEqual(ev("(+ (**testmac1**) 5)"), 10);
 	
 	assert.ok(ev("(setv! testmac2 (lambda () 'baz))"));
 	assert.ok(ev("(setmac! testmac2)"));

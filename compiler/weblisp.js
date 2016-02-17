@@ -11,6 +11,14 @@ function format(...args) {
     });
 }
 
+function escapeStr(str) {
+    return JSON.stringify(str);
+}
+
+function unescapeStr(str) {
+    return (JSON.parse('{"str":' + str + "}")).str;
+}
+
 function argReducer(name, r, initial) {
     return function(...args) {
         if (args.length === 0)
@@ -141,10 +149,7 @@ var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
 var strPatt = /^"(?:(?:\\")|[^"])*"/;
 
 var tokenTable = [{patt: spacePatt, type: -1},
-                  {patt: lit("true"), type: TokenType.TRUE},
-                  {patt: lit("false"), type: TokenType.FALSE},
-                  {patt: lit("null"), type: TokenType.NULL},
-                  {patt: lit("undefined"), type: TokenType.UNDEF},
+                  {patt: /^;[^\n]*/, type: -1},
                   {patt: numberPatt, type: TokenType.NUM},
                   {patt: strPatt, type: TokenType.STR},
                   {patt: lit("("), type: TokenType.LIST_OPEN},
@@ -154,6 +159,12 @@ var tokenTable = [{patt: spacePatt, type: -1},
                   {patt: lit("~@"), type: TokenType.SPLICE},
                   {patt: lit("~"), type: TokenType.UNQUOTE},
                   {patt: symPatt, type: TokenType.SYM}];
+
+var keywords = {};
+keywords["true"] = TokenType.TRUE;
+keywords["false"] = TokenType.FALSE;
+keywords["undefined"] = TokenType.UNDEF;
+keywords["null"] = TokenType.NULL;
 
 function tokenize(src) {
     var toks = [];
@@ -168,8 +179,8 @@ function tokenize(src) {
                 str = str.substring(res[0].length);
 
                 if (tokenTable[i].type !== -1)
-                    toks.push(new Token(src, tokenTable[i].type, pos, res[0].length));
-
+                    toks.push(new Token(src, keywords[res[0]] || tokenTable[i].type, pos, res[0].length));
+    
                 pos += res[0].length;
                 break;
             }
@@ -209,7 +220,7 @@ Parser.prototype.parseExpr = function() {
         case TokenType.NULL:        return [];
         case TokenType.UNDEF:       return undefined;
         case TokenType.NUM:         return parseFloat(tok.text());
-        case TokenType.STR:         return tok.text();
+        case TokenType.STR:         return unescapeStr(tok.text());
         case TokenType.QUOTE:       return cons(new Symbol("quote"), cons(this.parseExpr(), []));
         case TokenType.BACKQUOTE:   return this.parseBackquotedExpr();
         case TokenType.SYM:         return new Symbol(tok.text());
@@ -321,6 +332,7 @@ Compiler.prototype.compileAtom = function(lexenv, x) {
     else if(null__QM(x))        return ["[]", ""];
     else if(x === undefined)    return ["undefined", ""];
     else if(symbol__QM(x))      return [(x.name in lexenv ? "" : "$$root.") + mangleName(x.name), ""];
+    else if(string__QM(x))      return [escapeStr(x), ""];
     else                        return [ x.toString(), ""];
 };
 
@@ -434,7 +446,12 @@ Compiler.prototype.macroexpandUnsafe = function(lexenv, expr) {
         return list(new Symbol("quote"), x);
     }));
 
+
+
     var tmp = this.compileFuncall(lexenv, withQuotedArgs);
+    
+        //console.log(tmp);
+    
     return this.root.jeval(tmp[1] + tmp[0]);
 };
 
@@ -454,7 +471,7 @@ Compiler.prototype.compile = function(lexenv, expr) {
                 case "setv!":       return this.compileSetv(lexenv, expr);
                 case "def":         return this.compileSetv(lexenv, expr);
                 default:
-                    if (this.isMacro(first.name))
+                    if (this.isMacro(mangleName(first.name)))
                         return this.compile(lexenv, this.macroexpandUnsafe(lexenv, expr));
                     else
                         return this.compileFuncall(lexenv, expr);
@@ -594,15 +611,13 @@ StaticCompiler.prototype.compileToplevel = function(e) {
             return cdr(cdr(car(e))).map(partial(this, this.compileToplevel)).join("");
         }
         
-        else if(this.isMacro(car(e).name)) {
+        else if(symbol__QM(car(e)) && this.isMacro(mangleName(car(e).name))) {
             return this.compileToplevel(this.macroexpandUnsafe({}, e));
         }
-        
-        else {
-            tmp = this.compile({}, e);
-            return tmp[1] + tmp[0] + ";";
-        }
     }
+    
+    tmp = this.compile({}, e);
+    return tmp[1] + tmp[0] + ";";
 };
 
 StaticCompiler.prototype.compileUnit = function(str) {
