@@ -145,7 +145,7 @@ function lit(str) {
 
 var spacePatt = /^\s+/;
 var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
-var symPatt = /^[<>?+\-=!@#$%\^&*/a-zA-Z][<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
+var symPatt = /^[.<>?+\-=!@#$%\^&*/a-zA-Z][.<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
 var strPatt = /^"(?:(?:\\")|[^"])*"/;
 
 var tokenTable = [{patt: spacePatt, type: -1},
@@ -160,7 +160,7 @@ var tokenTable = [{patt: spacePatt, type: -1},
                   {patt: lit("~"), type: TokenType.UNQUOTE},
                   {patt: symPatt, type: TokenType.SYM}];
 
-var keywords = {};
+var keywords = Object.create(null);
 keywords["true"] = TokenType.TRUE;
 keywords["false"] = TokenType.FALSE;
 keywords["undefined"] = TokenType.UNDEF;
@@ -288,6 +288,7 @@ function parse(toks) {
 }
 
 var manglingTable = {
+    ".": "__DOT",
     "<": "__LT",
     ">": "__GT",
     "?": "__QM",
@@ -331,7 +332,7 @@ Compiler.prototype.compileAtom = function(lexenv, x) {
     else if(x === false)        return ["false", ""];
     else if(null__QM(x))        return ["[]", ""];
     else if(x === undefined)    return ["undefined", ""];
-    else if(symbol__QM(x))      return [(x.name in lexenv ? "" : "$$root.") + mangleName(x.name), ""];
+    else if(symbol__QM(x))      return [(x.name in lexenv) ? mangleName(x.name) : '$$root["' + x.name + '"]', ""];
     else if(string__QM(x))      return [escapeStr(x), ""];
     else                        return [ x.toString(), ""];
 };
@@ -436,7 +437,7 @@ Compiler.prototype.compileQuoted = function(lexenv, x) {
 };
 
 Compiler.prototype.compileSetv = function(lexenv, lst) {
-    var varName = (lst[1].name in lexenv ? "" : "$$root.") + mangleName(lst[1].name);
+    var varName = this.compileAtom(lexenv, lst[1])[0]; //(lst[1].name in lexenv ? "" : "$$root.") + mangleName(lst[1].name);
     var compiledVal = this.compile(lexenv, lst[2]);
     return [varName, compiledVal[1] + varName + "=" + compiledVal[0] + ";"];
 };
@@ -446,12 +447,7 @@ Compiler.prototype.macroexpandUnsafe = function(lexenv, expr) {
         return list(new Symbol("quote"), x);
     }));
 
-
-
     var tmp = this.compileFuncall(lexenv, withQuotedArgs);
-    
-        //console.log(tmp);
-    
     return this.root.jeval(tmp[1] + tmp[0]);
 };
 
@@ -471,7 +467,7 @@ Compiler.prototype.compile = function(lexenv, expr) {
                 case "setv!":       return this.compileSetv(lexenv, expr);
                 case "def":         return this.compileSetv(lexenv, expr);
                 default:
-                    if (this.isMacro(mangleName(first.name)))
+                    if (this.isMacro(first.name))
                         return this.compile(lexenv, this.macroexpandUnsafe(lexenv, expr));
                     else
                         return this.compileFuncall(lexenv, expr);
@@ -488,29 +484,39 @@ Compiler.prototype.compile = function(lexenv, expr) {
 
 var rootProto = {
     Symbol          :   Symbol,
+    symbol          :   function(name) { return new Symbol(name); },
     apply           :   function(fun, args) { return fun.apply(null, args); },
     cons            :   cons,
     car             :   car,
     cdr             :   cdr,
     list            :   list,
     concat          :   concat,
-    symbol__QM      :   symbol__QM,
-    null__QM        :   null__QM,
-    number__QM      :   number__QM,
-    atom__QM        :   atom__QM,
-    list__QM        :   list__QM,
-    __PLUS          :   argReducer("+", function(a, b) { return a + b; }, 0),
-    __MINUS         :   argReducer("-", function(a, b) { return a - b; }, 0),
-    __STAR          :   argReducer("*", function(a, b) { return a * b; }, 1),
-    __SLASH         :   argReducer("/", function(a, b) { return a / b }, 1),
-    __EQL           :   __EQL,
-    not__EQL        :   function(x, y) { return x !== y; },
-    __LT            :   function(x, y) { return x < y; },
-    __GT            :   function(x, y) { return x > y; },
-    __LT__EQL       :   function(x, y) { return x <= y; },
-    __GT__EQL       :   function(x, y) { return x >= y; },
+    "symbol?"      :   symbol__QM,
+    "null?"        :   null__QM,
+    "number?"      :   number__QM,
+    "atom?"        :   atom__QM,
+    "list?"        :   list__QM,
+    "+"          :   argReducer("+", function(a, b) { return a + b; }, 0),
+    "-"         :   argReducer("-", function(a, b) { return a - b; }, 0),
+    "*"          :   argReducer("*", function(a, b) { return a * b; }, 1),
+    "/"         :   argReducer("/", function(a, b) { return a / b }, 1),
+    not         :   function(b) { return !b; },
+    "="           :   __EQL,
+    "not="        :   function(x, y) { return x !== y; },
+    "<"            :   function(x, y) { return x < y; },
+    ">"            :   function(x, y) { return x > y; },
+    "<="       :   function(x, y) { return x <= y; },
+    ">="       :   function(x, y) { return x >= y; },
     mod             :   function(x, y) { return x % y; },
-    setmac__BANG    :   function(x) { return x.isMacro = true; },
+    "setmac!"    :   function(x) { return x.isMacro = true; },
+    geti            :   function geti(obj, idx) { return obj[idx]; },
+    "seti!"      :   function seti__BANG(obj, idx, val) { obj[idx] = val },
+    "apply-method"  :   function apply__MINUSmethod(method, target, args) {
+        return method.apply(target, args);
+    },
+    "call-method"   :   function call__MINUSmethod(method, target, ...args) {
+        return method.apply(target, args);
+    },
 };
 
 function NodeEvaluator() {
@@ -577,6 +583,11 @@ function StaticCompiler() {
         return VM.runInContext(str, sandbox);
     };
     
+    var nextGensymSuffix = 0;
+    
+    root.gensym = function gensym() {
+        return new Symbol("__GS" + (++nextGensymSuffix));
+    };
 }
 
 StaticCompiler.prototype = Object.create(Compiler.prototype);
@@ -596,7 +607,7 @@ StaticCompiler.prototype.compileToplevel = function(e) {
     if(list__QM(e) && !null__QM(e)) {
         if(car(e).name === "def") {
             tmp = this.compile({}, e);
-            var name = mangleName(second(e).name);
+            var name = second(e).name;
             this.root[name] = new LazyDef(tmp[1], tmp[0]);
             return tmp[1] + tmp[0] + ";";
         }
@@ -611,7 +622,7 @@ StaticCompiler.prototype.compileToplevel = function(e) {
             return cdr(cdr(car(e))).map(partial(this, this.compileToplevel)).join("");
         }
         
-        else if(symbol__QM(car(e)) && this.isMacro(mangleName(car(e).name))) {
+        else if(symbol__QM(car(e)) && this.isMacro(car(e).name)) {
             return this.compileToplevel(this.macroexpandUnsafe({}, e));
         }
     }

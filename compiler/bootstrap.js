@@ -34,8 +34,14 @@ Symbol.prototype.toString = function() {
     return this.name;
 };
 
+var nextGensymSuffix = 0;
+
 var $$root = {
     Symbol: Symbol,
+    
+    symbol: function symbol(name) {
+        return new Symbol(name);
+    },
     
     apply: function apply (fun, args) {
         return fun.apply(null, args);
@@ -63,66 +69,78 @@ var $$root = {
         }, []);
     },
     
-    symbol__QM: function symbol__QM(x) {
+    "symbol?": function symbol__QM(x) {
         return x instanceof Symbol;
     },
 
-    number__QM: function number__QM(x) {
+    "number?": function number__QM(x) {
         return typeof x === "number" || x instanceof Number;
     },
     
-    string__QM: function number__QM(x) {
+    "string?": function number__QM(x) {
         return typeof x === "string" || x instanceof String;
     },
 
-    null__QM: function null__QM(x) {
+    "null?": function null__QM(x) {
         return Array.isArray(x) && x.length === 0;
     },
 
-    atom__QM: function atom__QM(x) {
-        return x === true || x === false || $$root.null__QM(x) || x === undefined || $$root.number__QM(x) || $$root.symbol__QM(x);
+    "atom?": function atom__QM(x) {
+        return x === true || x === false || $$root["null?"](x) || x === undefined || $$root["number?"](x) || $$root["symbol?"](x);
     },
 
-    list__QM: function list__QM(x) {
+    "list?": function list__QM(x) {
         return Array.isArray(x);
     },
 
-    __EQL:  function __EQL(...args) {
+    "=":  function __EQL(...args) {
         var v = args[0];
 
         for (var i = 1; i < args.length; ++i)
-            if (args[i] !== v && !($$root.null__QM(args[i]) && $$root.null__QM(v)))
+            if (args[i] !== v && !($$root["null?"](args[i]) && $$root["null?"](v)))
                 return false;
 
         return true;
     },
     
-    __PLUS          :   argReducer("+", function(a, b) { return a + b; }, 0),
-    __MINUS         :   argReducer("-", function(a, b) { return a - b; }, 0),
-    __STAR          :   argReducer("*", function(a, b) { return a * b; }, 1),
-    __SLASH         :   argReducer("/", function(a, b) { return a / b }, 1),
-    not__EQL        :   function(x, y) { return x !== y; },
-    __LT            :   function(x, y) { return x < y; },
-    __GT            :   function(x, y) { return x > y; },
-    __LT__EQL       :   function(x, y) { return x <= y; },
-    __GT__EQL       :   function(x, y) { return x >= y; },
-    mod             :   function(x, y) { return x % y; },
-    setmac__BANG    :   function(x) { return x.isMacro = true; },
-    str             :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
-    print           :   function print(x) { console.log($$root.str(x)); },
-    regex           :   function regex(str, flags) { return new RegExp(str, flags); },
+    "+"         :   argReducer("+", function(a, b) { return a + b; }, 0),
+    "-"         :   argReducer("-", function(a, b) { return a - b; }, 0),
+    "*"         :   argReducer("*", function(a, b) { return a * b; }, 1),
+    "/"         :   argReducer("/", function(a, b) { return a / b }, 1),
+    not         :   function(b) { return !b; },
+    "not="      :   function(x, y) { return x !== y; },
+    "<"         :   function(x, y) { return x < y; },
+    ">"         :   function(x, y) { return x > y; },
+    "<="        :   function(x, y) { return x <= y; },
+    ">="        :   function(x, y) { return x >= y; },
+    mod         :   function(x, y) { return x % y; },
+    "setmac!"   :   function(x) { return x.isMacro = true; },
+    str         :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
+    print       :   function print(x) { console.log($$root.str(x)); },
+    regex       :   function regex(str, flags) { return new RegExp(str, flags); },
     
-    object          :   function object(proto) { return Object.create(proto || {}); },
-    geti            :   function geti(obj, idx) { return obj[idx]; },
-    seti__BANG      :   function seti__BANG(obj, idx, val) { obj[idx] = val },
+    object      :   function object(proto) { return Object.create(proto || {}); },
+    geti        :   function geti(obj, idx) { return obj[idx]; },
+    "seti!"     :   function seti__BANG(obj, idx, val) { obj[idx] = val },
     
-    apply__MINUSmethod  :   function apply__MINUSmethod(method, target, args) {
+    "apply-method"  :   function apply__MINUSmethod(method, target, args) {
         return method.apply(target, args);
     },
-    call__MINUSmethod   :   function call__MINUSmethod(method, target, ...args) {
+    "call-method"   :   function call__MINUSmethod(method, target, ...args) {
         return method.apply(target, args);
     },
+    gensym : function() {
+        return new Symbol("__GS" + (++nextGensymSuffix));
+    },
+    "macro?" : function(f) {
+        return "isMacro" in f;
+    },
+    error:  function(msg) {
+        throw Error(msg);
+    }
 };
+
+$$root["*ns*"] = $$root;
 
 // *
 // * 

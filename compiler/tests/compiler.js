@@ -149,7 +149,7 @@ test( "Comparison", function( assert ) {
 
 
 evaluator.root.globalCounter = 0;
-evaluator.root.for__MINUSside__MINUSeffect = function(x) {
+evaluator.root["for-side-effect"] = function(x) {
 	evaluator.root.globalCounter += x;
 	return evaluator.root.globalCounter;
 };
@@ -282,6 +282,8 @@ test( "Defun", function( assert ) {
 
 
 test( "Defmacro", function( assert ) {
+	assert.ok(evaluator.root["setmac!"]);
+	
 	assert.ok(ev("(setv! testmac1 (lambda () 5))"));
 	assert.ok(ev("(setmac! testmac1)"));
 	assert.deepEqual(ev("(+ (testmac1) 5)"), 10);

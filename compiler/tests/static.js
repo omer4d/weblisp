@@ -64,10 +64,10 @@ test("Misc.", function( assert ) {
     (setv! foo3 (testmac2 (5 + (5 + (5 + 5)))))`;
 
     jeval(comp(testCode3));
-    assert.ok(typeof staticCompiler.root.my__MINUScar === "function");
-    assert.ok(typeof staticCompiler.root.my__MINUScdr === "function");
+    assert.ok(typeof staticCompiler.root["my-car"] === "function");
+    assert.ok(typeof staticCompiler.root["my-cdr"] === "function");
     assert.ok(typeof staticCompiler.root.id === "function");
-    assert.ok(typeof staticCompiler.root.my__MINUSatom__QM === "function");
+    assert.ok(typeof staticCompiler.root["my-atom?"] === "function");
     assert.ok(staticCompiler.root.lazyfoo instanceof wl.LazyDef);
     assert.notOk(staticCompiler.root.invisible);
     assert.equal(sandbox.$$root.foo3, 5 + 5 + 5 + 5);

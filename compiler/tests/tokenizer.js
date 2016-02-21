@@ -57,7 +57,8 @@ test("Symbols", function( assert ) {
 	assert.deepEqual(tk("baz"), ["SYM", "END"]);
 	assert.deepEqual(tk("-baz"), ["SYM", "END"]);
 	assert.deepEqual(tk("+baz"), ["SYM", "END"]);
-	assert.deepEqual(tk("<>?+-=!@#$%^&*/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
+	assert.deepEqual(tk("toStrng"), ["SYM", "END"]);
+	assert.deepEqual(tk(".<>?+-=!@#$%^&*/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
 					["SYM", "END"]);
 	
 	//pairs(["true", "false", "null", "undefined", "baz"]).forEach(function(pair) {
