@@ -116,7 +116,7 @@ var $$root = {
     mod         :   function(x, y) { return x % y; },
     "setmac!"   :   function(x) { return x.isMacro = true; },
     str         :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
-    print       :   function print(x) { console.log($$root.str(x)); },
+    print       :   function print(...args) { console.log(args.map(str1).join(" ")); },
     regex       :   function regex(str, flags) { return new RegExp(str, flags); },
     
     object      :   function object(proto) { return Object.create(proto || {}); },
@@ -133,7 +133,7 @@ var $$root = {
         return new Symbol("__GS" + (++nextGensymSuffix));
     },
     "macro?" : function(f) {
-        return "isMacro" in f;
+        return f && ("isMacro" in f);
     },
     error:  function(msg) {
         throw Error(msg);

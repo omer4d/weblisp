@@ -116,7 +116,7 @@ var $$root = {
     mod         :   function(x, y) { return x % y; },
     "setmac!"   :   function(x) { return x.isMacro = true; },
     str         :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
-    print       :   function print(x) { console.log($$root.str(x)); },
+    print       :   function print(...args) { console.log(args.map(str1).join(" ")); },
     regex       :   function regex(str, flags) { return new RegExp(str, flags); },
     
     object      :   function object(proto) { return Object.create(proto || {}); },
@@ -133,7 +133,7 @@ var $$root = {
         return new Symbol("__GS" + (++nextGensymSuffix));
     },
     "macro?" : function(f) {
-        return "isMacro" in f;
+        return f && ("isMacro" in f);
     },
     error:  function(msg) {
         throw Error(msg);
@@ -224,7 +224,7 @@ $$root["or"]=(function(...args){
 );
 $$root["or"];
 $$root["setmac!"]($$root["or"]);
-$$root["macroexpand"]=(function(expr){
+$$root["macroexpand-1"]=(function(expr){
    var $$TMP10;
    var $$TMP11;
    var $$TMP12;
@@ -251,7 +251,7 @@ $$root["macroexpand"]=(function(expr){
    return $$TMP10;
 }
 );
-$$root["macroexpand"];
+$$root["macroexpand-1"];
 $$root["inc"]=(function(x){
    var $$TMP14;
    $$TMP14=$$root["+"](x,1);
@@ -859,218 +859,384 @@ $$root["let*"]=(function(bindings,...body){
 );
 $$root["let*"];
 $$root["setmac!"]($$root["let*"]);
-$$root["destruct-helper"]=(function(structure,expr){
-   var $$TMP105;
-   $$TMP105=(function(expr__MINUSname){
-      var $$TMP106;
-      $$TMP106=$$root["concat"]($$root["list"](expr__MINUSname),$$root["list"](expr),$$root["apply"]($$root["concat"],$$root["map-indexed"]((function(v,idx){
-         var $$TMP107;
-         var $$TMP108;
-         if($$root["symbol?"](v)){
-            var $$TMP109;
-            if($$root["="]($$root["geti"]($$root["geti"](v,(new $$root.Symbol("name"))),0),"&")){
-               $$TMP109=$$root["concat"]($$root["list"]($$root["symbol"]((function(target){
-                  var $$TMP110;
-                  $$TMP110=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("slice"))),target,1);
-                  return $$TMP110;
-               }
-               )($$root["geti"](v,(new $$root.Symbol("name")))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("drop"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
-            }
-            else{
-               $$TMP109=$$root["concat"]($$root["list"](v),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
-            }
-            $$TMP108=$$TMP109;
-         }
-         else{
-            $$TMP108=$$root["destruct-helper"](v,$$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname)));
-         }
-         $$TMP107=$$TMP108;
-         return $$TMP107;
-      }
-      ),structure)));
-      return $$TMP106;
-   }
-   )($$root["gensym"]());
-   return $$TMP105;
-}
-);
-$$root["destruct-helper"];
-$$root["destructuring-bind"]=(function(structure,expr,...body){
-   var $$TMP111;
-   $$TMP111=$$root["concat"]($$root["list"]((new $$root.Symbol("let*"))),$$root["list"]($$root["destruct-helper"](structure,expr)),body);
-   return $$TMP111;
-}
-);
-$$root["destructuring-bind"];
-$$root["setmac!"]($$root["destructuring-bind"]);
 $$root["case"]=(function(e,...pairs){
-   var $$TMP112;
-   $$TMP112=(function(e__MINUSname,def__MINUSidx){
-      var $$TMP113;
-      var $$TMP114;
+   var $$TMP105;
+   $$TMP105=(function(e__MINUSname,def__MINUSidx){
+      var $$TMP106;
+      var $$TMP107;
       if($$root["="](def__MINUSidx,-1)){
-         $$TMP114=$$root.cons((new $$root.Symbol("error")),$$root.cons("Fell out of case!",[]));
+         $$TMP107=$$root.cons((new $$root.Symbol("error")),$$root.cons("Fell out of case!",[]));
       }
       else{
-         $$TMP114=$$root["nth"]($$root["inc"](def__MINUSidx),pairs);
+         $$TMP107=$$root["nth"]($$root["inc"](def__MINUSidx),pairs);
       }
-      $$TMP113=(function(def__MINUSexpr,zipped__MINUSpairs){
-         var $$TMP115;
-         $$TMP115=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
-            var $$TMP116;
-            $$TMP116=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("="))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["second"](pair));
-            return $$TMP116;
+      $$TMP106=(function(def__MINUSexpr,zipped__MINUSpairs){
+         var $$TMP108;
+         $$TMP108=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
+            var $$TMP109;
+            $$TMP109=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("="))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["second"](pair));
+            return $$TMP109;
          }
          ),$$root["filter"]((function(pair){
-            var $$TMP117;
-            $$TMP117=$$root["not"]($$root["equal?"]($$root["car"](pair),(new $$root.Symbol("default"))));
-            return $$TMP117;
+            var $$TMP110;
+            $$TMP110=$$root["not"]($$root["equal?"]($$root["car"](pair),(new $$root.Symbol("default"))));
+            return $$TMP110;
          }
          ),zipped__MINUSpairs))),$$root["list"](true),$$root["list"](def__MINUSexpr))));
-         return $$TMP115;
+         return $$TMP108;
       }
-      )($$TMP114,$$root["partition"](2,pairs));
-      return $$TMP113;
+      )($$TMP107,$$root["partition"](2,pairs));
+      return $$TMP106;
    }
    )($$root["gensym"](),$$root["find"]($$root["equal?"],(new $$root.Symbol("default")),pairs));
-   return $$TMP112;
+   return $$TMP105;
 }
 );
 $$root["case"];
 $$root["setmac!"]($$root["case"]);
-$$root["list-matches?"]=(function(expr,patt){
-   var $$TMP118;
-   var $$TMP119;
-   if($$root["equal?"]($$root["first"](patt),(new $$root.Symbol("quote")))){
-      $$TMP119=$$root["equal?"]($$root["second"](patt),expr);
-   }
-   else{
-      var $$TMP120;
-      if($$root["="]($$root["geti"]($$root["geti"]($$root["first"](patt),(new $$root.Symbol("name"))),0),"&")){
-         $$TMP120=$$root["list?"](expr);
-      }
-      else{
-         var $$TMP121;
-         if(true){
-            var $$TMP122;
-            var $$TMP123;
-            if($$root["list?"](expr)){
-               var $$TMP124;
-               if($$root["not"]($$root["null?"](expr))){
-                  $$TMP124=true;
+$$root["destruct-helper"]=(function(structure,expr){
+   var $$TMP111;
+   $$TMP111=(function(expr__MINUSname){
+      var $$TMP112;
+      $$TMP112=$$root["concat"]($$root["list"](expr__MINUSname),$$root["list"](expr),$$root["apply"]($$root["concat"],$$root["map-indexed"]((function(v,idx){
+         var $$TMP113;
+         var $$TMP114;
+         if($$root["symbol?"](v)){
+            var $$TMP115;
+            if($$root["="]($$root["geti"]($$root["geti"](v,(new $$root.Symbol("name"))),0),"&")){
+               $$TMP115=$$root["concat"]($$root["list"]($$root["symbol"]((function(target){
+                  var $$TMP116;
+                  $$TMP116=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("slice"))),target,1);
+                  return $$TMP116;
                }
-               else{
-                  $$TMP124=false;
-               }
-               $$TMP123=$$TMP124;
+               )($$root["geti"](v,(new $$root.Symbol("name")))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("drop"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
             }
             else{
-               $$TMP123=false;
-            }
-            if($$TMP123){
-               var $$TMP125;
-               if($$root["matches?"]($$root["car"](expr),$$root["car"](patt))){
-                  var $$TMP126;
-                  if($$root["matches?"]($$root["cdr"](expr),$$root["cdr"](patt))){
-                     $$TMP126=true;
-                  }
-                  else{
-                     $$TMP126=false;
-                  }
-                  $$TMP125=$$TMP126;
+               var $$TMP117;
+               if($$root["="]($$root["geti"](v,(new $$root.Symbol("name"))),"_")){
+                  $$TMP117=[];
                }
                else{
-                  $$TMP125=false;
+                  $$TMP117=$$root["concat"]($$root["list"](v),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
                }
-               $$TMP122=$$TMP125;
+               $$TMP115=$$TMP117;
             }
-            else{
-               $$TMP122=false;
-            }
-            $$TMP121=$$TMP122;
+            $$TMP114=$$TMP115;
          }
          else{
-            $$TMP121=undefined;
+            $$TMP114=$$root["destruct-helper"](v,$$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname)));
          }
-         $$TMP120=$$TMP121;
+         $$TMP113=$$TMP114;
+         return $$TMP113;
       }
-      $$TMP119=$$TMP120;
+      ),structure)));
+      return $$TMP112;
    }
-   $$TMP118=$$TMP119;
+   )($$root["gensym"]());
+   return $$TMP111;
+}
+);
+$$root["destruct-helper"];
+$$root["destructuring-bind"]=(function(structure,expr,...body){
+   var $$TMP118;
+   var $$TMP119;
+   if($$root["symbol?"](structure)){
+      $$TMP119=$$root["list"](structure,expr);
+   }
+   else{
+      $$TMP119=$$root["destruct-helper"](structure,expr);
+   }
+   $$TMP118=$$root["concat"]($$root["list"]((new $$root.Symbol("let*"))),$$root["list"]($$TMP119),body);
    return $$TMP118;
+}
+);
+$$root["destructuring-bind"];
+$$root["setmac!"]($$root["destructuring-bind"]);
+$$root["macroexpand"]=(function(expr){
+   var $$TMP120;
+   var $$TMP121;
+   if($$root["list?"](expr)){
+      var $$TMP122;
+      if($$root["macro?"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)))){
+         $$TMP122=$$root["macroexpand"]($$root["apply"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)),$$root["cdr"](expr)));
+      }
+      else{
+         $$TMP122=$$root["map"]($$root["macroexpand"],expr);
+      }
+      $$TMP121=$$TMP122;
+   }
+   else{
+      $$TMP121=expr;
+   }
+   $$TMP120=$$TMP121;
+   return $$TMP120;
+}
+);
+$$root["macroexpand"];
+$$root["list-matches?"]=(function(expr,patt){
+   var $$TMP123;
+   var $$TMP124;
+   if($$root["equal?"]($$root["first"](patt),(new $$root.Symbol("quote")))){
+      $$TMP124=$$root["equal?"]($$root["second"](patt),expr);
+   }
+   else{
+      var $$TMP125;
+      var $$TMP126;
+      if($$root["symbol?"]($$root["first"](patt))){
+         var $$TMP127;
+         if($$root["="]($$root["geti"]($$root["geti"]($$root["first"](patt),(new $$root.Symbol("name"))),0),"&")){
+            $$TMP127=true;
+         }
+         else{
+            $$TMP127=false;
+         }
+         $$TMP126=$$TMP127;
+      }
+      else{
+         $$TMP126=false;
+      }
+      if($$TMP126){
+         $$TMP125=$$root["list?"](expr);
+      }
+      else{
+         var $$TMP128;
+         if(true){
+            var $$TMP129;
+            var $$TMP130;
+            if($$root["list?"](expr)){
+               var $$TMP131;
+               if($$root["not"]($$root["null?"](expr))){
+                  $$TMP131=true;
+               }
+               else{
+                  $$TMP131=false;
+               }
+               $$TMP130=$$TMP131;
+            }
+            else{
+               $$TMP130=false;
+            }
+            if($$TMP130){
+               var $$TMP132;
+               if($$root["matches?"]($$root["car"](expr),$$root["car"](patt))){
+                  var $$TMP133;
+                  if($$root["matches?"]($$root["cdr"](expr),$$root["cdr"](patt))){
+                     $$TMP133=true;
+                  }
+                  else{
+                     $$TMP133=false;
+                  }
+                  $$TMP132=$$TMP133;
+               }
+               else{
+                  $$TMP132=false;
+               }
+               $$TMP129=$$TMP132;
+            }
+            else{
+               $$TMP129=false;
+            }
+            $$TMP128=$$TMP129;
+         }
+         else{
+            $$TMP128=undefined;
+         }
+         $$TMP125=$$TMP128;
+      }
+      $$TMP124=$$TMP125;
+   }
+   $$TMP123=$$TMP124;
+   return $$TMP123;
 }
 );
 $$root["list-matches?"];
 $$root["matches?"]=(function(expr,patt){
-   var $$TMP127;
-   var $$TMP128;
+   var $$TMP134;
+   var $$TMP135;
    if($$root["null?"](patt)){
-      $$TMP128=$$root["null?"](expr);
+      $$TMP135=$$root["null?"](expr);
    }
    else{
-      var $$TMP129;
+      var $$TMP136;
       if($$root["list?"](patt)){
-         $$TMP129=$$root["list-matches?"](expr,patt);
+         $$TMP136=$$root["list-matches?"](expr,patt);
       }
       else{
-         var $$TMP130;
+         var $$TMP137;
          if($$root["symbol?"](patt)){
-            $$TMP130=true;
+            $$TMP137=true;
          }
          else{
-            var $$TMP131;
+            var $$TMP138;
             if(true){
-               $$TMP131=$$root["error"]("Invalid pattern!");
+               $$TMP138=$$root["error"]("Invalid pattern!");
             }
             else{
-               $$TMP131=undefined;
+               $$TMP138=undefined;
             }
-            $$TMP130=$$TMP131;
+            $$TMP137=$$TMP138;
          }
-         $$TMP129=$$TMP130;
+         $$TMP136=$$TMP137;
       }
-      $$TMP128=$$TMP129;
+      $$TMP135=$$TMP136;
    }
-   $$TMP127=$$TMP128;
-   return $$TMP127;
+   $$TMP134=$$TMP135;
+   return $$TMP134;
 }
 );
 $$root["matches?"];
+$$root["pattern->structure"]=(function(patt){
+   var $$TMP139;
+   var $$TMP140;
+   var $$TMP141;
+   if($$root["list?"](patt)){
+      var $$TMP142;
+      if($$root["not"]($$root["null?"](patt))){
+         $$TMP142=true;
+      }
+      else{
+         $$TMP142=false;
+      }
+      $$TMP141=$$TMP142;
+   }
+   else{
+      $$TMP141=false;
+   }
+   if($$TMP141){
+      var $$TMP143;
+      if($$root["equal?"]($$root["car"](patt),(new $$root.Symbol("quote")))){
+         $$TMP143=(new $$root.Symbol("_"));
+      }
+      else{
+         $$TMP143=$$root["map"]($$root["pattern->structure"],patt);
+      }
+      $$TMP140=$$TMP143;
+   }
+   else{
+      $$TMP140=patt;
+   }
+   $$TMP139=$$TMP140;
+   return $$TMP139;
+}
+);
+$$root["pattern->structure"];
+$$root["pattern-case"]=(function(e,...pairs){
+   var $$TMP144;
+   $$TMP144=(function(e__MINUSname,zipped__MINUSpairs){
+      var $$TMP145;
+      $$TMP145=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
+         var $$TMP146;
+         $$TMP146=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("matches?"))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["concat"]($$root["list"]((new $$root.Symbol("destructuring-bind"))),$$root["list"]($$root["pattern->structure"]($$root["first"](pair))),$$root["list"](e__MINUSname),$$root["list"]($$root["second"](pair))));
+         return $$TMP146;
+      }
+      ),zipped__MINUSpairs)),$$root["list"](true),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("error"))),$$root["list"]("Fell out of case!"))))));
+      return $$TMP145;
+   }
+   )($$root["gensym"](),$$root["partition"](2,pairs));
+   return $$TMP144;
+}
+);
+$$root["pattern-case"];
+$$root["setmac!"]($$root["pattern-case"]);
+(function(__GS1){
+   var $$TMP147;
+   var $$TMP148;
+   if($$root["matches?"](__GS1,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("lambda")),[])),$$root.cons($$root.cons((new $$root.Symbol("&args")),[]),$$root.cons((new $$root.Symbol("&body")),[]))))){
+      $$TMP148=(function(__GS2){
+         var $$TMP149;
+         $$TMP149=(function(__GS3){
+            var $$TMP150;
+            $$TMP150=(function(args,body){
+               var $$TMP151;
+               $$TMP151=$$root["print"]("lambda",args,body);
+               return $$TMP151;
+            }
+            )($$root["drop"](0,__GS3),$$root["drop"](2,__GS2));
+            return $$TMP150;
+         }
+         )($$root["nth"](1,__GS2));
+         return $$TMP149;
+      }
+      )(__GS1);
+   }
+   else{
+      var $$TMP152;
+      if($$root["matches?"](__GS1,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("if")),[])),$$root.cons((new $$root.Symbol("c")),$$root.cons((new $$root.Symbol("t")),$$root.cons((new $$root.Symbol("f")),[])))))){
+         $$TMP152=(function(__GS4){
+            var $$TMP153;
+            $$TMP153=(function(c,t,f){
+               var $$TMP154;
+               $$TMP154=$$root["print"]("if",c,t,f);
+               return $$TMP154;
+            }
+            )($$root["nth"](1,__GS4),$$root["nth"](2,__GS4),$$root["nth"](3,__GS4));
+            return $$TMP153;
+         }
+         )(__GS1);
+      }
+      else{
+         var $$TMP155;
+         if($$root["matches?"](__GS1,(new $$root.Symbol("any")))){
+            $$TMP155=(function(any){
+               var $$TMP156;
+               $$TMP156=$$root["print"]("Unknown: ",any);
+               return $$TMP156;
+            }
+            )(__GS1);
+         }
+         else{
+            var $$TMP157;
+            if(true){
+               $$TMP157=$$root["error"]("Fell out of case!");
+            }
+            else{
+               $$TMP157=undefined;
+            }
+            $$TMP155=$$TMP157;
+         }
+         $$TMP152=$$TMP155;
+      }
+      $$TMP148=$$TMP152;
+   }
+   $$TMP147=$$TMP148;
+   return $$TMP147;
+}
+)($$root.cons((new $$root.Symbol("lambda")),$$root.cons($$root.cons((new $$root.Symbol("x")),$$root.cons((new $$root.Symbol("y")),[])),$$root.cons($$root.cons((new $$root.Symbol("+")),$$root.cons((new $$root.Symbol("x")),$$root.cons((new $$root.Symbol("y")),[]))),[]))));
 $$root["make-enum"]=(function(...args){
-   var $$TMP132;
-   $$TMP132=(function(e,len){
-      var $$TMP133;
+   var $$TMP158;
+   $$TMP158=(function(e,len){
+      var $$TMP159;
       (function(recur){
-         var $$TMP134;
+         var $$TMP160;
          recur=(function(i){
-            var $$TMP135;
-            var $$TMP136;
+            var $$TMP161;
+            var $$TMP162;
             if($$root["<"](i,len)){
-               $$TMP136=(function(){
-                  var $$TMP137;
+               $$TMP162=(function(){
+                  var $$TMP163;
                   $$root["seti!"](e,$$root["geti"](args,i),i);
-                  $$TMP137=recur($$root["inc"](i));
-                  return $$TMP137;
+                  $$TMP163=recur($$root["inc"](i));
+                  return $$TMP163;
                }
                )();
             }
             else{
-               $$TMP136=undefined;
+               $$TMP162=undefined;
             }
-            $$TMP135=$$TMP136;
-            return $$TMP135;
+            $$TMP161=$$TMP162;
+            return $$TMP161;
          }
          );
          recur;
-         $$TMP134=recur(0);
-         return $$TMP134;
+         $$TMP160=recur(0);
+         return $$TMP160;
       }
       )([]);
-      $$TMP133=e;
-      return $$TMP133;
+      $$TMP159=e;
+      return $$TMP159;
    }
    )($$root["object"](),$$root["count"](args));
-   return $$TMP132;
+   return $$TMP158;
 }
 );
 $$root["make-enum"];

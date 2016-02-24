@@ -145,7 +145,7 @@ function lit(str) {
 
 var spacePatt = /^\s+/;
 var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
-var symPatt = /^[.<>?+\-=!@#$%\^&*/a-zA-Z][.<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
+var symPatt = /^[_.<>?+\-=!@#$%\^&*/a-zA-Z][_.<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
 var strPatt = /^"(?:(?:\\")|[^"])*"/;
 
 var tokenTable = [{patt: spacePatt, type: -1},
