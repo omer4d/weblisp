@@ -141,6 +141,7 @@ var $$root = {
 };
 
 $$root["*ns*"] = $$root;
+$$root.__proto__ = global;
 
 // *
 // * 

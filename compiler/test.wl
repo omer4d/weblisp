@@ -101,6 +101,9 @@
 (defun nth (n lst)
     (if (= n 0) (car lst) (nth (dec n) (cdr lst))))
     
+(defun count (lst)
+    (reduce (lambda (accum v) (inc accum)) lst 0))
+    
 (defun zip (a &more)
    ((lambda (args)
         (if (reduce (lambda (accum v) (or accum (null? v))) args false)
@@ -132,6 +135,20 @@
     `(let (recur null)
         (setv! recur (lambda ~(every-nth 2 bindings) ~@body))
         (recur ~@(every-nth 2 (cdr bindings)))))
+
+(defun partition (n lst)
+    (if (null? lst)
+        null
+        (reverse
+            (loop (accum '()
+                   part (cons (car lst) null)
+                   rem (cdr lst)
+                   counter 1)
+                (if (null? rem)
+                    (cons (reverse part) accum)
+                    (if (= (mod counter n) 0)
+                        (recur (cons (reverse part) accum) (cons (car rem) null) (cdr rem) (inc counter))
+                        (recur accum (cons (car rem) part) (cdr rem) (inc counter))))))))
 
 (defun dot-helper (obj-name reversed-fields)
     (if (null? reversed-fields)
@@ -183,7 +200,7 @@
                       ~(let-helper* (concat binding-pairs (map first (first divs))) (second divs) body))))))
 
 (defmacro let* (bindings &body)
-    (let-helper* '() (zip (every-nth 2 bindings) (every-nth 2 (cdr bindings))) body))
+    (let-helper* '() (partition 2 bindings) body))
 
 (defun destruct-helper (structure expr)
     (let (expr-name (gensym))
@@ -204,31 +221,42 @@
     (let* (e-name (gensym)
            def-idx (find equal? 'default pairs)
            def-expr (if (= def-idx -1) '(error "Fell out of case!") (nth (inc def-idx) pairs))
-           zipped-pairs (zip (every-nth 2 pairs) (every-nth 2 (cdr pairs))))
+           zipped-pairs (partition 2 pairs))
         `(let (~e-name ~e)
             (cond ~@(apply concat
-                            (map (lambda (pair) (list `(= ~e-name (quote ~(first pair))) (second pair)))   
+                            (map (lambda (pair) (list `(= ~e-name (quote ~(first pair))) (second pair)))
                                  (filter (lambda (pair) (not (equal? (car pair) 'default))) zipped-pairs)))
                     true ~def-expr))))
 
-;(defun pprint (expr)
-;    (if (and (list? expr) (not (null? expr)))
-;        (case (car expr)
-;            lambda (print (
-            
-            
-;(print (destructuring-bind (a (b (c &more)) &etc) '(1 (2 (3 4 5)) 6 7) (+ (+ a b c) (apply + more) (apply + etc))))
+(defun list-matches? (expr patt)
+    (cond
+        (equal? (first patt) 'quote)
+        (equal? (second patt) expr)
+        
+        (= (. (first patt) name 0) "&")
+        (list? expr)
+        
+        true
+        (if (and (list? expr) (not (null? expr)))
+            (and (matches? (car expr) (car patt)) (matches? (cdr expr) (cdr patt)))
+            false)))
 
-
-;(print (macroexpand '(let* (gs1 (quote (1 2 (3 4)))
-;       a (nth 0 gs1)
-;       b (nth 1 gs1)
-;       gs2 (nth 2 gs1)
-;       c (nth 0 gs2)
-;       d (nth 1 gs2))
-;    (+ a b c))))
-
-;(print (destructuring-bind (a b (c d)) '(1 2 (3 4)) (+ a b c)))
-
-;(print (destructuring-bind (a b (c d)) '(1 2 (3 4))
-;         (+ a b)))
+(defun matches? (expr patt)
+    (cond
+        (null? patt) (null? expr)
+        (list? patt) (list-matches? expr patt) 
+        (symbol? patt) true
+        true         (error "Invalid pattern!")))
+        
+(defun make-enum (&args)
+    (let (e (object)
+          len (count args))
+        (loop (i 0)
+            (when (< i len)
+                (seti! e (geti args i) i)
+                (recur (inc i))))
+        e))
+        
+        
+;(def token-proto (make-object))
+;(seti token-proto text (lambda (
