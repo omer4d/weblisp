@@ -10,6 +10,17 @@
 
 (setmac! defmacro)
 
+(defmacro method (args &body)
+  `(lambda ~(cdr args)
+      ((lambda (~(car args))
+	 ~@body) this)))
+
+(defmacro defmethod (name obj args &body)
+  `(seti! ~obj (quote ~name)
+     (lambda ~(cdr args)
+	((lambda (~(car args))
+	 ~@body) this))))
+
 (defmacro defun (name args &body)
     `(def ~name (lambda ~args ~@body)))
 
@@ -34,7 +45,9 @@
 (defmacro or (&args)
     (if (null? args)
         false
-        `(if ~(car args) true ~(cons 'or (cdr args)))))
+	`((lambda (c)
+	   (if c c ~(cons 'or (cdr args))))
+	  ~(car args))))
 
 (defun macroexpand-1 (expr)
     (if (and (list? expr) (macro? (geti *ns* (car expr))))
@@ -44,14 +57,19 @@
 (defun inc (x) (+ x 1))
 (defun dec (x) (- x 1))
 
-(defmacro inc! (name) `(setv! ~name (+ ~name 1)))
-(defmacro dec! (name) `(setv! ~name (- ~name 1)))
+(defmacro inc! (name amt)
+  (setv! amt (or amt 1))
+  `(setv! ~name (+ ~name ~amt)))
+
+(defmacro dec! (name amt)
+  (setv! amt (or amt 1))
+  `(setv! ~name (- ~name ~amt)))
 
 (def first car)
 (defun second (lst) (car (cdr lst)))
-(defun third (lst) (car (car (cdr lst))))
-(defun fourth (lst) (car (car (car (cdr lst)))))
-(defun fifth (lst) (car (car (car (car (cdr lst))))))
+(defun third (lst) (car (cdr (cdr lst))))
+(defun fourth (lst) (car (cdr (cdr (cdr lst)))))
+(defun fifth (lst) (car (cdr (cdr (cdr (cdr lst))))))
 
 (defun reduce (r lst accum)
     (if (null? lst)
@@ -202,6 +220,8 @@
 (defmacro let* (bindings &body)
     (let-helper* '() (partition 2 bindings) body))
 
+(defun complement (f) (lambda (x) (not (f x))))
+
 (defmacro case (e &pairs)
     (let* (e-name (gensym)
            def-idx (find equal? 'default pairs)
@@ -209,7 +229,7 @@
            zipped-pairs (partition 2 pairs))
         `(let (~e-name ~e)
             (cond ~@(apply concat
-                            (map (lambda (pair) (list `(= ~e-name (quote ~(first pair))) (second pair)))
+                            (map (lambda (pair) (list `(equal? ~e-name (quote ~(first pair))) (second pair)))
                                  (filter (lambda (pair) (not (equal? (car pair) 'default))) zipped-pairs)))
                     true ~def-expr))))
 
@@ -276,11 +296,65 @@
 			   zipped-pairs))
 	     true (error "Fell out of case!")))))
 
-(pattern-case '(lambda (x y) (+ x y))
-  ('lambda (&args) &body) (print "lambda" args body)
-  ('if c t f)             (print "if" c t f)
-  any                     (print "Unknown: " any))
+(defmacro set! (place v)
+  (pattern-case (macroexpand place)
+     ('geti obj field) `(seti! ~obj ~field ~v)
+     any (if (symbol? any)
+	     `(setv! ~any ~v)
+	     `(error "Not a settable place!"))))
 
+(defun push (x lst) (reverse (cons x (reverse lst))))
+
+(defmacro -> (x &forms)
+  (if (null? forms)
+      x
+      `(-> ~(push x (car forms)) ~@(cdr forms))))
+
+(defmacro while (c &body)
+  `(loop ()
+      (when ~c
+	~@body
+	(recur))))
+
+(defun sort (cmp lst)
+  (. lst sort (cmp)))
+
+(defun in-range (binding-name start end step)
+  (set! step (or step 1))
+  (list (list binding-name start)
+	`((inc! ~binding-name ~step))
+	`(< ~binding-name ~end)))
+
+(defun iterate-compile-for (form)
+  (destructuring-bind (_ binding-name (func-name &args)) form
+    (apply (geti *ns* func-name) (cons binding-name args))))
+
+(defun iterate-compile-while (form)
+  (list '() '() (second form)))
+
+(defun iterate-compile-do (form)
+  (list '() (cdr form) '()))
+
+(def iterate-form-order '(do while for))
+
+(defmacro iterate (&forms)
+  (let* (trips (map (lambda (form)
+		      (case (car form)
+			for     (iterate-compile-for form)
+			while   (iterate-compile-while form)
+			do      (iterate-compile-do form)
+			default (error "Unknown iterate form")))
+		 (sort (lambda (a b) (- (find equal? (car a) iterate-form-order)
+					(find equal? (car b) iterate-form-order)))
+		       forms))
+	 bindings (map first trips)
+	 actions (map second trips)
+	 conds (filter (complement null?) (map third trips)))
+    `(let* ~(apply concat bindings)
+	   (loop ()
+	      (when ~(cons 'and conds)
+		    ~@(apply concat actions)
+		    (recur))))))
 
 (defun make-enum (&args)
     (let (e (object)
@@ -291,5 +365,53 @@
                 (recur (inc i))))
         e))
 
-;(def token-proto (make-object))
-;(seti token-proto text (lambda (
+(defmacro gen-consts (names suffix)
+  `(progn
+     ~@(map-indexed
+	(lambda (name idx)
+	  `(def ~(symbol (str name "-" suffix)) ~idx))
+	names)))
+
+(gen-consts ("list-open" "list-close" "true" "false" "null" "undef" "num" "sym" "str"
+			 "quote" "backquote" "unquote" "splice" "end") "tok")
+
+(def token-proto (object))
+
+(defun make-token (src type start len)
+  (let (o (object token-proto))
+    (set! (. o src) src)
+    (set! (. o type) type)
+    (set! (. o start) start)
+    (set! (. o len) len)
+    o))
+
+(defmethod text token-proto (self)
+  (. self src substr ((. self start) (. self len))))
+
+(defun lit(s)
+  (regex (str "^" (. s replace ((regex "[.*+?^${}()|[\\]\\\\]" "g") "\\$&")))))
+
+(def space-patt (regex "^\\s+"))
+(def number-patt (regex "^[+\\-]?\\d+(\\.\\d*)?|^[+\\-]?\\.\\d+"))
+(def sym-patt (regex "^[_.<>?+\\-=!@#$%\\^&*/a-zA-Z][_.<>?+\\-=!@#$%\\^&*/a-zA-Z0-9]*"))
+(def str-patt (regex "^\"(?:(?:\\\\\")|[^\"])*\""))
+
+(def token-table (list (list space-patt           -1)
+		       (list (regex "^;[^\\n]*")  -1)
+		       (list number-patt          num-tok)
+		       (list str-patt             str-tok)
+		       (list (lit "(")            list-open-tok)
+		       (list (lit ")")            list-close-tok)
+		       (list (lit "'")            quote-tok)
+		       (list (lit "`")            backquote-tok)
+		       (list (lit "~@")           splice-tok)
+		       (list (lit "~")            unquote-tok)
+		       (list sym-patt             sym-tok)))
+
+(def keywords (object null))
+(set! (. keywords "true") true-tok)
+(set! (. keywords "false") false-tok)
+(set! (. keywords "undefined") undefined-tok)
+(set! (. keywords "null") null-tok)
+
+

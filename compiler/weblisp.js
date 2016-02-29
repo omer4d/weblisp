@@ -482,6 +482,19 @@ Compiler.prototype.compile = function(lexenv, expr) {
         return this.compileAtom(lexenv, expr);
 };
 
+function str1(x) {
+    if(Array.isArray(x) && x.length === 0)
+   	return "null";
+    else if(x === undefined)
+    	return "undefined";
+    else if(typeof(x) === "function")
+    	return (x.isMacro ? "Macro " : "Function ") + (x.name || "[Anonymous]");
+    else if(Array.isArray(x))
+        return "(" + x.map(str1).join(" ") + ")";
+    else
+    	return x.toString();
+}
+
 var rootProto = {
     Symbol          :   Symbol,
     symbol          :   function(name) { return new Symbol(name); },
@@ -517,6 +530,14 @@ var rootProto = {
     "call-method"   :   function call__MINUSmethod(method, target, ...args) {
         return method.apply(target, args);
     },
+    "macro?" : function(f) {
+        return f && ("isMacro" in f);
+    },
+    str      :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
+    print    :   function print(...args) { console.log(args.map(str1).join(" ")); },
+    error    :   function(msg) {
+        throw Error(msg);
+    }
 };
 
 function NodeEvaluator() {
@@ -535,7 +556,7 @@ function NodeEvaluator() {
 }
 
 NodeEvaluator.prototype.eval = function(expr) {
-    var tmp = this.compiler.compile({}, expr);
+    var tmp = this.compiler.compile({"this": true}, expr);
     return this.root.jeval(tmp[1] + tmp[0]);
 };
 
@@ -582,6 +603,8 @@ function StaticCompiler() {
     root.jeval = function(str) {
         return VM.runInContext(str, sandbox);
     };
+
+    root["*ns*"] = sandbox.$$root;
     
     var nextGensymSuffix = 0;
     
@@ -602,18 +625,18 @@ function isIIFE(e) {
 }
 
 StaticCompiler.prototype.compileToplevel = function(e) {
-    var tmp;
+    var tmp, lexenv = {"this": true};
     
     if(list__QM(e) && !null__QM(e)) {
         if(car(e).name === "def") {
-            tmp = this.compile({}, e);
+            tmp = this.compile(lexenv, e);
             var name = second(e).name;
             this.root[name] = new LazyDef(tmp[1], tmp[0]);
             return tmp[1] + tmp[0] + ";";
         }
         
         else if(car(e).name === "setmac!") {
-            tmp = this.compile({}, e);
+            tmp = this.compile(lexenv, e);
             this.root.jeval(tmp[1] + tmp[0]);
             return tmp[1] + tmp[0] + ";";
         }
@@ -623,11 +646,11 @@ StaticCompiler.prototype.compileToplevel = function(e) {
         }
         
         else if(symbol__QM(car(e)) && this.isMacro(car(e).name)) {
-            return this.compileToplevel(this.macroexpandUnsafe({}, e));
+            return this.compileToplevel(this.macroexpandUnsafe(lexenv, e));
         }
     }
     
-    tmp = this.compile({}, e);
+    tmp = this.compile(lexenv, e);
     return tmp[1] + tmp[0] + ";";
 };
 
@@ -641,11 +664,11 @@ StaticCompiler.prototype.compileUnit = function(str) {
     return r;
 };
 
-function formatCode(str) {
+function formatCode1(str) {
     var toks = str.split(/(;|{|})/);
     var out = "";
     var ind = [];
-    
+
     for(var i = 0; i < Math.floor(toks.length / 2); ++i) {
         if(toks[i * 2 + 1] === "}")
             ind.pop();
@@ -657,6 +680,14 @@ function formatCode(str) {
     }
     
     return out + toks[toks.length - 1];
+}
+
+function formatCode(str) {
+    var strPatt = /("(?:(?:\\")|[^"])*")/;
+    var toks = str.split(strPatt);
+    return toks.map(function(tok, idx) {
+	return idx % 2 ? tok : formatCode1(tok);
+    }).join("");
 }
 
 if("in" in argv) {
