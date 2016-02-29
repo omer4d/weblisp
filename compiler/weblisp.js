@@ -522,6 +522,7 @@ var rootProto = {
     ">="       :   function(x, y) { return x >= y; },
     mod             :   function(x, y) { return x % y; },
     "setmac!"    :   function(x) { return x.isMacro = true; },
+    object      :   function object(proto) { return Object.create(proto || {}); },
     geti            :   function geti(obj, idx) { return obj[idx]; },
     "seti!"      :   function seti__BANG(obj, idx, val) { obj[idx] = val },
     "apply-method"  :   function apply__MINUSmethod(method, target, args) {
