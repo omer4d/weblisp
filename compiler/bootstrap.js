@@ -137,11 +137,14 @@ var $$root = {
     },
     error:  function(msg) {
         throw Error(msg);
-    }
+    },
+	export: function(s, v) {
+		module.exports[s] = v;
+	},
 };
 
 $$root["*ns*"] = $$root;
-$$root.__proto__ = global;
+$$root.__proto__ = Function('return this')();
 
 // *
 // * 

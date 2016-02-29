@@ -45,11 +45,13 @@
         `(if ~(car args) ~(cons 'and (cdr args)) false)))
 
 (defmacro or (&args)
-    (if (null? args)
-        false
-	`((lambda (c)
-	   (if c c ~(cons 'or (cdr args))))
-	  ~(car args))))
+  (if (null? args)
+      false
+      (if (null? (cdr args))
+	  (car args)
+	  `((lambda (c)
+	      (if c c ~(cons 'or (cdr args))))
+	    ~(car args)))))
 
 (defun macroexpand-1 (expr)
     (if (and (list? expr) (macro? (geti *ns* (car expr))))
@@ -455,7 +457,7 @@
 (def keywords (object null))
 (set! (. keywords "true") true-tok)
 (set! (. keywords "false") false-tok)
-(set! (. keywords "undefined") undefined-tok)
+(set! (. keywords "undefined") undef-tok)
 (set! (. keywords "null") null-tok)
 
 (defun tokenize (src)
@@ -480,4 +482,6 @@
 					    toks)))
 			      (inc! pos (. res 0 length)))
 			    (error (str "Unrecognized token: " s))))))
-    (reverse (cons end-tok toks))))
+    (reverse (cons (make-token src end-tok 0 0) toks))))
+
+(export 'root *ns*)

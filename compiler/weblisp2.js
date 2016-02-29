@@ -137,11 +137,14 @@ var $$root = {
     },
     error:  function(msg) {
         throw Error(msg);
-    }
+    },
+	export: function(s, v) {
+		module.exports[s] = v;
+	},
 };
 
 $$root["*ns*"] = $$root;
-$$root.__proto__ = global;
+$$root.__proto__ = Function('return this')();
 
 // *
 // * 
@@ -239,7 +242,14 @@ if($$root["null?"](args)){
    $$TMP12=false;
 }
 else{
-$$TMP12=$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("c"))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("if"))),$$root["list"]((new $$root.Symbol("c"))),$$root["list"]((new $$root.Symbol("c"))),$$root["list"]($$root["cons"]((new $$root.Symbol("or")),$$root["cdr"](args))))))),$$root["list"]($$root["car"](args)));
+   var $$TMP13;
+if($$root["null?"]($$root["cdr"](args))){
+$$TMP13=$$root["car"](args);
+}
+else{
+$$TMP13=$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("c"))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("if"))),$$root["list"]((new $$root.Symbol("c"))),$$root["list"]((new $$root.Symbol("c"))),$$root["list"]($$root["cons"]((new $$root.Symbol("or")),$$root["cdr"](args))))))),$$root["list"]($$root["car"](args)));
+}
+$$TMP12=$$TMP13;
 }
 $$TMP11=$$TMP12;
 return $$TMP11;
@@ -248,111 +258,87 @@ return $$TMP11;
 $$root["or"];
 $$root["setmac!"]($$root["or"]);
 $$root["macroexpand-1"]=(function(expr){
-   var $$TMP13;
    var $$TMP14;
    var $$TMP15;
-if($$root["list?"](expr)){
    var $$TMP16;
+if($$root["list?"](expr)){
+   var $$TMP17;
 if($$root["macro?"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)))){
-   $$TMP16=true;
+   $$TMP17=true;
+}
+else{
+   $$TMP17=false;
+}
+$$TMP16=$$TMP17;
 }
 else{
    $$TMP16=false;
 }
-$$TMP15=$$TMP16;
+if($$TMP16){
+$$TMP15=$$root["apply"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)),$$root["cdr"](expr));
 }
 else{
-   $$TMP15=false;
+   $$TMP15=expr;
 }
-if($$TMP15){
-$$TMP14=$$root["apply"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)),$$root["cdr"](expr));
-}
-else{
-   $$TMP14=expr;
-}
-$$TMP13=$$TMP14;
-return $$TMP13;
+$$TMP14=$$TMP15;
+return $$TMP14;
 }
 );
 $$root["macroexpand-1"];
 $$root["inc"]=(function(x){
-   var $$TMP17;
-$$TMP17=$$root["+"](x,1);
-return $$TMP17;
+   var $$TMP18;
+$$TMP18=$$root["+"](x,1);
+return $$TMP18;
 }
 );
 $$root["inc"];
 $$root["dec"]=(function(x){
-   var $$TMP18;
-$$TMP18=$$root["-"](x,1);
-return $$TMP18;
+   var $$TMP19;
+$$TMP19=$$root["-"](x,1);
+return $$TMP19;
 }
 );
 $$root["dec"];
 $$root["inc!"]=(function(name,amt){
-   var $$TMP19;
+   var $$TMP20;
    amt=(function(c){
-      var $$TMP20;
       var $$TMP21;
+      var $$TMP22;
       if(c){
-         $$TMP21=c;
+         $$TMP22=c;
       }
       else{
-         $$TMP21=(function(c){
-            var $$TMP22;
-            var $$TMP23;
-            if(c){
-               $$TMP23=c;
-            }
-            else{
-               $$TMP23=false;
-            }
-            $$TMP22=$$TMP23;
-            return $$TMP22;
-         }
-         )(1);
+         $$TMP22=1;
       }
-      $$TMP20=$$TMP21;
-      return $$TMP20;
+      $$TMP21=$$TMP22;
+      return $$TMP21;
    }
    )(amt);
    amt;
-$$TMP19=$$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("+"))),$$root["list"](name),$$root["list"](amt))));
-return $$TMP19;
+$$TMP20=$$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("+"))),$$root["list"](name),$$root["list"](amt))));
+return $$TMP20;
 }
 );
 $$root["inc!"];
 $$root["setmac!"]($$root["inc!"]);
 $$root["dec!"]=(function(name,amt){
-   var $$TMP24;
+   var $$TMP23;
    amt=(function(c){
+      var $$TMP24;
       var $$TMP25;
-      var $$TMP26;
       if(c){
-         $$TMP26=c;
+         $$TMP25=c;
       }
       else{
-         $$TMP26=(function(c){
-            var $$TMP27;
-            var $$TMP28;
-            if(c){
-               $$TMP28=c;
-            }
-            else{
-               $$TMP28=false;
-            }
-            $$TMP27=$$TMP28;
-            return $$TMP27;
-         }
-         )(1);
+         $$TMP25=1;
       }
-      $$TMP25=$$TMP26;
-      return $$TMP25;
+      $$TMP24=$$TMP25;
+      return $$TMP24;
    }
    )(amt);
    amt;
-$$TMP24=$$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("-"))),$$root["list"](name),$$root["list"](amt))));
-return $$TMP24;
+$$TMP23=$$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("-"))),$$root["list"](name),$$root["list"](amt))));
+return $$TMP23;
 }
 );
 $$root["dec!"];
@@ -360,96 +346,117 @@ $$root["setmac!"]($$root["dec!"]);
 $$root["first"]=$$root["car"];
 $$root["first"];
 $$root["second"]=(function(lst){
-   var $$TMP29;
-$$TMP29=$$root["car"]($$root["cdr"](lst));
-return $$TMP29;
+   var $$TMP26;
+$$TMP26=$$root["car"]($$root["cdr"](lst));
+return $$TMP26;
 }
 );
 $$root["second"];
 $$root["third"]=(function(lst){
-   var $$TMP30;
-$$TMP30=$$root["car"]($$root["cdr"]($$root["cdr"](lst)));
-return $$TMP30;
+   var $$TMP27;
+$$TMP27=$$root["car"]($$root["cdr"]($$root["cdr"](lst)));
+return $$TMP27;
 }
 );
 $$root["third"];
 $$root["fourth"]=(function(lst){
-   var $$TMP31;
-$$TMP31=$$root["car"]($$root["cdr"]($$root["cdr"]($$root["cdr"](lst))));
-return $$TMP31;
+   var $$TMP28;
+$$TMP28=$$root["car"]($$root["cdr"]($$root["cdr"]($$root["cdr"](lst))));
+return $$TMP28;
 }
 );
 $$root["fourth"];
 $$root["fifth"]=(function(lst){
-   var $$TMP32;
-$$TMP32=$$root["car"]($$root["cdr"]($$root["cdr"]($$root["cdr"]($$root["cdr"](lst)))));
-return $$TMP32;
+   var $$TMP29;
+$$TMP29=$$root["car"]($$root["cdr"]($$root["cdr"]($$root["cdr"]($$root["cdr"](lst)))));
+return $$TMP29;
 }
 );
 $$root["fifth"];
 $$root["getter"]=(function(field){
-   var $$TMP33;
-   $$TMP33=(function(obj){
-      var $$TMP34;
-$$TMP34=$$root["geti"](obj,field);
-return $$TMP34;
+   var $$TMP30;
+   $$TMP30=(function(obj){
+      var $$TMP31;
+$$TMP31=$$root["geti"](obj,field);
+return $$TMP31;
 }
 );
-return $$TMP33;
+return $$TMP30;
 }
 );
 $$root["getter"];
 $$root["reduce"]=(function(r,lst,accum){
-   var $$TMP35;
-   var $$TMP36;
+   var $$TMP32;
+   var $$TMP33;
 if($$root["null?"](lst)){
-   $$TMP36=accum;
+   $$TMP33=accum;
 }
 else{
-$$TMP36=$$root["reduce"](r,$$root["cdr"](lst),r(accum,$$root["car"](lst)));
+$$TMP33=$$root["reduce"](r,$$root["cdr"](lst),r(accum,$$root["car"](lst)));
 }
-$$TMP35=$$TMP36;
-return $$TMP35;
+$$TMP32=$$TMP33;
+return $$TMP32;
 }
 );
 $$root["reduce"];
 $$root["reverse"]=(function(lst){
-   var $$TMP37;
-$$TMP37=$$root["reduce"]((function(accum,v){
-   var $$TMP38;
-$$TMP38=$$root["cons"](v,accum);
-return $$TMP38;
+   var $$TMP34;
+$$TMP34=$$root["reduce"]((function(accum,v){
+   var $$TMP35;
+$$TMP35=$$root["cons"](v,accum);
+return $$TMP35;
 }
 ),lst,[]);
-return $$TMP37;
+return $$TMP34;
 }
 );
 $$root["reverse"];
 $$root["transform-list"]=(function(r,lst){
-   var $$TMP39;
-$$TMP39=$$root["reverse"]($$root["reduce"](r,lst,[]));
-return $$TMP39;
+   var $$TMP36;
+$$TMP36=$$root["reverse"]($$root["reduce"](r,lst,[]));
+return $$TMP36;
 }
 );
 $$root["transform-list"];
 $$root["map"]=(function(f,lst){
-   var $$TMP40;
-$$TMP40=$$root["transform-list"]((function(accum,v){
-   var $$TMP41;
-$$TMP41=$$root["cons"](f(v),accum);
-return $$TMP41;
+   var $$TMP37;
+$$TMP37=$$root["transform-list"]((function(accum,v){
+   var $$TMP38;
+$$TMP38=$$root["cons"](f(v),accum);
+return $$TMP38;
 }
 ),lst);
-return $$TMP40;
+return $$TMP37;
 }
 );
 $$root["map"];
 $$root["filter"]=(function(p,lst){
+   var $$TMP39;
+$$TMP39=$$root["transform-list"]((function(accum,v){
+   var $$TMP40;
+   var $$TMP41;
+   if(p(v)){
+$$TMP41=$$root["cons"](v,accum);
+}
+else{
+   $$TMP41=accum;
+}
+$$TMP40=$$TMP41;
+return $$TMP40;
+}
+),lst);
+return $$TMP39;
+}
+);
+$$root["filter"];
+$$root["take"]=(function(n,lst){
    var $$TMP42;
 $$TMP42=$$root["transform-list"]((function(accum,v){
    var $$TMP43;
-   var $$TMP44;
-   if(p(v)){
+n=$$root["-"](n,1);
+n;
+var $$TMP44;
+if($$root[">="](n,0)){
 $$TMP44=$$root["cons"](v,accum);
 }
 else{
@@ -462,8 +469,8 @@ return $$TMP43;
 return $$TMP42;
 }
 );
-$$root["filter"];
-$$root["take"]=(function(n,lst){
+$$root["take"];
+$$root["drop"]=(function(n,lst){
    var $$TMP45;
 $$TMP45=$$root["transform-list"]((function(accum,v){
    var $$TMP46;
@@ -471,10 +478,10 @@ n=$$root["-"](n,1);
 n;
 var $$TMP47;
 if($$root[">="](n,0)){
-$$TMP47=$$root["cons"](v,accum);
+   $$TMP47=accum;
 }
 else{
-   $$TMP47=accum;
+$$TMP47=$$root["cons"](v,accum);
 }
 $$TMP46=$$TMP47;
 return $$TMP46;
@@ -483,288 +490,281 @@ return $$TMP46;
 return $$TMP45;
 }
 );
-$$root["take"];
-$$root["drop"]=(function(n,lst){
-   var $$TMP48;
-$$TMP48=$$root["transform-list"]((function(accum,v){
-   var $$TMP49;
-n=$$root["-"](n,1);
-n;
-var $$TMP50;
-if($$root[">="](n,0)){
-   $$TMP50=accum;
-}
-else{
-$$TMP50=$$root["cons"](v,accum);
-}
-$$TMP49=$$TMP50;
-return $$TMP49;
-}
-),lst);
-return $$TMP48;
-}
-);
 $$root["drop"];
 $$root["every-nth"]=(function(n,lst){
+   var $$TMP48;
+   $$TMP48=(function(counter){
+      var $$TMP49;
+$$TMP49=$$root["transform-list"]((function(accum,v){
+   var $$TMP50;
    var $$TMP51;
-   $$TMP51=(function(counter){
-      var $$TMP52;
-$$TMP52=$$root["transform-list"]((function(accum,v){
-   var $$TMP53;
-   var $$TMP54;
 counter=$$root["+"](counter,1);
 if($$root["="]($$root["mod"](counter,n),0)){
-$$TMP54=$$root["cons"](v,accum);
+$$TMP51=$$root["cons"](v,accum);
 }
 else{
-   $$TMP54=accum;
+   $$TMP51=accum;
 }
-$$TMP53=$$TMP54;
-return $$TMP53;
+$$TMP50=$$TMP51;
+return $$TMP50;
 }
 ),lst);
-return $$TMP52;
+return $$TMP49;
 }
 )(-1);
-return $$TMP51;
+return $$TMP48;
 }
 );
 $$root["every-nth"];
 $$root["nth"]=(function(n,lst){
-   var $$TMP55;
-   var $$TMP56;
+   var $$TMP52;
+   var $$TMP53;
 if($$root["="](n,0)){
-$$TMP56=$$root["car"](lst);
+$$TMP53=$$root["car"](lst);
 }
 else{
-$$TMP56=$$root["nth"]($$root["dec"](n),$$root["cdr"](lst));
+$$TMP53=$$root["nth"]($$root["dec"](n),$$root["cdr"](lst));
 }
-$$TMP55=$$TMP56;
-return $$TMP55;
+$$TMP52=$$TMP53;
+return $$TMP52;
 }
 );
 $$root["nth"];
 $$root["count"]=(function(lst){
-   var $$TMP57;
-$$TMP57=$$root["reduce"]((function(accum,v){
-   var $$TMP58;
-$$TMP58=$$root["inc"](accum);
-return $$TMP58;
+   var $$TMP54;
+$$TMP54=$$root["reduce"]((function(accum,v){
+   var $$TMP55;
+$$TMP55=$$root["inc"](accum);
+return $$TMP55;
 }
 ),lst,0);
-return $$TMP57;
+return $$TMP54;
 }
 );
 $$root["count"];
 $$root["zip"]=(function(a,...more){
+   var $$TMP56;
+   $$TMP56=(function(args){
+      var $$TMP57;
+      var $$TMP58;
+if($$root["reduce"]((function(accum,v){
    var $$TMP59;
-   $$TMP59=(function(args){
+   $$TMP59=(function(c){
       var $$TMP60;
       var $$TMP61;
-if($$root["reduce"]((function(accum,v){
-   var $$TMP62;
-   $$TMP62=(function(c){
-      var $$TMP63;
-      var $$TMP64;
       if(c){
-         $$TMP64=c;
+         $$TMP61=c;
       }
       else{
-         $$TMP64=(function(c){
-            var $$TMP65;
-            var $$TMP66;
-            if(c){
-               $$TMP66=c;
-            }
-            else{
-               $$TMP66=false;
-            }
-            $$TMP65=$$TMP66;
-            return $$TMP65;
-         }
-)($$root["null?"](v));
-}
-$$TMP63=$$TMP64;
-return $$TMP63;
-}
-)(accum);
-return $$TMP62;
-}
-),args,false)){
-   $$TMP61=[];
-}
-else{
-$$TMP61=$$root["cons"]($$root["map"]($$root["car"],args),$$root["apply"]($$root["zip"],$$root["map"]($$root["cdr"],args)));
+$$TMP61=$$root["null?"](v);
 }
 $$TMP60=$$TMP61;
 return $$TMP60;
 }
-)($$root["cons"](a,more));
+)(accum);
 return $$TMP59;
+}
+),args,false)){
+   $$TMP58=[];
+}
+else{
+$$TMP58=$$root["cons"]($$root["map"]($$root["car"],args),$$root["apply"]($$root["zip"],$$root["map"]($$root["cdr"],args)));
+}
+$$TMP57=$$TMP58;
+return $$TMP57;
+}
+)($$root["cons"](a,more));
+return $$TMP56;
 }
 );
 $$root["zip"];
 $$root["let"]=(function(bindings,...body){
-   var $$TMP67;
-$$TMP67=$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["every-nth"](2,bindings)),body)),$$root["every-nth"](2,$$root["cdr"](bindings)));
-return $$TMP67;
+   var $$TMP62;
+$$TMP62=$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["every-nth"](2,bindings)),body)),$$root["every-nth"](2,$$root["cdr"](bindings)));
+return $$TMP62;
 }
 );
 $$root["let"];
 $$root["setmac!"]($$root["let"]);
 $$root["find"]=(function(f,arg,lst){
-   var $$TMP68;
-   $$TMP68=(function(idx){
-      var $$TMP69;
-$$TMP69=$$root["reduce"]((function(accum,v){
-   var $$TMP70;
+   var $$TMP63;
+   $$TMP63=(function(idx){
+      var $$TMP64;
+$$TMP64=$$root["reduce"]((function(accum,v){
+   var $$TMP65;
 idx=$$root["+"](idx,1);
 idx;
-var $$TMP71;
+var $$TMP66;
 if(f(arg,v)){
-   $$TMP71=idx;
+   $$TMP66=idx;
 }
 else{
-   $$TMP71=accum;
+   $$TMP66=accum;
 }
-$$TMP70=$$TMP71;
-return $$TMP70;
+$$TMP65=$$TMP66;
+return $$TMP65;
 }
 ),lst,-1);
-return $$TMP69;
+return $$TMP64;
 }
 )(-1);
-return $$TMP68;
+return $$TMP63;
 }
 );
 $$root["find"];
 $$root["flatten"]=(function(x){
-   var $$TMP72;
-   var $$TMP73;
+   var $$TMP67;
+   var $$TMP68;
 if($$root["atom?"](x)){
-$$TMP73=$$root["list"](x);
+$$TMP68=$$root["list"](x);
 }
 else{
-$$TMP73=$$root["apply"]($$root["concat"],$$root["map"]($$root["flatten"],x));
+$$TMP68=$$root["apply"]($$root["concat"],$$root["map"]($$root["flatten"],x));
 }
-$$TMP72=$$TMP73;
-return $$TMP72;
+$$TMP67=$$TMP68;
+return $$TMP67;
 }
 );
 $$root["flatten"];
 $$root["map-indexed"]=(function(f,lst){
-   var $$TMP74;
-   $$TMP74=(function(idx){
-      var $$TMP75;
-$$TMP75=$$root["transform-list"]((function(accum,v){
-   var $$TMP76;
+   var $$TMP69;
+   $$TMP69=(function(idx){
+      var $$TMP70;
+$$TMP70=$$root["transform-list"]((function(accum,v){
+   var $$TMP71;
 idx=$$root["+"](idx,1);
-$$TMP76=$$root["cons"](f(v,idx),accum);
-return $$TMP76;
+$$TMP71=$$root["cons"](f(v,idx),accum);
+return $$TMP71;
 }
 ),lst);
-return $$TMP75;
+return $$TMP70;
 }
 )(-1);
-return $$TMP74;
+return $$TMP69;
 }
 );
 $$root["map-indexed"];
 $$root["loop"]=(function(bindings,...body){
-   var $$TMP77;
-$$TMP77=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))),$$root["list"]([]))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"]((new $$root.Symbol("recur"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["every-nth"](2,bindings)),body)))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))),$$root["every-nth"](2,$$root["cdr"](bindings)))));
-return $$TMP77;
+   var $$TMP72;
+$$TMP72=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))),$$root["list"]([]))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"]((new $$root.Symbol("recur"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["every-nth"](2,bindings)),body)))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))),$$root["every-nth"](2,$$root["cdr"](bindings)))));
+return $$TMP72;
 }
 );
 $$root["loop"];
 $$root["setmac!"]($$root["loop"]);
 $$root["partition"]=(function(n,lst){
-   var $$TMP78;
-   var $$TMP79;
+   var $$TMP73;
+   var $$TMP74;
 if($$root["null?"](lst)){
-   $$TMP79=[];
+   $$TMP74=[];
 }
 else{
-$$TMP79=$$root["reverse"]((function(recur){
-   var $$TMP80;
+$$TMP74=$$root["reverse"]((function(recur){
+   var $$TMP75;
    recur=(function(accum,part,rem,counter){
-      var $$TMP81;
-      var $$TMP82;
+      var $$TMP76;
+      var $$TMP77;
 if($$root["null?"](rem)){
-$$TMP82=$$root["cons"]($$root["reverse"](part),accum);
+$$TMP77=$$root["cons"]($$root["reverse"](part),accum);
 }
 else{
-   var $$TMP83;
+   var $$TMP78;
 if($$root["="]($$root["mod"](counter,n),0)){
-$$TMP83=recur($$root["cons"]($$root["reverse"](part),accum),$$root["cons"]($$root["car"](rem),[]),$$root["cdr"](rem),$$root["inc"](counter));
+$$TMP78=recur($$root["cons"]($$root["reverse"](part),accum),$$root["cons"]($$root["car"](rem),[]),$$root["cdr"](rem),$$root["inc"](counter));
 }
 else{
-$$TMP83=recur(accum,$$root["cons"]($$root["car"](rem),part),$$root["cdr"](rem),$$root["inc"](counter));
+$$TMP78=recur(accum,$$root["cons"]($$root["car"](rem),part),$$root["cdr"](rem),$$root["inc"](counter));
 }
-$$TMP82=$$TMP83;
+$$TMP77=$$TMP78;
 }
-$$TMP81=$$TMP82;
-return $$TMP81;
+$$TMP76=$$TMP77;
+return $$TMP76;
 }
 );
 recur;
-$$TMP80=recur([],$$root["cons"]($$root["car"](lst),[]),$$root["cdr"](lst),1);
-return $$TMP80;
+$$TMP75=recur([],$$root["cons"]($$root["car"](lst),[]),$$root["cdr"](lst),1);
+return $$TMP75;
 }
 )([]));
 }
-$$TMP78=$$TMP79;
-return $$TMP78;
+$$TMP73=$$TMP74;
+return $$TMP73;
 }
 );
 $$root["partition"];
 $$root["dot-helper"]=(function(obj__MINUSname,reversed__MINUSfields){
-   var $$TMP84;
-   var $$TMP85;
+   var $$TMP79;
+   var $$TMP80;
 if($$root["null?"](reversed__MINUSfields)){
-   $$TMP85=obj__MINUSname;
+   $$TMP80=obj__MINUSname;
 }
 else{
-$$TMP85=$$root["concat"]($$root["list"]((new $$root.Symbol("geti"))),$$root["list"]($$root["dot-helper"](obj__MINUSname,$$root["cdr"](reversed__MINUSfields))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["car"](reversed__MINUSfields)))));
+$$TMP80=$$root["concat"]($$root["list"]((new $$root.Symbol("geti"))),$$root["list"]($$root["dot-helper"](obj__MINUSname,$$root["cdr"](reversed__MINUSfields))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["car"](reversed__MINUSfields)))));
 }
-$$TMP84=$$TMP85;
-return $$TMP84;
+$$TMP79=$$TMP80;
+return $$TMP79;
 }
 );
 $$root["dot-helper"];
 $$root["."]=(function(obj__MINUSname,...fields){
-   var $$TMP86;
-   $$TMP86=(function(rev__MINUSfields){
-      var $$TMP87;
-      var $$TMP88;
+   var $$TMP81;
+   $$TMP81=(function(rev__MINUSfields){
+      var $$TMP82;
+      var $$TMP83;
 if($$root["list?"]($$root["car"](rev__MINUSfields))){
-$$TMP88=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("target"))),$$root["list"]($$root["dot-helper"](obj__MINUSname,$$root["cdr"]($$root["cdr"](rev__MINUSfields)))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("call-method"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("geti"))),$$root["list"]((new $$root.Symbol("target"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["second"](rev__MINUSfields)))))),$$root["list"]((new $$root.Symbol("target"))),$$root["first"](rev__MINUSfields))));
+$$TMP83=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("target"))),$$root["list"]($$root["dot-helper"](obj__MINUSname,$$root["cdr"]($$root["cdr"](rev__MINUSfields)))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("call-method"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("geti"))),$$root["list"]((new $$root.Symbol("target"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["second"](rev__MINUSfields)))))),$$root["list"]((new $$root.Symbol("target"))),$$root["first"](rev__MINUSfields))));
 }
 else{
-$$TMP88=$$root["dot-helper"](obj__MINUSname,rev__MINUSfields);
+$$TMP83=$$root["dot-helper"](obj__MINUSname,rev__MINUSfields);
 }
-$$TMP87=$$TMP88;
-return $$TMP87;
+$$TMP82=$$TMP83;
+return $$TMP82;
 }
 )($$root["reverse"](fields));
-return $$TMP86;
+return $$TMP81;
 }
 );
 $$root["."];
 $$root["setmac!"]($$root["."]);
 $$root["equal?"]=(function(a,b){
-   var $$TMP89;
-   var $$TMP90;
+   var $$TMP84;
+   var $$TMP85;
 if($$root["null?"](a)){
-$$TMP90=$$root["null?"](b);
+$$TMP85=$$root["null?"](b);
 }
 else{
-   var $$TMP91;
+   var $$TMP86;
 if($$root["symbol?"](a)){
-   var $$TMP92;
+   var $$TMP87;
 if($$root["symbol?"](b)){
-   var $$TMP93;
+   var $$TMP88;
 if($$root["="]($$root["geti"](a,(new $$root.Symbol("name"))),$$root["geti"](b,(new $$root.Symbol("name"))))){
+   $$TMP88=true;
+}
+else{
+   $$TMP88=false;
+}
+$$TMP87=$$TMP88;
+}
+else{
+   $$TMP87=false;
+}
+$$TMP86=$$TMP87;
+}
+else{
+   var $$TMP89;
+if($$root["atom?"](a)){
+$$TMP89=$$root["="](a,b);
+}
+else{
+   var $$TMP90;
+if($$root["list?"](a)){
+   var $$TMP91;
+if($$root["list?"](b)){
+   var $$TMP92;
+if($$root["equal?"]($$root["car"](a),$$root["car"](b))){
+   var $$TMP93;
+if($$root["equal?"]($$root["cdr"](a),$$root["cdr"](b))){
    $$TMP93=true;
 }
 else{
@@ -778,853 +778,803 @@ else{
 $$TMP91=$$TMP92;
 }
 else{
-   var $$TMP94;
-if($$root["atom?"](a)){
-$$TMP94=$$root["="](a,b);
-}
-else{
-   var $$TMP95;
-if($$root["list?"](a)){
-   var $$TMP96;
-if($$root["list?"](b)){
-   var $$TMP97;
-if($$root["equal?"]($$root["car"](a),$$root["car"](b))){
-   var $$TMP98;
-if($$root["equal?"]($$root["cdr"](a),$$root["cdr"](b))){
-   $$TMP98=true;
-}
-else{
-   $$TMP98=false;
-}
-$$TMP97=$$TMP98;
-}
-else{
-   $$TMP97=false;
-}
-$$TMP96=$$TMP97;
-}
-else{
-   $$TMP96=false;
-}
-$$TMP95=$$TMP96;
-}
-else{
-   $$TMP95=undefined;
-}
-$$TMP94=$$TMP95;
-}
-$$TMP91=$$TMP94;
+   $$TMP91=false;
 }
 $$TMP90=$$TMP91;
 }
+else{
+   $$TMP90=undefined;
+}
 $$TMP89=$$TMP90;
-return $$TMP89;
+}
+$$TMP86=$$TMP89;
+}
+$$TMP85=$$TMP86;
+}
+$$TMP84=$$TMP85;
+return $$TMP84;
 }
 );
 $$root["equal?"];
 $$root["split"]=(function(p,lst){
-   var $$TMP99;
-   $$TMP99=(function(res){
-      var $$TMP107;
-$$TMP107=$$root["list"]($$root["reverse"]($$root["first"](res)),$$root["second"](res));
-return $$TMP107;
+   var $$TMP94;
+   $$TMP94=(function(res){
+      var $$TMP100;
+$$TMP100=$$root["list"]($$root["reverse"]($$root["first"](res)),$$root["second"](res));
+return $$TMP100;
 }
 )((function(recur){
-   var $$TMP100;
+   var $$TMP95;
    recur=(function(l1,l2){
-      var $$TMP101;
-      var $$TMP102;
+      var $$TMP96;
+      var $$TMP97;
       if((function(c){
-         var $$TMP103;
-         var $$TMP104;
+         var $$TMP98;
+         var $$TMP99;
          if(c){
-            $$TMP104=c;
+            $$TMP99=c;
          }
          else{
-            $$TMP104=(function(c){
-               var $$TMP105;
-               var $$TMP106;
-               if(c){
-                  $$TMP106=c;
-               }
-               else{
-                  $$TMP106=false;
-               }
-               $$TMP105=$$TMP106;
-               return $$TMP105;
-            }
-)(p($$root["car"](l2)));
+$$TMP99=p($$root["car"](l2));
 }
-$$TMP103=$$TMP104;
-return $$TMP103;
+$$TMP98=$$TMP99;
+return $$TMP98;
 }
 )($$root["null?"](l2))){
-$$TMP102=$$root["list"](l1,l2);
+$$TMP97=$$root["list"](l1,l2);
 }
 else{
-$$TMP102=recur($$root["cons"]($$root["car"](l2),l1),$$root["cdr"](l2));
+$$TMP97=recur($$root["cons"]($$root["car"](l2),l1),$$root["cdr"](l2));
+}
+$$TMP96=$$TMP97;
+return $$TMP96;
+}
+);
+recur;
+$$TMP95=recur([],lst);
+return $$TMP95;
+}
+)([]));
+return $$TMP94;
+}
+);
+$$root["split"];
+$$root["any?"]=(function(lst){
+   var $$TMP101;
+   var $$TMP102;
+if($$root["reduce"]((function(accum,v){
+   var $$TMP103;
+   var $$TMP104;
+   if(accum){
+      $$TMP104=accum;
+   }
+   else{
+      $$TMP104=v;
+   }
+   $$TMP103=$$TMP104;
+   return $$TMP103;
+}
+),lst,false)){
+   $$TMP102=true;
+}
+else{
+   $$TMP102=false;
 }
 $$TMP101=$$TMP102;
 return $$TMP101;
 }
 );
-recur;
-$$TMP100=recur([],lst);
-return $$TMP100;
-}
-)([]));
-return $$TMP99;
-}
-);
-$$root["split"];
-$$root["any?"]=(function(lst){
-   var $$TMP108;
-   var $$TMP109;
-if($$root["reduce"]((function(accum,v){
-   var $$TMP110;
-   var $$TMP111;
-   if(accum){
-      $$TMP111=accum;
-   }
-   else{
-      $$TMP111=v;
-   }
-   $$TMP110=$$TMP111;
-   return $$TMP110;
-}
-),lst,false)){
-   $$TMP109=true;
-}
-else{
-   $$TMP109=false;
-}
-$$TMP108=$$TMP109;
-return $$TMP108;
-}
-);
 $$root["any?"];
 $$root["splitting-pair"]=(function(binding__MINUSnames,outer,pair){
-   var $$TMP112;
-$$TMP112=$$root["any?"]($$root["map"]((function(sym){
-   var $$TMP113;
-   var $$TMP114;
+   var $$TMP105;
+$$TMP105=$$root["any?"]($$root["map"]((function(sym){
+   var $$TMP106;
+   var $$TMP107;
 if($$root["="]($$root["find"]($$root["equal?"],sym,outer),-1)){
-   var $$TMP115;
+   var $$TMP108;
 if($$root["not="]($$root["find"]($$root["equal?"],sym,binding__MINUSnames),-1)){
-   $$TMP115=true;
+   $$TMP108=true;
 }
 else{
-   $$TMP115=false;
+   $$TMP108=false;
 }
-$$TMP114=$$TMP115;
+$$TMP107=$$TMP108;
 }
 else{
-   $$TMP114=false;
+   $$TMP107=false;
 }
-$$TMP113=$$TMP114;
-return $$TMP113;
+$$TMP106=$$TMP107;
+return $$TMP106;
 }
 ),$$root["filter"]($$root["symbol?"],$$root["flatten"]($$root["second"](pair)))));
-return $$TMP112;
+return $$TMP105;
 }
 );
 $$root["splitting-pair"];
 $$root["let-helper*"]=(function(outer,binding__MINUSpairs,body){
-   var $$TMP116;
-   $$TMP116=(function(binding__MINUSnames){
-      var $$TMP117;
-      $$TMP117=(function(divs){
-         var $$TMP119;
-         var $$TMP120;
+   var $$TMP109;
+   $$TMP109=(function(binding__MINUSnames){
+      var $$TMP110;
+      $$TMP110=(function(divs){
+         var $$TMP112;
+         var $$TMP113;
 if($$root["null?"]($$root["second"](divs))){
-$$TMP120=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["apply"]($$root["concat"],$$root["first"](divs))),body);
+$$TMP113=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["apply"]($$root["concat"],$$root["first"](divs))),body);
 }
 else{
-$$TMP120=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["apply"]($$root["concat"],$$root["first"](divs))),$$root["list"]($$root["let-helper*"]($$root["concat"](binding__MINUSpairs,$$root["map"]($$root["first"],$$root["first"](divs))),$$root["second"](divs),body)));
+$$TMP113=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["apply"]($$root["concat"],$$root["first"](divs))),$$root["list"]($$root["let-helper*"]($$root["concat"](binding__MINUSpairs,$$root["map"]($$root["first"],$$root["first"](divs))),$$root["second"](divs),body)));
 }
-$$TMP119=$$TMP120;
-return $$TMP119;
+$$TMP112=$$TMP113;
+return $$TMP112;
 }
 )($$root["split"]((function(pair){
-   var $$TMP118;
-$$TMP118=$$root["splitting-pair"](binding__MINUSnames,outer,pair);
-return $$TMP118;
+   var $$TMP111;
+$$TMP111=$$root["splitting-pair"](binding__MINUSnames,outer,pair);
+return $$TMP111;
 }
 ),binding__MINUSpairs));
-return $$TMP117;
+return $$TMP110;
 }
 )($$root["map"]($$root["first"],binding__MINUSpairs));
-return $$TMP116;
+return $$TMP109;
 }
 );
 $$root["let-helper*"];
 $$root["let*"]=(function(bindings,...body){
-   var $$TMP121;
-$$TMP121=$$root["let-helper*"]([],$$root["partition"](2,bindings),body);
-return $$TMP121;
+   var $$TMP114;
+$$TMP114=$$root["let-helper*"]([],$$root["partition"](2,bindings),body);
+return $$TMP114;
 }
 );
 $$root["let*"];
 $$root["setmac!"]($$root["let*"]);
 $$root["complement"]=(function(f){
-   var $$TMP122;
-   $$TMP122=(function(x){
-      var $$TMP123;
-$$TMP123=$$root["not"](f(x));
-return $$TMP123;
+   var $$TMP115;
+   $$TMP115=(function(x){
+      var $$TMP116;
+$$TMP116=$$root["not"](f(x));
+return $$TMP116;
 }
 );
-return $$TMP122;
+return $$TMP115;
 }
 );
 $$root["complement"];
 $$root["case"]=(function(e,...pairs){
-   var $$TMP124;
-   $$TMP124=(function(e__MINUSname,def__MINUSidx){
-      var $$TMP125;
-      var $$TMP126;
+   var $$TMP117;
+   $$TMP117=(function(e__MINUSname,def__MINUSidx){
+      var $$TMP118;
+      var $$TMP119;
 if($$root["="](def__MINUSidx,-1)){
-$$TMP126=$$root.cons((new $$root.Symbol("error")),$$root.cons("Fell out of case!",[]));
+$$TMP119=$$root.cons((new $$root.Symbol("error")),$$root.cons("Fell out of case!",[]));
 }
 else{
-$$TMP126=$$root["nth"]($$root["inc"](def__MINUSidx),pairs);
+$$TMP119=$$root["nth"]($$root["inc"](def__MINUSidx),pairs);
 }
-$$TMP125=(function(def__MINUSexpr,zipped__MINUSpairs){
-   var $$TMP127;
-$$TMP127=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
-   var $$TMP128;
-$$TMP128=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("equal?"))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["second"](pair));
-return $$TMP128;
+$$TMP118=(function(def__MINUSexpr,zipped__MINUSpairs){
+   var $$TMP120;
+$$TMP120=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
+   var $$TMP121;
+$$TMP121=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("equal?"))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["second"](pair));
+return $$TMP121;
 }
 ),$$root["filter"]((function(pair){
-   var $$TMP129;
-$$TMP129=$$root["not"]($$root["equal?"]($$root["car"](pair),(new $$root.Symbol("default"))));
-return $$TMP129;
+   var $$TMP122;
+$$TMP122=$$root["not"]($$root["equal?"]($$root["car"](pair),(new $$root.Symbol("default"))));
+return $$TMP122;
 }
 ),zipped__MINUSpairs))),$$root["list"](true),$$root["list"](def__MINUSexpr))));
-return $$TMP127;
+return $$TMP120;
 }
-)($$TMP126,$$root["partition"](2,pairs));
-return $$TMP125;
+)($$TMP119,$$root["partition"](2,pairs));
+return $$TMP118;
 }
 )($$root["gensym"](),$$root["find"]($$root["equal?"],(new $$root.Symbol("default")),pairs));
-return $$TMP124;
+return $$TMP117;
 }
 );
 $$root["case"];
 $$root["setmac!"]($$root["case"]);
 $$root["destruct-helper"]=(function(structure,expr){
-   var $$TMP130;
-   $$TMP130=(function(expr__MINUSname){
-      var $$TMP131;
-$$TMP131=$$root["concat"]($$root["list"](expr__MINUSname),$$root["list"](expr),$$root["apply"]($$root["concat"],$$root["map-indexed"]((function(v,idx){
-   var $$TMP132;
-   var $$TMP133;
+   var $$TMP123;
+   $$TMP123=(function(expr__MINUSname){
+      var $$TMP124;
+$$TMP124=$$root["concat"]($$root["list"](expr__MINUSname),$$root["list"](expr),$$root["apply"]($$root["concat"],$$root["map-indexed"]((function(v,idx){
+   var $$TMP125;
+   var $$TMP126;
 if($$root["symbol?"](v)){
-   var $$TMP134;
+   var $$TMP127;
 if($$root["="]($$root["geti"]($$root["geti"](v,(new $$root.Symbol("name"))),0),"&")){
-$$TMP134=$$root["concat"]($$root["list"]($$root["symbol"]((function(target){
-   var $$TMP135;
-$$TMP135=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("slice"))),target,1);
-return $$TMP135;
+$$TMP127=$$root["concat"]($$root["list"]($$root["symbol"]((function(target){
+   var $$TMP128;
+$$TMP128=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("slice"))),target,1);
+return $$TMP128;
 }
 )($$root["geti"](v,(new $$root.Symbol("name")))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("drop"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
 }
 else{
-   var $$TMP136;
+   var $$TMP129;
 if($$root["="]($$root["geti"](v,(new $$root.Symbol("name"))),"_")){
-   $$TMP136=[];
+   $$TMP129=[];
 }
 else{
-$$TMP136=$$root["concat"]($$root["list"](v),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
+$$TMP129=$$root["concat"]($$root["list"](v),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname))));
 }
-$$TMP134=$$TMP136;
+$$TMP127=$$TMP129;
 }
-$$TMP133=$$TMP134;
+$$TMP126=$$TMP127;
 }
 else{
-$$TMP133=$$root["destruct-helper"](v,$$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname)));
+$$TMP126=$$root["destruct-helper"](v,$$root["concat"]($$root["list"]((new $$root.Symbol("nth"))),$$root["list"](idx),$$root["list"](expr__MINUSname)));
 }
-$$TMP132=$$TMP133;
-return $$TMP132;
+$$TMP125=$$TMP126;
+return $$TMP125;
 }
 ),structure)));
-return $$TMP131;
+return $$TMP124;
 }
 )($$root["gensym"]());
-return $$TMP130;
+return $$TMP123;
 }
 );
 $$root["destruct-helper"];
 $$root["destructuring-bind"]=(function(structure,expr,...body){
-   var $$TMP137;
-   var $$TMP138;
+   var $$TMP130;
+   var $$TMP131;
 if($$root["symbol?"](structure)){
-$$TMP138=$$root["list"](structure,expr);
+$$TMP131=$$root["list"](structure,expr);
 }
 else{
-$$TMP138=$$root["destruct-helper"](structure,expr);
+$$TMP131=$$root["destruct-helper"](structure,expr);
 }
-$$TMP137=$$root["concat"]($$root["list"]((new $$root.Symbol("let*"))),$$root["list"]($$TMP138),body);
-return $$TMP137;
+$$TMP130=$$root["concat"]($$root["list"]((new $$root.Symbol("let*"))),$$root["list"]($$TMP131),body);
+return $$TMP130;
 }
 );
 $$root["destructuring-bind"];
 $$root["setmac!"]($$root["destructuring-bind"]);
 $$root["macroexpand"]=(function(expr){
-   var $$TMP139;
-   var $$TMP140;
+   var $$TMP132;
+   var $$TMP133;
 if($$root["list?"](expr)){
-   var $$TMP141;
+   var $$TMP134;
 if($$root["macro?"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)))){
-$$TMP141=$$root["macroexpand"]($$root["apply"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)),$$root["cdr"](expr)));
+$$TMP134=$$root["macroexpand"]($$root["apply"]($$root["geti"]($$root["*ns*"],$$root["car"](expr)),$$root["cdr"](expr)));
 }
 else{
-$$TMP141=$$root["map"]($$root["macroexpand"],expr);
+$$TMP134=$$root["map"]($$root["macroexpand"],expr);
 }
-$$TMP140=$$TMP141;
+$$TMP133=$$TMP134;
 }
 else{
-   $$TMP140=expr;
+   $$TMP133=expr;
 }
-$$TMP139=$$TMP140;
-return $$TMP139;
+$$TMP132=$$TMP133;
+return $$TMP132;
 }
 );
 $$root["macroexpand"];
 $$root["list-matches?"]=(function(expr,patt){
-   var $$TMP142;
-   var $$TMP143;
+   var $$TMP135;
+   var $$TMP136;
 if($$root["equal?"]($$root["first"](patt),(new $$root.Symbol("quote")))){
-$$TMP143=$$root["equal?"]($$root["second"](patt),expr);
+$$TMP136=$$root["equal?"]($$root["second"](patt),expr);
 }
 else{
-   var $$TMP144;
-   var $$TMP145;
+   var $$TMP137;
+   var $$TMP138;
 if($$root["symbol?"]($$root["first"](patt))){
-   var $$TMP146;
+   var $$TMP139;
 if($$root["="]($$root["geti"]($$root["geti"]($$root["first"](patt),(new $$root.Symbol("name"))),0),"&")){
-   $$TMP146=true;
+   $$TMP139=true;
 }
 else{
-   $$TMP146=false;
+   $$TMP139=false;
 }
-$$TMP145=$$TMP146;
+$$TMP138=$$TMP139;
+}
+else{
+   $$TMP138=false;
+}
+if($$TMP138){
+$$TMP137=$$root["list?"](expr);
+}
+else{
+   var $$TMP140;
+   if(true){
+      var $$TMP141;
+      var $$TMP142;
+if($$root["list?"](expr)){
+   var $$TMP143;
+if($$root["not"]($$root["null?"](expr))){
+   $$TMP143=true;
+}
+else{
+   $$TMP143=false;
+}
+$$TMP142=$$TMP143;
+}
+else{
+   $$TMP142=false;
+}
+if($$TMP142){
+   var $$TMP144;
+if($$root["matches?"]($$root["car"](expr),$$root["car"](patt))){
+   var $$TMP145;
+if($$root["matches?"]($$root["cdr"](expr),$$root["cdr"](patt))){
+   $$TMP145=true;
 }
 else{
    $$TMP145=false;
 }
-if($$TMP145){
-$$TMP144=$$root["list?"](expr);
+$$TMP144=$$TMP145;
 }
 else{
-   var $$TMP147;
-   if(true){
-      var $$TMP148;
-      var $$TMP149;
-if($$root["list?"](expr)){
-   var $$TMP150;
-if($$root["not"]($$root["null?"](expr))){
-   $$TMP150=true;
+   $$TMP144=false;
+}
+$$TMP141=$$TMP144;
 }
 else{
-   $$TMP150=false;
+   $$TMP141=false;
 }
-$$TMP149=$$TMP150;
-}
-else{
-   $$TMP149=false;
-}
-if($$TMP149){
-   var $$TMP151;
-if($$root["matches?"]($$root["car"](expr),$$root["car"](patt))){
-   var $$TMP152;
-if($$root["matches?"]($$root["cdr"](expr),$$root["cdr"](patt))){
-   $$TMP152=true;
+$$TMP140=$$TMP141;
 }
 else{
-   $$TMP152=false;
+   $$TMP140=undefined;
 }
-$$TMP151=$$TMP152;
+$$TMP137=$$TMP140;
 }
-else{
-   $$TMP151=false;
+$$TMP136=$$TMP137;
 }
-$$TMP148=$$TMP151;
-}
-else{
-   $$TMP148=false;
-}
-$$TMP147=$$TMP148;
-}
-else{
-   $$TMP147=undefined;
-}
-$$TMP144=$$TMP147;
-}
-$$TMP143=$$TMP144;
-}
-$$TMP142=$$TMP143;
-return $$TMP142;
+$$TMP135=$$TMP136;
+return $$TMP135;
 }
 );
 $$root["list-matches?"];
 $$root["matches?"]=(function(expr,patt){
-   var $$TMP153;
-   var $$TMP154;
+   var $$TMP146;
+   var $$TMP147;
 if($$root["null?"](patt)){
-$$TMP154=$$root["null?"](expr);
+$$TMP147=$$root["null?"](expr);
 }
 else{
-   var $$TMP155;
+   var $$TMP148;
 if($$root["list?"](patt)){
-$$TMP155=$$root["list-matches?"](expr,patt);
+$$TMP148=$$root["list-matches?"](expr,patt);
 }
 else{
-   var $$TMP156;
+   var $$TMP149;
 if($$root["symbol?"](patt)){
-   $$TMP156=true;
+   $$TMP149=true;
 }
 else{
-   var $$TMP157;
+   var $$TMP150;
    if(true){
-$$TMP157=$$root["error"]("Invalid pattern!");
+$$TMP150=$$root["error"]("Invalid pattern!");
 }
 else{
-   $$TMP157=undefined;
+   $$TMP150=undefined;
 }
-$$TMP156=$$TMP157;
+$$TMP149=$$TMP150;
 }
-$$TMP155=$$TMP156;
+$$TMP148=$$TMP149;
 }
-$$TMP154=$$TMP155;
+$$TMP147=$$TMP148;
 }
-$$TMP153=$$TMP154;
-return $$TMP153;
+$$TMP146=$$TMP147;
+return $$TMP146;
 }
 );
 $$root["matches?"];
 $$root["pattern->structure"]=(function(patt){
-   var $$TMP158;
-   var $$TMP159;
-   var $$TMP160;
+   var $$TMP151;
+   var $$TMP152;
+   var $$TMP153;
 if($$root["list?"](patt)){
-   var $$TMP161;
+   var $$TMP154;
 if($$root["not"]($$root["null?"](patt))){
-   $$TMP161=true;
+   $$TMP154=true;
 }
 else{
-   $$TMP161=false;
+   $$TMP154=false;
 }
-$$TMP160=$$TMP161;
+$$TMP153=$$TMP154;
 }
 else{
-   $$TMP160=false;
+   $$TMP153=false;
 }
-if($$TMP160){
-   var $$TMP162;
+if($$TMP153){
+   var $$TMP155;
 if($$root["equal?"]($$root["car"](patt),(new $$root.Symbol("quote")))){
-$$TMP162=(new $$root.Symbol("_"));
+$$TMP155=(new $$root.Symbol("_"));
 }
 else{
-$$TMP162=$$root["map"]($$root["pattern->structure"],patt);
+$$TMP155=$$root["map"]($$root["pattern->structure"],patt);
 }
-$$TMP159=$$TMP162;
+$$TMP152=$$TMP155;
 }
 else{
-   $$TMP159=patt;
+   $$TMP152=patt;
 }
-$$TMP158=$$TMP159;
-return $$TMP158;
+$$TMP151=$$TMP152;
+return $$TMP151;
 }
 );
 $$root["pattern->structure"];
 $$root["pattern-case"]=(function(e,...pairs){
-   var $$TMP163;
-   $$TMP163=(function(e__MINUSname,zipped__MINUSpairs){
-      var $$TMP164;
-$$TMP164=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
-   var $$TMP165;
-$$TMP165=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("matches?"))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["concat"]($$root["list"]((new $$root.Symbol("destructuring-bind"))),$$root["list"]($$root["pattern->structure"]($$root["first"](pair))),$$root["list"](e__MINUSname),$$root["list"]($$root["second"](pair))));
-return $$TMP165;
+   var $$TMP156;
+   $$TMP156=(function(e__MINUSname,zipped__MINUSpairs){
+      var $$TMP157;
+$$TMP157=$$root["concat"]($$root["list"]((new $$root.Symbol("let"))),$$root["list"]($$root["concat"]($$root["list"](e__MINUSname),$$root["list"](e))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cond"))),$$root["apply"]($$root["concat"],$$root["map"]((function(pair){
+   var $$TMP158;
+$$TMP158=$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("matches?"))),$$root["list"](e__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"]($$root["first"](pair))))),$$root["concat"]($$root["list"]((new $$root.Symbol("destructuring-bind"))),$$root["list"]($$root["pattern->structure"]($$root["first"](pair))),$$root["list"](e__MINUSname),$$root["list"]($$root["second"](pair))));
+return $$TMP158;
 }
 ),zipped__MINUSpairs)),$$root["list"](true),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("error"))),$$root["list"]("Fell out of case!"))))));
-return $$TMP164;
+return $$TMP157;
 }
 )($$root["gensym"](),$$root["partition"](2,pairs));
-return $$TMP163;
+return $$TMP156;
 }
 );
 $$root["pattern-case"];
 $$root["setmac!"]($$root["pattern-case"]);
 $$root["set!"]=(function(place,v){
-   var $$TMP166;
-   $$TMP166=(function(__GS1){
-      var $$TMP167;
-      var $$TMP168;
+   var $$TMP159;
+   $$TMP159=(function(__GS1){
+      var $$TMP160;
+      var $$TMP161;
 if($$root["matches?"](__GS1,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("geti")),[])),$$root.cons((new $$root.Symbol("obj")),$$root.cons((new $$root.Symbol("field")),[]))))){
-   $$TMP168=(function(__GS2){
-      var $$TMP169;
-      $$TMP169=(function(obj,field){
-         var $$TMP170;
-$$TMP170=$$root["concat"]($$root["list"]((new $$root.Symbol("seti!"))),$$root["list"](obj),$$root["list"](field),$$root["list"](v));
-return $$TMP170;
+   $$TMP161=(function(__GS2){
+      var $$TMP162;
+      $$TMP162=(function(obj,field){
+         var $$TMP163;
+$$TMP163=$$root["concat"]($$root["list"]((new $$root.Symbol("seti!"))),$$root["list"](obj),$$root["list"](field),$$root["list"](v));
+return $$TMP163;
 }
 )($$root["nth"](1,__GS2),$$root["nth"](2,__GS2));
-return $$TMP169;
+return $$TMP162;
 }
 )(__GS1);
 }
 else{
-   var $$TMP171;
+   var $$TMP164;
 if($$root["matches?"](__GS1,(new $$root.Symbol("any")))){
-   $$TMP171=(function(any){
-      var $$TMP172;
-      var $$TMP173;
+   $$TMP164=(function(any){
+      var $$TMP165;
+      var $$TMP166;
 if($$root["symbol?"](any)){
-$$TMP173=$$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"](any),$$root["list"](v));
+$$TMP166=$$root["concat"]($$root["list"]((new $$root.Symbol("setv!"))),$$root["list"](any),$$root["list"](v));
 }
 else{
-$$TMP173=$$root["concat"]($$root["list"]((new $$root.Symbol("error"))),$$root["list"]("Not a settable place!"));
+$$TMP166=$$root["concat"]($$root["list"]((new $$root.Symbol("error"))),$$root["list"]("Not a settable place!"));
 }
-$$TMP172=$$TMP173;
-return $$TMP172;
+$$TMP165=$$TMP166;
+return $$TMP165;
 }
 )(__GS1);
 }
 else{
-   var $$TMP174;
+   var $$TMP167;
    if(true){
-$$TMP174=$$root["error"]("Fell out of case!");
+$$TMP167=$$root["error"]("Fell out of case!");
 }
 else{
-   $$TMP174=undefined;
+   $$TMP167=undefined;
 }
-$$TMP171=$$TMP174;
+$$TMP164=$$TMP167;
 }
-$$TMP168=$$TMP171;
+$$TMP161=$$TMP164;
 }
-$$TMP167=$$TMP168;
-return $$TMP167;
+$$TMP160=$$TMP161;
+return $$TMP160;
 }
 )($$root["macroexpand"](place));
-return $$TMP166;
+return $$TMP159;
 }
 );
 $$root["set!"];
 $$root["setmac!"]($$root["set!"]);
 $$root["push"]=(function(x,lst){
-   var $$TMP175;
-$$TMP175=$$root["reverse"]($$root["cons"](x,$$root["reverse"](lst)));
-return $$TMP175;
+   var $$TMP168;
+$$TMP168=$$root["reverse"]($$root["cons"](x,$$root["reverse"](lst)));
+return $$TMP168;
 }
 );
 $$root["push"];
 $$root["->"]=(function(x,...forms){
-   var $$TMP176;
-   var $$TMP177;
+   var $$TMP169;
+   var $$TMP170;
 if($$root["null?"](forms)){
-   $$TMP177=x;
+   $$TMP170=x;
 }
 else{
-$$TMP177=$$root["concat"]($$root["list"]((new $$root.Symbol("->"))),$$root["list"]($$root["push"](x,$$root["car"](forms))),$$root["cdr"](forms));
+$$TMP170=$$root["concat"]($$root["list"]((new $$root.Symbol("->"))),$$root["list"]($$root["push"](x,$$root["car"](forms))),$$root["cdr"](forms));
 }
-$$TMP176=$$TMP177;
-return $$TMP176;
+$$TMP169=$$TMP170;
+return $$TMP169;
 }
 );
 $$root["->"];
 $$root["setmac!"]($$root["->"]);
 $$root["while"]=(function(c,...body){
-   var $$TMP178;
-$$TMP178=$$root["concat"]($$root["list"]((new $$root.Symbol("loop"))),$$root["list"]($$root["concat"]()),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("when"))),$$root["list"](c),body,$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))))))));
-return $$TMP178;
+   var $$TMP171;
+$$TMP171=$$root["concat"]($$root["list"]((new $$root.Symbol("loop"))),$$root["list"]($$root["concat"]()),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("when"))),$$root["list"](c),body,$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))))))));
+return $$TMP171;
 }
 );
 $$root["while"];
 $$root["setmac!"]($$root["while"]);
 $$root["sort"]=(function(cmp,lst){
-   var $$TMP179;
-   $$TMP179=(function(target){
-      var $$TMP180;
-$$TMP180=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("sort"))),target,cmp);
-return $$TMP180;
+   var $$TMP172;
+   $$TMP172=(function(target){
+      var $$TMP173;
+$$TMP173=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("sort"))),target,cmp);
+return $$TMP173;
 }
 )(lst);
-return $$TMP179;
+return $$TMP172;
 }
 );
 $$root["sort"];
 $$root["in-range"]=(function(binding__MINUSname,start,end,step){
-   var $$TMP181;
+   var $$TMP174;
    step=(function(c){
-      var $$TMP182;
-      var $$TMP183;
+      var $$TMP175;
+      var $$TMP176;
       if(c){
-         $$TMP183=c;
+         $$TMP176=c;
       }
       else{
-         $$TMP183=(function(c){
-            var $$TMP184;
-            var $$TMP185;
-            if(c){
-               $$TMP185=c;
-            }
-            else{
-               $$TMP185=false;
-            }
-            $$TMP184=$$TMP185;
-            return $$TMP184;
-         }
-         )(1);
+         $$TMP176=1;
       }
-      $$TMP182=$$TMP183;
-      return $$TMP182;
+      $$TMP175=$$TMP176;
+      return $$TMP175;
    }
    )(step);
    step;
-   $$TMP181=(function(data){
-      var $$TMP186;
+   $$TMP174=(function(data){
+      var $$TMP177;
 $$root["seti!"](data,(new $$root.Symbol("bind")),$$root["list"](binding__MINUSname,start));
 $$root["seti!"](data,(new $$root.Symbol("post")),$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("inc!"))),$$root["list"](binding__MINUSname),$$root["list"](step)))));
 $$root["seti!"](data,(new $$root.Symbol("cond")),$$root["concat"]($$root["list"]((new $$root.Symbol("<"))),$$root["list"](binding__MINUSname),$$root["list"](end)));
-$$TMP186=data;
-return $$TMP186;
+$$TMP177=data;
+return $$TMP177;
 }
 )($$root["object"]([]));
-return $$TMP181;
+return $$TMP174;
 }
 );
 $$root["in-range"];
 $$root["index-in"]=(function(binding__MINUSname,expr){
-   var $$TMP187;
-   $$TMP187=(function(len__MINUSname,data){
-      var $$TMP188;
+   var $$TMP178;
+   $$TMP178=(function(len__MINUSname,data){
+      var $$TMP179;
 $$root["seti!"](data,(new $$root.Symbol("bind")),$$root["concat"]($$root["list"](binding__MINUSname),$$root["list"](0),$$root["list"](len__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("count"))),$$root["list"](expr)))));
 $$root["seti!"](data,(new $$root.Symbol("post")),$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("inc!"))),$$root["list"](binding__MINUSname),$$root["list"](1)))));
 $$root["seti!"](data,(new $$root.Symbol("cond")),$$root["concat"]($$root["list"]((new $$root.Symbol("<"))),$$root["list"](binding__MINUSname),$$root["list"](len__MINUSname)));
-$$TMP188=data;
-return $$TMP188;
+$$TMP179=data;
+return $$TMP179;
 }
 )($$root["gensym"](),$$root["object"]([]));
-return $$TMP187;
+return $$TMP178;
 }
 );
 $$root["index-in"];
 $$root["in-list"]=(function(binding__MINUSname,expr){
-   var $$TMP189;
-   $$TMP189=(function(lst__MINUSname,data){
-      var $$TMP190;
+   var $$TMP180;
+   $$TMP180=(function(lst__MINUSname,data){
+      var $$TMP181;
 $$root["seti!"](data,(new $$root.Symbol("bind")),$$root["list"](lst__MINUSname,expr,binding__MINUSname,[]));
 $$root["seti!"](data,(new $$root.Symbol("pre")),$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("set!"))),$$root["list"](binding__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("car"))),$$root["list"](lst__MINUSname)))))));
 $$root["seti!"](data,(new $$root.Symbol("post")),$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("set!"))),$$root["list"](lst__MINUSname),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("cdr"))),$$root["list"](lst__MINUSname)))))));
 $$root["seti!"](data,(new $$root.Symbol("cond")),$$root["concat"]($$root["list"]((new $$root.Symbol("not"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("null?"))),$$root["list"](lst__MINUSname)))));
-$$TMP190=data;
-return $$TMP190;
+$$TMP181=data;
+return $$TMP181;
 }
 )($$root["gensym"](),$$root["object"]([]));
-return $$TMP189;
+return $$TMP180;
 }
 );
 $$root["in-list"];
 $$root["iterate-compile-for"]=(function(form){
-   var $$TMP191;
-   $$TMP191=(function(__GS3){
-      var $$TMP192;
-      $$TMP192=(function(binding__MINUSname,__GS4){
-         var $$TMP193;
-         $$TMP193=(function(func__MINUSname,args){
-            var $$TMP194;
-$$TMP194=$$root["apply"]($$root["geti"]($$root["*ns*"],func__MINUSname),$$root["cons"](binding__MINUSname,args));
-return $$TMP194;
+   var $$TMP182;
+   $$TMP182=(function(__GS3){
+      var $$TMP183;
+      $$TMP183=(function(binding__MINUSname,__GS4){
+         var $$TMP184;
+         $$TMP184=(function(func__MINUSname,args){
+            var $$TMP185;
+$$TMP185=$$root["apply"]($$root["geti"]($$root["*ns*"],func__MINUSname),$$root["cons"](binding__MINUSname,args));
+return $$TMP185;
 }
 )($$root["nth"](0,__GS4),$$root["drop"](1,__GS4));
-return $$TMP193;
+return $$TMP184;
 }
 )($$root["nth"](1,__GS3),$$root["nth"](2,__GS3));
-return $$TMP192;
+return $$TMP183;
 }
 )(form);
-return $$TMP191;
+return $$TMP182;
 }
 );
 $$root["iterate-compile-for"];
 $$root["iterate-compile-while"]=(function(form){
-   var $$TMP195;
-   $$TMP195=(function(data){
-      var $$TMP196;
+   var $$TMP186;
+   $$TMP186=(function(data){
+      var $$TMP187;
 $$root["seti!"](data,(new $$root.Symbol("cond")),$$root["second"](form));
-$$TMP196=data;
-return $$TMP196;
+$$TMP187=data;
+return $$TMP187;
 }
 )($$root["object"]([]));
-return $$TMP195;
+return $$TMP186;
 }
 );
 $$root["iterate-compile-while"];
 $$root["iterate-compile-do"]=(function(form){
-   var $$TMP197;
-   $$TMP197=(function(data){
-      var $$TMP198;
+   var $$TMP188;
+   $$TMP188=(function(data){
+      var $$TMP189;
 $$root["seti!"](data,(new $$root.Symbol("body")),$$root["cdr"](form));
-$$TMP198=data;
-return $$TMP198;
+$$TMP189=data;
+return $$TMP189;
 }
 )($$root["object"]([]));
-return $$TMP197;
+return $$TMP188;
 }
 );
 $$root["iterate-compile-do"];
 $$root["iterate-compile-finally"]=(function(form){
-   var $$TMP199;
-   $$TMP199=(function(data){
-      var $$TMP200;
+   var $$TMP190;
+   $$TMP190=(function(data){
+      var $$TMP191;
 $$root["seti!"](data,(new $$root.Symbol("finally")),$$root["cdr"](form));
-$$TMP200=data;
-return $$TMP200;
+$$TMP191=data;
+return $$TMP191;
 }
 )($$root["object"]([]));
-return $$TMP199;
+return $$TMP190;
 }
 );
 $$root["iterate-compile-finally"];
 $$root["iterate-compile-let"]=(function(form){
-   var $$TMP201;
-   $$TMP201=(function(data){
-      var $$TMP202;
+   var $$TMP192;
+   $$TMP192=(function(data){
+      var $$TMP193;
 $$root["seti!"](data,(new $$root.Symbol("bind")),$$root["second"](form));
-$$TMP202=data;
-return $$TMP202;
+$$TMP193=data;
+return $$TMP193;
 }
 )($$root["object"]([]));
-return $$TMP201;
+return $$TMP192;
 }
 );
 $$root["iterate-compile-let"];
 $$root["collect-field"]=(function(field,objs){
-   var $$TMP203;
-$$TMP203=$$root["filter"]((function(x){
-   var $$TMP204;
-$$TMP204=$$root["not="](x,undefined);
-return $$TMP204;
+   var $$TMP194;
+$$TMP194=$$root["filter"]((function(x){
+   var $$TMP195;
+$$TMP195=$$root["not="](x,undefined);
+return $$TMP195;
 }
 ),$$root["map"]($$root["getter"](field),objs));
-return $$TMP203;
+return $$TMP194;
 }
 );
 $$root["collect-field"];
 $$root["iterate"]=(function(...forms){
-   var $$TMP205;
-   $$TMP205=(function(all){
-      var $$TMP214;
-$$TMP214=$$root["concat"]($$root["list"]((new $$root.Symbol("let*"))),$$root["list"]($$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("bind")),all))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("loop"))),$$root["list"]($$root["concat"]()),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("if"))),$$root["list"]($$root["cons"]((new $$root.Symbol("and")),$$root["collect-field"]((new $$root.Symbol("cond")),all))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("pre")),all)),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("body")),all)),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("post")),all)),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("finally")),all)))))))));
-return $$TMP214;
+   var $$TMP196;
+   $$TMP196=(function(all){
+      var $$TMP205;
+$$TMP205=$$root["concat"]($$root["list"]((new $$root.Symbol("let*"))),$$root["list"]($$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("bind")),all))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("loop"))),$$root["list"]($$root["concat"]()),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("if"))),$$root["list"]($$root["cons"]((new $$root.Symbol("and")),$$root["collect-field"]((new $$root.Symbol("cond")),all))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("pre")),all)),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("body")),all)),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("post")),all)),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("recur"))))))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["apply"]($$root["concat"],$$root["collect-field"]((new $$root.Symbol("finally")),all)))))))));
+return $$TMP205;
 }
 )($$root["map"]((function(form){
-   var $$TMP206;
-   $$TMP206=(function(__GS5){
-      var $$TMP207;
-      var $$TMP208;
+   var $$TMP197;
+   $$TMP197=(function(__GS5){
+      var $$TMP198;
+      var $$TMP199;
 if($$root["equal?"](__GS5,(new $$root.Symbol("let")))){
-$$TMP208=$$root["iterate-compile-let"](form);
+$$TMP199=$$root["iterate-compile-let"](form);
 }
 else{
-   var $$TMP209;
+   var $$TMP200;
 if($$root["equal?"](__GS5,(new $$root.Symbol("for")))){
-$$TMP209=$$root["iterate-compile-for"](form);
+$$TMP200=$$root["iterate-compile-for"](form);
 }
 else{
-   var $$TMP210;
+   var $$TMP201;
 if($$root["equal?"](__GS5,(new $$root.Symbol("while")))){
-$$TMP210=$$root["iterate-compile-while"](form);
+$$TMP201=$$root["iterate-compile-while"](form);
 }
 else{
-   var $$TMP211;
+   var $$TMP202;
 if($$root["equal?"](__GS5,(new $$root.Symbol("do")))){
-$$TMP211=$$root["iterate-compile-do"](form);
+$$TMP202=$$root["iterate-compile-do"](form);
 }
 else{
-   var $$TMP212;
+   var $$TMP203;
 if($$root["equal?"](__GS5,(new $$root.Symbol("finally")))){
-$$TMP212=$$root["iterate-compile-finally"](form);
+$$TMP203=$$root["iterate-compile-finally"](form);
 }
 else{
-   var $$TMP213;
+   var $$TMP204;
    if(true){
-$$TMP213=$$root["error"]("Unknown iterate form");
+$$TMP204=$$root["error"]("Unknown iterate form");
 }
 else{
-   $$TMP213=undefined;
+   $$TMP204=undefined;
 }
-$$TMP212=$$TMP213;
+$$TMP203=$$TMP204;
 }
-$$TMP211=$$TMP212;
+$$TMP202=$$TMP203;
 }
-$$TMP210=$$TMP211;
+$$TMP201=$$TMP202;
 }
-$$TMP209=$$TMP210;
+$$TMP200=$$TMP201;
 }
-$$TMP208=$$TMP209;
+$$TMP199=$$TMP200;
 }
-$$TMP207=$$TMP208;
-return $$TMP207;
+$$TMP198=$$TMP199;
+return $$TMP198;
 }
 )($$root["car"](form));
-return $$TMP206;
+return $$TMP197;
 }
 ),forms));
-return $$TMP205;
+return $$TMP196;
 }
 );
 $$root["iterate"];
 $$root["setmac!"]($$root["iterate"]);
 $$root["make-enum"]=(function(...args){
-   var $$TMP215;
-   $$TMP215=(function(e,len){
-      var $$TMP216;
+   var $$TMP206;
+   $$TMP206=(function(e,len){
+      var $$TMP207;
       (function(recur){
-         var $$TMP217;
+         var $$TMP208;
          recur=(function(i){
-            var $$TMP218;
-            var $$TMP219;
+            var $$TMP209;
+            var $$TMP210;
 if($$root["<"](i,len)){
-   $$TMP219=(function(){
-      var $$TMP220;
+   $$TMP210=(function(){
+      var $$TMP211;
 $$root["seti!"](e,$$root["geti"](args,i),i);
-$$TMP220=recur($$root["inc"](i));
-return $$TMP220;
+$$TMP211=recur($$root["inc"](i));
+return $$TMP211;
 }
 )();
 }
 else{
-   $$TMP219=undefined;
+   $$TMP210=undefined;
 }
-$$TMP218=$$TMP219;
-return $$TMP218;
+$$TMP209=$$TMP210;
+return $$TMP209;
 }
 );
 recur;
-$$TMP217=recur(0);
-return $$TMP217;
+$$TMP208=recur(0);
+return $$TMP208;
 }
 )([]);
-$$TMP216=e;
-return $$TMP216;
+$$TMP207=e;
+return $$TMP207;
 }
 )($$root["object"](),$$root["count"](args));
-return $$TMP215;
+return $$TMP206;
 }
 );
 $$root["make-enum"];
 $$root["gen-consts"]=(function(names,suffix){
-   var $$TMP221;
-$$TMP221=$$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["map-indexed"]((function(name,idx){
-   var $$TMP222;
-$$TMP222=$$root["concat"]($$root["list"]((new $$root.Symbol("def"))),$$root["list"]($$root["symbol"]($$root["str"](name,"-",suffix))),$$root["list"](idx));
-return $$TMP222;
+   var $$TMP212;
+$$TMP212=$$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["map-indexed"]((function(name,idx){
+   var $$TMP213;
+$$TMP213=$$root["concat"]($$root["list"]((new $$root.Symbol("def"))),$$root["list"]($$root["symbol"]($$root["str"](name,"-",suffix))),$$root["list"](idx));
+return $$TMP213;
 }
 ),names));
-return $$TMP221;
+return $$TMP212;
 }
 );
 $$root["gen-consts"];
@@ -1660,46 +1610,46 @@ $$root["end-tok"];
 $$root["token-proto"]=$$root["object"]();
 $$root["token-proto"];
 $$root["make-token"]=(function(src,type,start,len){
-   var $$TMP223;
-   $$TMP223=(function(o){
-      var $$TMP224;
+   var $$TMP214;
+   $$TMP214=(function(o){
+      var $$TMP215;
 $$root["seti!"](o,(new $$root.Symbol("src")),src);
 $$root["seti!"](o,(new $$root.Symbol("type")),type);
 $$root["seti!"](o,(new $$root.Symbol("start")),start);
 $$root["seti!"](o,(new $$root.Symbol("len")),len);
-$$TMP224=o;
-return $$TMP224;
+$$TMP215=o;
+return $$TMP215;
 }
 )($$root["object"]($$root["token-proto"]));
-return $$TMP223;
+return $$TMP214;
 }
 );
 $$root["make-token"];
 $$root["seti!"]($$root["token-proto"],(new $$root.Symbol("text")),(function(){
-   var $$TMP225;
-   $$TMP225=(function(self){
-      var $$TMP226;
-      $$TMP226=(function(target){
-         var $$TMP227;
-$$TMP227=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("substr"))),target,$$root["geti"](self,(new $$root.Symbol("start"))),$$root["geti"](self,(new $$root.Symbol("len"))));
-return $$TMP227;
+   var $$TMP216;
+   $$TMP216=(function(self){
+      var $$TMP217;
+      $$TMP217=(function(target){
+         var $$TMP218;
+$$TMP218=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("substr"))),target,$$root["geti"](self,(new $$root.Symbol("start"))),$$root["geti"](self,(new $$root.Symbol("len"))));
+return $$TMP218;
 }
 )($$root["geti"](self,(new $$root.Symbol("src"))));
-return $$TMP226;
+return $$TMP217;
 }
 )(this);
-return $$TMP225;
+return $$TMP216;
 }
 ));
 $$root["lit"]=(function(s){
-   var $$TMP228;
-$$TMP228=$$root["regex"]($$root["str"]("^",(function(target){
-   var $$TMP229;
-$$TMP229=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("replace"))),target,$$root["regex"]("[.*+?^${}()|[\\]\\\\]","g"),"\\$&");
-return $$TMP229;
+   var $$TMP219;
+$$TMP219=$$root["regex"]($$root["str"]("^",(function(target){
+   var $$TMP220;
+$$TMP220=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("replace"))),target,$$root["regex"]("[.*+?^${}()|[\\]\\\\]","g"),"\\$&");
+return $$TMP220;
 }
 )(s)));
-return $$TMP228;
+return $$TMP219;
 }
 );
 $$root["lit"];
@@ -1717,57 +1667,57 @@ $$root["keywords"]=$$root["object"]([]);
 $$root["keywords"];
 $$root["seti!"]($$root["keywords"],"true",$$root["true-tok"]);
 $$root["seti!"]($$root["keywords"],"false",$$root["false-tok"]);
-$$root["seti!"]($$root["keywords"],"undefined",$$root["undefined-tok"]);
+$$root["seti!"]($$root["keywords"],"undefined",$$root["undef-tok"]);
 $$root["seti!"]($$root["keywords"],"null",$$root["null-tok"]);
 $$root["tokenize"]=(function(src){
-   var $$TMP230;
-   $$TMP230=(function(toks,pos,s){
-      var $$TMP231;
+   var $$TMP221;
+   $$TMP221=(function(toks,pos,s){
+      var $$TMP222;
       (function(recur){
-         var $$TMP232;
+         var $$TMP223;
          recur=(function(){
-            var $$TMP233;
-            var $$TMP234;
+            var $$TMP224;
+            var $$TMP225;
 if($$root[">"]($$root["geti"](s,(new $$root.Symbol("length"))),0)){
-   $$TMP234=(function(){
-      var $$TMP235;
+   $$TMP225=(function(){
+      var $$TMP226;
       (function(res,i,__GS6,__GS7,entry){
-         var $$TMP236;
-         $$TMP236=(function(recur){
-            var $$TMP237;
+         var $$TMP227;
+         $$TMP227=(function(recur){
+            var $$TMP228;
             recur=(function(){
-               var $$TMP238;
-               var $$TMP239;
-               var $$TMP240;
+               var $$TMP229;
+               var $$TMP230;
+               var $$TMP231;
 if($$root["<"](i,__GS6)){
-   var $$TMP241;
+   var $$TMP232;
 if($$root["not"]($$root["null?"](__GS7))){
-   var $$TMP242;
+   var $$TMP233;
 if($$root["not"](res)){
-   $$TMP242=true;
+   $$TMP233=true;
 }
 else{
-   $$TMP242=false;
+   $$TMP233=false;
 }
-$$TMP241=$$TMP242;
-}
-else{
-   $$TMP241=false;
-}
-$$TMP240=$$TMP241;
+$$TMP232=$$TMP233;
 }
 else{
-   $$TMP240=false;
+   $$TMP232=false;
 }
-if($$TMP240){
-   $$TMP239=(function(){
-      var $$TMP243;
+$$TMP231=$$TMP232;
+}
+else{
+   $$TMP231=false;
+}
+if($$TMP231){
+   $$TMP230=(function(){
+      var $$TMP234;
 entry=$$root["car"](__GS7);
 entry;
 res=(function(target){
-   var $$TMP244;
-$$TMP244=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("match"))),target,$$root["first"](entry));
-return $$TMP244;
+   var $$TMP235;
+$$TMP235=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("match"))),target,$$root["first"](entry));
+return $$TMP235;
 }
 )(s);
 res;
@@ -1775,111 +1725,100 @@ i=$$root["+"](i,1);
 i;
 __GS7=$$root["cdr"](__GS7);
 __GS7;
-$$TMP243=recur();
-return $$TMP243;
+$$TMP234=recur();
+return $$TMP234;
 }
 )();
 }
 else{
-   $$TMP239=(function(){
-      var $$TMP245;
-      var $$TMP246;
+   $$TMP230=(function(){
+      var $$TMP236;
+      var $$TMP237;
       if(res){
-         $$TMP246=(function(){
-            var $$TMP247;
+         $$TMP237=(function(){
+            var $$TMP238;
             s=(function(target){
-               var $$TMP248;
-$$TMP248=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("substring"))),target,$$root["geti"]($$root["geti"](res,0),(new $$root.Symbol("length"))));
-return $$TMP248;
+               var $$TMP239;
+$$TMP239=$$root["call-method"]($$root["geti"](target,(new $$root.Symbol("substring"))),target,$$root["geti"]($$root["geti"](res,0),(new $$root.Symbol("length"))));
+return $$TMP239;
 }
 )(s);
 s;
-var $$TMP249;
+var $$TMP240;
 if($$root["not="]($$root["second"](entry),-1)){
-   $$TMP249=(function(){
-      var $$TMP250;
+   $$TMP240=(function(){
+      var $$TMP241;
 toks=$$root["cons"]($$root["make-token"](src,(function(c){
-   var $$TMP251;
-   var $$TMP252;
+   var $$TMP242;
+   var $$TMP243;
    if(c){
-      $$TMP252=c;
+      $$TMP243=c;
    }
    else{
-      $$TMP252=(function(c){
-         var $$TMP253;
-         var $$TMP254;
-         if(c){
-            $$TMP254=c;
-         }
-         else{
-            $$TMP254=false;
-         }
-         $$TMP253=$$TMP254;
-         return $$TMP253;
-      }
-)($$root["second"](entry));
+$$TMP243=$$root["second"](entry);
 }
-$$TMP251=$$TMP252;
-return $$TMP251;
+$$TMP242=$$TMP243;
+return $$TMP242;
 }
 )($$root["geti"]($$root["keywords"],$$root["geti"](res,0))),pos,$$root["geti"]($$root["geti"](res,0),(new $$root.Symbol("length")))),toks);
-$$TMP250=toks;
-return $$TMP250;
+$$TMP241=toks;
+return $$TMP241;
 }
 )();
 }
 else{
-   $$TMP249=undefined;
+   $$TMP240=undefined;
 }
-$$TMP249;
+$$TMP240;
 pos=$$root["+"](pos,$$root["geti"]($$root["geti"](res,0),(new $$root.Symbol("length"))));
-$$TMP247=pos;
-return $$TMP247;
-}
-)();
-}
-else{
-$$TMP246=$$root["error"]($$root["str"]("Unrecognized token: ",s));
-}
-$$TMP245=$$TMP246;
-return $$TMP245;
-}
-)();
-}
-$$TMP238=$$TMP239;
+$$TMP238=pos;
 return $$TMP238;
 }
-);
-recur;
-$$TMP237=recur();
-return $$TMP237;
+)();
 }
-)([]);
+else{
+$$TMP237=$$root["error"]($$root["str"]("Unrecognized token: ",s));
+}
+$$TMP236=$$TMP237;
 return $$TMP236;
 }
+)();
+}
+$$TMP229=$$TMP230;
+return $$TMP229;
+}
+);
+recur;
+$$TMP228=recur();
+return $$TMP228;
+}
+)([]);
+return $$TMP227;
+}
 )(false,0,$$root["count"]($$root["token-table"]),$$root["token-table"],[]);
-$$TMP235=recur();
-return $$TMP235;
+$$TMP226=recur();
+return $$TMP226;
 }
 )();
 }
 else{
-   $$TMP234=undefined;
+   $$TMP225=undefined;
 }
-$$TMP233=$$TMP234;
-return $$TMP233;
+$$TMP224=$$TMP225;
+return $$TMP224;
 }
 );
 recur;
-$$TMP232=recur();
-return $$TMP232;
+$$TMP223=recur();
+return $$TMP223;
 }
 )([]);
-$$TMP231=$$root["reverse"]($$root["cons"]($$root["end-tok"],toks));
-return $$TMP231;
+$$TMP222=$$root["reverse"]($$root["cons"]($$root["make-token"](src,$$root["end-tok"],0,0),toks));
+return $$TMP222;
 }
 )([],0,src);
-return $$TMP230;
+return $$TMP221;
 }
 );
 $$root["tokenize"];
+$$root["export"]((new $$root.Symbol("root")),$$root["*ns*"]);
