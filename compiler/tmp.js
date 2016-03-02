@@ -86,7 +86,7 @@ var $$root = {
     },
 
     "atom?": function atom__QM(x) {
-        return x === true || x === false || $$root["null?"](x) || x === undefined || $$root["number?"](x) || $$root["symbol?"](x) || $$root["string?"](x);
+        return x === true || x === false || $$root["null?"](x) || x === undefined || $$root["number?"](x) || $$root["symbol?"](x);
     },
 
     "list?": function list__QM(x) {
@@ -136,20 +136,11 @@ var $$root = {
     "macro?" : function(f) {
         return f && ("isMacro" in f);
     },
-	"function?" : function(f) {
-		return typeof f === "function";
-	},
     error:  function(msg) {
         throw Error(msg);
     },
 	export: function(s, v) {
 		module.exports[s] = v;
-	},
-	require: function(mod) {
-		return require(mod);
-	},
-	in: function(obj, f) {
-		return f in obj;
 	},
 };
 
@@ -160,3 +151,4 @@ $$root.__proto__ = Function('return this')();
 // * 
 // *
 
+"\\";

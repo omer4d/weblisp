@@ -4,19 +4,19 @@ var test = function(title, f) {
 	_test("[Parser] " + title, f);
 }
 
-var wl = require('../weblisp.js');
+var wl = require('../weblisp2.js');
 
-var cons = wl.cons;
-var list = wl.list;
-var Symbol = wl.Symbol;
+var cons = wl.root.cons;
+var list = wl.root.list;
+var symbol = wl.root.symbol;
 
 function pt(str) {
-	return wl.parse(wl.tokenize(str))[0];
+	return wl.root.car(wl.root.parse(wl.root.tokenize(str)));
 }
 
 test( "Atoms", function( assert ) {
 	assert.deepEqual(pt("10"), 10);
-	assert.deepEqual(pt("baz"), new Symbol("baz"));
+	assert.deepEqual(pt("baz"), symbol("baz"));
 	assert.deepEqual(pt("true"), true);
 	assert.deepEqual(pt("false"), false);
 	assert.deepEqual(pt("null"), []);
@@ -27,12 +27,12 @@ test( "Atoms", function( assert ) {
 });
 
 test( "Lists", function( assert ) {
-	assert.deepEqual(wl.list(1, 2, 3), cons(1, cons(2, cons(3, []))));
+	assert.deepEqual(list(1, 2, 3), cons(1, cons(2, cons(3, []))));
 	assert.deepEqual(pt("()"), []);
 	assert.deepEqual(pt("(())"), list([]));
 	assert.deepEqual(pt("(1 2 3)"), list(1, 2, 3));
 	assert.deepEqual(pt("(1 (2 3 4) 5 6)"), list(1, list(2, 3, 4), 5, 6));
-	assert.deepEqual(pt("(foo bar 5)"), list(new Symbol("foo"), new Symbol("bar"), 5));
+	assert.deepEqual(pt("(foo bar 5)"), list(symbol("foo"), symbol("bar"), 5));
 	assert.end();
 });
 

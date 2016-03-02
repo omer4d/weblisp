@@ -2,60 +2,25 @@ var _test = require('tape');
 const NodeAssert = require('assert');
 const VM = require('vm');
 
-function formatCode(str)
-{
-    var toks = str.split(/(;|{|})/);
-    var out = "";
-    var ind = [];
-    
-    for(var i = 0; i < Math.floor(toks.length / 2); ++i)
-    {
-        if(toks[i * 2 + 1] === "}")
-            ind.pop();
-        
-        out += ind.join("") + toks[i * 2] + toks[i * 2 + 1] + "\n";
-
-        if(toks[i * 2 + 1] === "{")
-            ind.push("   ");
-    }
-    
-    return out + toks[toks.length - 1];
-}
-
-function evalisp(expr) {
-    var tmp = wl.compile({}, expr);
-    return tmp[1] + tmp[0];
-}
-
-function compileAll(str) {
-    var forms = wl.parse(wl.tokenize(str)), r = "";
-
-    for (var i = 0; i < forms.length; ++i) {
-        r += evalisp(forms[i]);
-    }
-
-    return r;
-}
-
 var test = function(title, f) {
 	_test("[Compiler] " + title, f);
 }
 
-var wl = require('../weblisp.js');
+var wl = require('../weblisp2.js');
 
-var cons = wl.cons;
-var list = wl.list;
-var Symbol = wl.Symbol;
+var cons = wl.root.cons;
+var list = wl.root.list;
+var symbol = wl.root.symbol;
 
+var evaluator = wl.root["make-node-evaluator"]();
 
-var evaluator = new wl.NodeEvaluator();
 function ev(str) {
-	return evaluator.evalStr(str);
+	return evaluator["eval-str"](str);
 }
 
 test( "Atoms (sans symbol)", function( assert ) {
 	assert.deepEqual(ev("1"), 1);
-	assert.deepEqual(ev("'baz"), new Symbol("baz"));
+	assert.deepEqual(ev("'baz"), symbol("baz"));
 	assert.deepEqual(ev("null"), []);
 	assert.deepEqual(ev("true"), true);
 	assert.deepEqual(ev("false"), false);
@@ -70,7 +35,7 @@ test( "Atoms (sans symbol)", function( assert ) {
 
 test( "Quote", function( assert ) {
 	assert.deepEqual(ev("'1"), 1);
-	assert.deepEqual(ev("'baz"), new Symbol("baz"));
+	assert.deepEqual(ev("'baz"), symbol("baz"));
 
 	assert.deepEqual(ev("'null"), []);
 	assert.deepEqual(ev("'true"), true);
@@ -80,7 +45,7 @@ test( "Quote", function( assert ) {
 	
 	assert.deepEqual(ev("'()"), []);
 	assert.deepEqual(ev("'(1 2 3)"), list(1, 2, 3));
-	assert.deepEqual(ev("'(1 baz 3)"), list(1, new Symbol("baz"), 3));
+	assert.deepEqual(ev("'(1 baz 3)"), list(1, symbol("baz"), 3));
 	assert.deepEqual(ev("'(1 (2 3) 4)"), list(1, list(2, 3), 4));
 		
 	assert.end();

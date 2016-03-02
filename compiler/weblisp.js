@@ -16,7 +16,7 @@ function escapeStr(str) {
 }
 
 function unescapeStr(str) {
-    return (JSON.parse('{"str":' + str + "}")).str;
+    return JSON.parse(str);
 }
 
 function argReducer(name, r, initial) {
@@ -146,7 +146,7 @@ function lit(str) {
 var spacePatt = /^\s+/;
 var numberPatt = /^[+\-]?\d+(\.\d*)?|^[+\-]?\.\d+/;
 var symPatt = /^[_.<>?+\-=!@#$%\^&*/a-zA-Z][_.<>?+\-=!@#$%\^&*/a-zA-Z0-9]*/;
-var strPatt = /^"(?:(?:\\")|[^"])*"/;
+var strPatt = /^"(?:\\.|[^"])*"/;
 
 var tokenTable = [{patt: spacePatt, type: -1},
                   {patt: /^;[^\n]*/, type: -1},

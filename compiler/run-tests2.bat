@@ -1,1 +1,1 @@
-node --harmony --harmony_proxies ./node_modules/tape/bin/tape tests2/tests.js | faucet
+node --harmony --harmony_proxies ./node_modules/tape/bin/tape tests2/tests.js

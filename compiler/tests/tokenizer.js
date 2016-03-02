@@ -71,6 +71,8 @@ test("Symbols", function( assert ) {
 
 test("Strings", function(assert) {
 	assert.deepEqual(tk('""'), ["STR", "END"]);
+	assert.deepEqual(tk('"\\\\"'), ["STR", "END"]);
+	assert.deepEqual(tk('"\\\\" "xyz"'), ["STR", "STR", "END"]);
 	assert.deepEqual(tk('"abcd"'), ["STR", "END"]);
 	assert.deepEqual(tk('"abcd\\n\\\\"'), ["STR", "END"]);
 	assert.deepEqual(tk('"abcd\\""'), ["STR", "END"]);
