@@ -203,6 +203,13 @@
       (list (format "%0(%1)" (first compiled-fun) (join "," (map first compiled-args)))
 	    (str (second compiled-fun) (join "" (map second compiled-args)))))))
 
+(defmethod compile-new compiler-proto (self lexenv lst)
+  (destructuring-bind (_ fun &args) lst
+    (let (compiled-args (map (partial-method self 'compile lexenv) args)
+	  compiled-fun (. self (compile lexenv fun)))
+      (list (format "(new (%0)(%1))" (first compiled-fun) (join "," (map first compiled-args)))
+	    (str (second compiled-fun) (join "" (map second compiled-args)))))))
+
 (defmethod compile-method-call compiler-proto (self lexenv lst)
   (destructuring-bind (method obj &args) lst
     (let (compiled-obj (. self (compile lexenv obj))
@@ -311,6 +318,7 @@
         (if (symbol? first)
             (case first
 		lambda    (. self (compile-lambda lexenv expr))
+		new       (. self (compile-new lexenv expr))
                 if        (. self (compile-if lexenv expr))
                 quote     (. self (compile-quoted lexenv (second expr)))
                 setv!     (. self (compile-setv lexenv expr))

@@ -7,6 +7,8 @@
 
 (def stage (new (. PIXI Container)))
 
+(.log console stage)
+
 (def texture (. PIXI Texture (fromImage "res/char.png")))
 
 (def sprite (new (. PIXI Sprite) texture))
