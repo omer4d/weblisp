@@ -12,7 +12,7 @@ var cons = wl.root.cons;
 var list = wl.root.list;
 var symbol = wl.root.symbol;
 
-var evaluator = wl.root["make-node-evaluator"]();
+var evaluator = wl.root["make-instance"](wl.root["node-evaluator-proto"]);
 
 function ev(str) {
 	return evaluator["eval-str"](str);

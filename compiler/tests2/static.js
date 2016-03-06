@@ -6,11 +6,15 @@ var test = function(title, f) {
 	_test("[Static Compiler] " + title, f);
 }
 
-var wl = require('../weblisp.js');
+var wl = require('../weblisp2.js');
 var sandbox = {};
-var staticCompiler = new wl.StaticCompiler();
+var staticCompiler = wl.root["make-instance"](wl.root["static-compiler-proto"]);
 
 VM.createContext(sandbox);
+
+function isLazyDef(x) {
+	return wl.root["lazy-def-proto"].isPrototypeOf(x);
+}
   
 function jeval(str) {
     return VM.runInContext(str, sandbox);
@@ -21,7 +25,7 @@ jeval(fs.readFileSync("./bootstrap.js", "utf8"));
 sandbox.$$root.jeval = jeval;
 
 function comp(str) {
-    return staticCompiler.compileUnit(str);
+    return staticCompiler["compile-unit"](str);
 }
 
 test("Misc.", function( assert ) {
@@ -31,8 +35,8 @@ test("Misc.", function( assert ) {
 
     comp(testCode1);
     
-    assert.ok(staticCompiler.root.fun1 instanceof wl.LazyDef);
-    assert.ok(staticCompiler.root.foo1 instanceof wl.LazyDef);
+    assert.ok(isLazyDef(staticCompiler.root.fun1));
+    assert.ok(isLazyDef(staticCompiler.root.foo1));
     
     var testCode2 =
     `(def testmac1 
@@ -40,9 +44,9 @@ test("Misc.", function( assert ) {
             (if (atom? x)
 		        x` +
 		        "`(~(car (cdr x)) (testmac1 ~(car x)) (testmac1 ~(car (cdr (cdr x))))))))" +
-		        `(setmac! testmac1)
+	`(setmac! testmac1)
     (setv! foo2 (testmac1 (1 + (2 + (3 + 4)))))`;
-
+	
     jeval(comp(testCode2));
     assert.equal(sandbox.$$root.foo2, 1 + 2 + 3 + 4);
 
@@ -68,7 +72,7 @@ test("Misc.", function( assert ) {
     assert.ok(typeof staticCompiler.root["my-cdr"] === "function");
     assert.ok(typeof staticCompiler.root.id === "function");
     assert.ok(typeof staticCompiler.root["my-atom?"] === "function");
-    assert.ok(staticCompiler.root.lazyfoo instanceof wl.LazyDef);
+    assert.ok(isLazyDef(staticCompiler.root.lazyfoo));
     assert.notOk(staticCompiler.root.invisible);
     assert.equal(sandbox.$$root.foo3, 5 + 5 + 5 + 5);
     assert.equal(sandbox.$$root.invisible, 12345);
@@ -83,7 +87,7 @@ test("Misc.", function( assert ) {
     assert.ok(staticCompiler.root.testmac3);
     assert.ok(typeof staticCompiler.root.testmac3 === "function");
     assert.ok(staticCompiler.root.id2);
-    assert.ok(staticCompiler.root.id2 instanceof wl.LazyDef);
+    assert.ok(isLazyDef(staticCompiler.root.id2));
     
     
     comp(`(def testmac4
@@ -97,9 +101,9 @@ test("Misc.", function( assert ) {
     assert.ok(staticCompiler.root.testmac4);
     assert.ok(typeof staticCompiler.root.testmac4 === "function");
     assert.ok(staticCompiler.root.id3);
-    assert.ok(staticCompiler.root.id3 instanceof wl.LazyDef);
+    assert.ok(isLazyDef(staticCompiler.root.id3));
     assert.ok(staticCompiler.root.id4);
-    assert.ok(staticCompiler.root.id4 instanceof wl.LazyDef);
+    assert.ok(isLazyDef(staticCompiler.root.id4));
     
 	assert.end();
 });

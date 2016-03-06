@@ -3,48 +3,38 @@
 ;; Figure out tests for string
 
 (def VM (require "vm"))
+(def Reflect (require "harmony-reflect"))
 
 (def defmacro
-     (lambda (name args &body)
-        `((lambda ()
-            (def ~name (lambda ~args ~@body))
-            (setmac! ~name)))))
+    (lambda (name args &body)
+      `((lambda ()
+	  (def ~name (lambda ~args ~@body))
+	  (setmac! ~name)))))
 
 (setmac! defmacro)
 
-(defmacro method (args &body)
-  `(lambda ~(cdr args)
-      ((lambda (~(car args))
-	 ~@body) this)))
-
-(defmacro defmethod (name obj args &body)
-  `(seti! ~obj (quote ~name)
-     (lambda ~(cdr args)
-	((lambda (~(car args))
-	 ~@body) this))))
-
 (defmacro defun (name args &body)
-    `(def ~name (lambda ~args ~@body)))
+  `(def ~name (lambda ~args ~@body)))
 
 (defmacro progn (&body)
   (if (null? body)
       undefined
       `((lambda () ~@body))))
-    
+ 
 (defmacro when (c &body)
-    `(if ~c (progn ~@body) undefined))
+  `(if ~c (progn ~@body) undefined))
 
 (defmacro cond (&pairs)
-    (if (null? pairs)
-        undefined
-        `(if ~(car pairs)
-             ~(car (cdr pairs))
-             (cond ~@(cdr (cdr pairs))))))
+  (if (null? pairs)
+      undefined
+      `(if ~(car pairs)
+	   ~(car (cdr pairs))
+	   (cond ~@(cdr (cdr pairs))))))
 
 (defmacro and (&args)
-    (if (null? args)
-        true
-        `(if ~(car args) ~(cons 'and (cdr args)) false)))
+  (if (null? args)
+      true
+      `(if ~(car args) ~(cons 'and (cdr args)) false)))
 
 (defmacro or (&args)
   (if (null? args)
@@ -82,52 +72,52 @@
   (lambda (obj) (geti obj field)))
 
 (defun reduce (r lst accum)
-    (if (null? lst)
-        accum
-        (reduce r (cdr lst) (r accum (car lst)))))
+  (if (null? lst)
+      accum
+      (reduce r (cdr lst) (r accum (car lst)))))
 
 (defun reverse (lst) (reduce (lambda (accum v) (cons v accum)) lst '()))
 
 (defun transform-list (r lst)
-    (reverse (reduce r lst '())))
+  (reverse (reduce r lst '())))
 
 (defun map (f lst)
-    (transform-list
-        (lambda (accum v) (cons (f v) accum))
-        lst))
+  (transform-list
+   (lambda (accum v) (cons (f v) accum))
+   lst))
 
 (defun filter (p lst)
-    (transform-list
-        (lambda (accum v) (if (p v) (cons v accum) accum))
-        lst))
+  (transform-list
+   (lambda (accum v) (if (p v) (cons v accum) accum))
+   lst))
 
 (defun take (n lst)
-    (transform-list
-        (lambda (accum v)
-            (decv! n)
-            (if (>= n 0)
-                (cons v accum)
-                accum))
-        lst))
+  (transform-list
+   (lambda (accum v)
+     (decv! n)
+     (if (>= n 0)
+	 (cons v accum)
+	 accum))
+   lst))
 
 (defun drop (n lst)
-    (transform-list
-        (lambda (accum v)
-            (decv! n)
-            (if (>= n 0)
-                accum
-                (cons v accum)))
-        lst))
+  (transform-list
+   (lambda (accum v)
+     (decv! n)
+     (if (>= n 0)
+	 accum
+	 (cons v accum)))
+   lst))
 
 (defun every-nth (n lst)
-    ((lambda (counter)
-        (transform-list
-            (lambda (accum v)
-                (if (= (mod (incv! counter) n) 0) (cons v accum) accum))
-            lst)) -1))
+  ((lambda (counter)
+     (transform-list
+      (lambda (accum v)
+	(if (= (mod (incv! counter) n) 0) (cons v accum) accum))
+      lst)) -1))
 
 (defun nth (n lst)
-    (if (= n 0) (car lst) (nth (dec n) (cdr lst))))
+  (if (= n 0) (car lst) (nth (dec n) (cdr lst))))
     
 (defun butlast (n lst)
   (take (- (count lst) n) lst))
@@ -136,7 +126,7 @@
   (reduce (lambda (accum v) v) lst undefined))
 
 (defun count (lst)
-    (reduce (lambda (accum v) (inc accum)) lst 0))
+  (reduce (lambda (accum v) (inc accum)) lst 0))
     
 (defun zip (a &more)
    ((lambda (args)
@@ -145,8 +135,8 @@
             (cons (map car args) (apply zip (map cdr args))))) (cons a more)))
 
 (defmacro let (bindings &body)
-    `((lambda ~(every-nth 2 bindings)
-        ~@body) ~@(every-nth 2 (cdr bindings))))
+  `((lambda ~(every-nth 2 bindings) ~@body)
+    ~@(every-nth 2 (cdr bindings))))
 
 (defun interpose(x lst)
   (let (fst true)
@@ -162,92 +152,115 @@
   (reduce str (interpose sep lst) ""))
 
 (defun find (f arg lst)
-    (let (idx -1)
-        (reduce (lambda (accum v)
-                    (incv! idx)
-                    (if (f arg v) idx accum))
-                lst -1)))
+  (let (idx -1)
+    (reduce (lambda (accum v)
+	      (incv! idx)
+	      (if (f arg v) idx accum))
+	    lst -1)))
 
 (defun flatten (x)
-    (if (atom? x) (list x)
-        (apply concat (map flatten x))))
+  (if (atom? x) (list x)
+      (apply concat (map flatten x))))
 
 (defun map-indexed (f lst)
-    (let (idx -1)
-        (transform-list
-            (lambda (accum v) (cons (f v (incv! idx)) accum))
-            lst)))
+  (let (idx -1)
+    (transform-list
+     (lambda (accum v) (cons (f v (incv! idx)) accum))
+     lst)))
 
 (defmacro loop (bindings &body)
-    `(let (recur null)
-        (setv! recur (lambda ~(every-nth 2 bindings) ~@body))
-        (recur ~@(every-nth 2 (cdr bindings)))))
+  `(let (recur null)
+     (setv! recur (lambda ~(every-nth 2 bindings) ~@body))
+     (recur ~@(every-nth 2 (cdr bindings)))))
 
 (defun partition (n lst)
-    (if (null? lst)
-        null
-        (reverse
-            (loop (accum '()
-                   part (cons (car lst) null)
-                   rem (cdr lst)
-                   counter 1)
-                (if (null? rem)
-                    (cons (reverse part) accum)
-                    (if (= (mod counter n) 0)
-                        (recur (cons (reverse part) accum) (cons (car rem) null) (cdr rem) (inc counter))
-                        (recur accum (cons (car rem) part) (cdr rem) (inc counter))))))))
+  (if (null? lst)
+      null
+      (reverse
+       (loop (accum '()
+	      part (cons (car lst) null)
+	      rem (cdr lst)
+	      counter 1)
+	  (if (null? rem)
+	      (cons (reverse part) accum)
+	      (if (= (mod counter n) 0)
+		  (recur (cons (reverse part) accum) (cons (car rem) null) (cdr rem) (inc counter))
+		  (recur accum (cons (car rem) part) (cdr rem) (inc counter))))))))
+
+(defmacro method (args &body)
+  `(lambda ~(cdr args)
+      ((lambda (~(car args))
+	 ~@body) this)))
+
+(defmacro defmethod (name obj args &body)
+  `(seti! ~obj (quote ~name)
+     (lambda ~(cdr args)
+	((lambda (~(car args))
+	 ~@body) this))))
+
+(defun make-instance (proto &args)
+  (let (instance (object proto))
+    (apply-method (geti proto 'init) instance args)
+    instance))
+
+(defun new (constructor &args)
+  (let (instance (object (. prototype constructor)))
+    (apply-method constructor instance args)))
 
 (defun dot-helper (obj-name reversed-fields)
-    (if (null? reversed-fields)
-        obj-name
-        `(geti ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields)))))
+  (if (null? reversed-fields)
+      obj-name
+      `(geti ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields)))))
 
 (defmacro . (obj-name &fields)
-    (let (rev-fields (reverse fields))
-        (if (list? (car rev-fields))
-            `(let (target ~(dot-helper obj-name (cdr (cdr rev-fields))))
-                (call-method (geti target (quote ~(second rev-fields))) target ~@(first rev-fields)))
-                (dot-helper obj-name rev-fields))))
+  (let (rev-fields (reverse fields))
+    (if (list? (car rev-fields))
+	`(let (target ~(dot-helper obj-name (cdr (cdr rev-fields))))
+	   (call-method (geti target (quote ~(second rev-fields))) target ~@(first rev-fields)))
+	(dot-helper obj-name rev-fields))))
+
+(defun prototype? (p o)
+  (. p isPrototypeOf (o)))
 
 (defun equal? (a b)
-    (cond
-        (null? a)   (null? b)
-        (symbol? a) (and (symbol? b) (= (. a name) (. b name)))
-        (atom? a)   (= a b)
-        (list? a)   (and (list? b) (equal? (car a) (car b)) (equal? (cdr a) (cdr b)))))
+  (cond
+    (null? a)   (null? b)
+    (symbol? a) (and (symbol? b) (= (. a name) (. b name)))
+    (atom? a)   (= a b)
+    (list? a)   (and (list? b) (equal? (car a) (car b)) (equal? (cdr a) (cdr b)))))
 
 (defun split (p lst)
-    (let (res (loop (l1 null
-                     l2 lst)
-                (if (or (null? l2) (p (car l2)))
-                    (list l1 l2)
-                    (recur (cons (car l2) l1) (cdr l2)))))
-        (list (reverse (first res)) (second res))))
+  (let (res (loop (l1 null
+		   l2 lst)
+	       (if (or (null? l2) (p (car l2)))
+		   (list l1 l2)
+		   (recur (cons (car l2) l1) (cdr l2)))))
+    (list (reverse (first res)) (second res))))
  
 (defun any? (lst)
-    (if (reduce (lambda (accum v)
-                        (if accum accum v))
-                lst
-                false)
-        true
-        false))
-        
+  (if (reduce (lambda (accum v)
+		(if accum accum v))
+	      lst
+	      false)
+      true
+      false))
+
 (defun splitting-pair (binding-names outer pair)
-    (any? (map (lambda (sym) (and (= (find equal? sym outer) -1)
-                                  (not= (find equal? sym binding-names) -1)))
-          (filter symbol? (flatten (second pair))))))
+  (any? (map (lambda (sym) (and (= (find equal? sym outer) -1)
+				(not= (find equal? sym binding-names) -1)))
+	     (filter symbol? (flatten (second pair))))))
 
 (defun let-helper* (outer binding-pairs body)
-    (let (binding-names (map first binding-pairs))
-        (let (divs (split (lambda (pair) (splitting-pair binding-names outer pair))
-                          binding-pairs))
-            (if (null? (second divs))
-                `(let ~(apply concat (first divs)) ~@body)
-                `(let ~(apply concat (first divs))
-                      ~(let-helper* (concat binding-pairs (map first (first divs))) (second divs) body))))))
+  (let (binding-names (map first binding-pairs))
+    (let (divs (split (lambda (pair) (splitting-pair binding-names outer pair))
+		       binding-pairs))
+      (if (null? (second divs))
+	  `(let ~(apply concat (first divs)) ~@body)
+	  `(let ~(apply concat (first divs))
+		~(let-helper* (concat binding-pairs (map first (first divs))) (second divs) body))))))
 
 (defmacro let* (bindings &body)
-    (let-helper* '() (partition 2 bindings) body))
+  (let-helper* '() (partition 2 bindings) body))
 
 (defun complement (f) (lambda (x) (not (f x))))
 
@@ -484,13 +497,12 @@
 
 (def token-proto (object))
 
-(defun make-token (src type start len)
-  (let (o (object token-proto))
-    (set! (. o src) src)
-    (set! (. o type) type)
-    (set! (. o start) start)
-    (set! (. o len) len)
-    o))
+(defmethod init token-proto (self src type start len)
+  (doto self
+    (seti! 'src src)
+    (seti! 'type type)
+    (seti! 'start start)
+    (seti! 'len len)))
 
 (defmethod text token-proto (self)
   (. self src substr ((. self start) (. self len))))
@@ -536,21 +548,20 @@
 				(set! s (. s substring ((. res 0 length))))
 				(when (not= (second entry) -1)
 				  (set! toks
-					(cons (make-token src
-							  (or (geti keywords (. res 0)) (second entry))
-							  pos
-							  (. res 0 length))
+					(cons (make-instance token-proto
+							     src
+							     (or (geti keywords (. res 0)) (second entry))
+							     pos
+							     (. res 0 length))
 					      toks)))
 				(inc! pos (. res 0 length)))
 			      (error (str "Unrecognized token: " s))))))
-    (reverse (cons (make-token src 'end-tok 0 0) toks))))
+    (reverse (cons (make-instance token-proto src 'end-tok 0 0) toks))))
 
 (def parser-proto (object))
 
-(defun make-parser (toks)
-  (let (o (object parser-proto))
-    (set! (. o pos) toks)
-    o))
+(defmethod init parser-proto (self toks)
+  (seti! self 'pos toks))
 
 (defmethod peek-tok parser-proto (self)
   (car (. self pos)))
@@ -611,7 +622,7 @@
       `(quote ~(. self parse-expr ()))))
 
 (defun parse (toks)
-  (let (p (make-parser toks))
+  (let (p (make-instance parser-proto toks))
     (iterate 
      (while (not (equal? (. (. p peek-tok ()) type) 'end-tok)))
      (collecting (. p parse-expr ())))))
@@ -649,8 +660,8 @@
 
 (def compiler-proto (object))
 
-(defun make-compiler (root)
-  (doto (object compiler-proto)
+(defmethod init compiler-proto (self root)
+  (doto self
     (seti! "root" root)
     (seti! "next-var-suffix" 0)))
 
@@ -791,17 +802,18 @@
 	    (. self compile-funcall (lexenv expr))))
       (. self compile-atom (lexenv expr))))
 
+
 (def node-evaluator-proto (object))
 
-(defun make-node-evaluator ()
+(defmethod init node-evaluator-proto (self)
   (let (root (object *ns*)
 	sandbox (object))
     (seti! sandbox "$$root" root)
     (. VM createContext (sandbox))
     (seti! root "jeval" (lambda (str) (. VM runInContext (str sandbox))))
-    (doto (object node-evaluator-proto)
+    (doto self
        (seti! "root" root)
-       (seti! "compiler" (make-compiler root)))))
+       (seti! "compiler" (make-instance compiler-proto root)))))
 
 (defmethod eval node-evaluator-proto (self expr)
   (let (tmp (. self compiler compile ((object) expr)))
@@ -811,6 +823,56 @@
   (let (forms (parse (tokenize s)))
     (iterate (for form (in-list forms))
 	     (do (. self eval (form))))))
+
+
+(def lazy-def-proto (object))
+
+(defmethod init lazy-def-proto (self compilation-result)
+  (seti! self 'code (str (second compilation-result) (first compilation-result))))
+
+(def static-compiler-proto (object compiler-proto))
+
+(defmethod init static-compiler-proto (self)
+  (let* (root (object *ns*)
+	 sandbox (object)
+	 handler (object)
+	 next-gensym-suffix 0)
+    (seti! handler 'get (lambda (target name)
+			  (let (r (geti target name))
+			    (when (prototype? lazy-def-proto r)
+			      (set! r (. root jeval ((. r code))))
+			      (seti! target name r))
+			    r)))
+    (seti! sandbox "$$root" (new Proxy root handler))
+    (. VM createContext (sandbox))
+    (seti! root "jeval" (lambda (str) (. VM runInContext (str sandbox))))
+    (seti! root "*ns*" (. sandbox "$$root"))
+    (seti! root "gensym" (lambda () (symbol (str "__GS" (inc! next-gensym-suffix)))))
+    (call-method (. compiler-proto init) self root)))
+
+(defmethod compile-toplevel static-compiler-proto (self e)
+  (let (lexenv (object))
+    (pattern-case e
+      ('def name val) (let (tmp (. self compile (lexenv e)))
+			(seti! (. self root) name (make-instance lazy-def-proto tmp))
+			(str (second tmp) (first tmp) ";"))
+
+      ('setmac! name) (let (tmp (. self compile (lexenv e)))
+			(. self root jeval ((str (second tmp) (first tmp))))
+			(str (second tmp) (first tmp) ";"))
+
+      (('lambda (&args) &body)) (join "" (map (partial-method self 'compile-toplevel) body))
+      
+      (name &args) (if (. self is-macro (name))
+		       (. self compile-toplevel ((. self macroexpand-unsafe (lexenv e))))
+		       (let (tmp (. self compile (lexenv e)))
+			 (str (second tmp) (first tmp) ";")))
+
+      any (let (tmp (. self compile (lexenv e)))
+	    (str (second tmp) (first tmp) ";")))))
+
+(defmethod compile-unit static-compiler-proto (self s)
+  (join "" (map (partial-method self 'compile-toplevel) (parse (tokenize s)))))
 
 ;(let* (e (make-node-evaluator)
 ;       ev (lambda (s) (. e eval-str (s))))
