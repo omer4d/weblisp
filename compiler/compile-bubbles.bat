@@ -1,0 +1,1 @@
+node --harmony --harmony_proxies weblisp.js lib2.lisp bubbles.lisp --out=bubbles.js

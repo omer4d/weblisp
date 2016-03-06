@@ -197,27 +197,23 @@
     instance))
 
 (defun new (constructor &args)
-  (let (instance (object (geti constructor 'prototype)))
+  (let (instance (object (. prototype constructor)))
     (apply-method constructor instance args)))
-
-(defun call-method-by-name (obj name &args)
-  (apply-method (geti obj name) obj args))
 
 (defun dot-helper (obj-name reversed-fields)
   (if (null? reversed-fields)
       obj-name
-      (if (list? (car reversed-fields))
-	  `(call-method-by-name
-	    ~(dot-helper obj-name (cdr reversed-fields))
-	    (quote ~(car (car reversed-fields)))
-	    ~@(cdr (car reversed-fields)))
-	  `(geti ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields))))))
+      `(geti ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields)))))
 
 (defmacro . (obj-name &fields)
-  (dot-helper obj-name (reverse fields)))
+  (let (rev-fields (reverse fields))
+    (if (list? (car rev-fields))
+	`(let (target ~(dot-helper obj-name (cdr (cdr rev-fields))))
+	   (call-method (geti target (quote ~(second rev-fields))) target ~@(first rev-fields)))
+	(dot-helper obj-name rev-fields))))
 
 (defun prototype? (p o)
-  (. p (isPrototypeOf o)))
+  (. p isPrototypeOf (o)))
 
 (defun equal? (a b)
   (cond
@@ -276,9 +272,9 @@
 (defun format (&args)
   (let (rx (regex "%[0-9]+" "gi"))
     (. (car args)
-       (replace
-	rx (lambda (match)
-	     (nth (parseInt (. match (substring 1))) (cdr args)))))))
+       replace
+       (rx (lambda (match)
+	     (nth (parseInt (. match substring (1))) (cdr args)))))))
 
 (defmacro case (e &pairs)
     (let* (e-name (gensym)
@@ -298,7 +294,7 @@
 	       (map-indexed (lambda (v idx)
 			      (if (symbol? v)
 				  (if (= (. v name 0) "&")
-				      `(~(symbol (. v name (slice 1))) (drop ~idx ~expr-name))
+				      `(~(symbol (. v name slice (1))) (drop ~idx ~expr-name))
 				      (if (= (. v name) "_") '() `(~v (nth ~idx ~expr-name))))
 				  (destruct-helper v `(nth ~idx ~expr-name))))
 			    structure)))))
@@ -392,7 +388,7 @@
 	(recur))))
 
 (defun sort (cmp lst)
-  (. lst (sort cmp)))
+  (. lst sort (cmp)))
 
 (defun in-range (binding-name start end step)
   (set! step (or step 1))
