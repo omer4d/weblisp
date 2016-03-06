@@ -1102,7 +1102,7 @@ $$root["case"]=(function(e,...pairs){
       var $$TMP141;
       var $$TMP142;
 if($$root["="](def__MINUSidx,-1)){
-$$TMP142=$$root.cons((new $$root.Symbol("error")),$$root.cons("Fell out of case!",[]));
+$$TMP142=$$root.list(((new $$root.Symbol("error")) ),("Fell out of case!" ));
 }
 else{
 $$TMP142=$$root["nth"]($$root["inc"](def__MINUSidx),pairs);
@@ -1375,7 +1375,7 @@ $$root["set!"]=(function(place,v){
    $$TMP181=(function(__GS1){
       var $$TMP182;
       var $$TMP183;
-if($$root["matches?"](__GS1,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("geti")),[])),$$root.cons((new $$root.Symbol("obj")),$$root.cons((new $$root.Symbol("field")),[]))))){
+if($$root["matches?"](__GS1,$$root.list(($$root.list(((new $$root.Symbol("quote")) ),((new $$root.Symbol("geti")) )) ),((new $$root.Symbol("obj")) ),((new $$root.Symbol("field")) )))){
    $$TMP183=(function(__GS2){
       var $$TMP184;
       $$TMP184=(function(obj,field){
@@ -3127,7 +3127,7 @@ $$root["seti!"]($$root["static-compiler-proto"],(new $$root.Symbol("compile-topl
          $$TMP460=(function(__GS33){
             var $$TMP461;
             var $$TMP462;
-if($$root["matches?"](__GS33,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("def")),[])),$$root.cons((new $$root.Symbol("name")),$$root.cons((new $$root.Symbol("val")),[]))))){
+if($$root["matches?"](__GS33,$$root.list(($$root.list(((new $$root.Symbol("quote")) ),((new $$root.Symbol("def")) )) ),((new $$root.Symbol("name")) ),((new $$root.Symbol("val")) )))){
    $$TMP462=(function(__GS34){
       var $$TMP463;
       $$TMP463=(function(name,val){
@@ -3148,7 +3148,7 @@ return $$TMP463;
 }
 else{
    var $$TMP466;
-if($$root["matches?"](__GS33,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("setmac!")),[])),$$root.cons((new $$root.Symbol("name")),[])))){
+if($$root["matches?"](__GS33,$$root.list(($$root.list(((new $$root.Symbol("quote")) ),((new $$root.Symbol("setmac!")) )) ),((new $$root.Symbol("name")) )))){
    $$TMP466=(function(__GS35){
       var $$TMP467;
       $$TMP467=(function(name){
@@ -3169,7 +3169,7 @@ return $$TMP467;
 }
 else{
    var $$TMP470;
-if($$root["matches?"](__GS33,$$root.cons($$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("lambda")),[])),$$root.cons($$root.cons((new $$root.Symbol("&args")),[]),$$root.cons((new $$root.Symbol("&body")),[]))),[]))){
+if($$root["matches?"](__GS33,$$root.list(($$root.list(($$root.list(((new $$root.Symbol("quote")) ),((new $$root.Symbol("lambda")) )) ),($$root.list(((new $$root.Symbol("&args")) )) ),((new $$root.Symbol("&body")) )) )))){
    $$TMP470=(function(__GS36){
       var $$TMP471;
       $$TMP471=(function(__GS37){
@@ -3194,7 +3194,7 @@ return $$TMP471;
 }
 else{
    var $$TMP475;
-if($$root["matches?"](__GS33,$$root.cons((new $$root.Symbol("name")),$$root.cons((new $$root.Symbol("&args")),[])))){
+if($$root["matches?"](__GS33,$$root.list(((new $$root.Symbol("name")) ),((new $$root.Symbol("&args")) )))){
    $$TMP475=(function(__GS39){
       var $$TMP476;
       $$TMP476=(function(name,args){

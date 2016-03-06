@@ -4,6 +4,8 @@
 
 (def VM (require "vm"))
 (def Reflect (require "harmony-reflect"))
+(def fs (require "fs"))
+(def argv ((require "minimist") (. process argv (slice 2))))
 
 (def token-proto (object))
 
@@ -220,8 +222,8 @@
 
 (defun lexical-name (sym)
   (if (= (. sym name 0) "&")
-      (mangle-name (. sym name (slice 1)))
-      (mangle-name (. sym name))))
+      (. sym name (slice 1))
+      (. sym name)))
 
 (defmethod compile-lambda compiler-proto (self lexenv lst)
   (destructuring-bind (_ (&args) &body) lst
@@ -315,6 +317,10 @@
 
 (def node-evaluator-proto (object))
 
+(defun default-lexenv ()
+  (doto (object)
+    (seti! "this" true)))
+
 (defmethod init node-evaluator-proto (self)
   (let (root (object *ns*)
 	sandbox (object))
@@ -326,7 +332,7 @@
        (seti! "compiler" (make-instance compiler-proto root)))))
 
 (defmethod eval node-evaluator-proto (self expr)
-  (let (tmp (. self compiler (compile (object) expr)))
+  (let (tmp (. self compiler (compile (default-lexenv) expr)))
     (. self root (jeval (str (second tmp) (first tmp))))))
 
 (defmethod eval-str node-evaluator-proto (self s)
@@ -361,7 +367,7 @@
     (call-method (. compiler-proto init) self root)))
 
 (defmethod compile-toplevel static-compiler-proto (self e)
-  (let (lexenv (object))
+  (let (lexenv (default-lexenv))
     (pattern-case e
       ('def name val) (let (tmp (. self (compile lexenv e)))
 			(seti! (. self root) name (make-instance lazy-def-proto tmp))
@@ -389,25 +395,5 @@
 ;  (print (ev (str "(setv! testmac2 (lambda () 'baz))"
 ;		  "(setmac! testmac2)"
 ;		  "((lambda (baz) (+ (testmac2) 5)) 5)"))))
-
-
-
-(defun call-method-by-name (obj name &args)
-  (apply-method (geti obj name) obj args))
-
-(defun dot-helper2 (obj-name reversed-fields)
-  (if (null? reversed-fields)
-      obj-name
-      (if (list? (car reversed-fields))
-	  `(call-method-by-name
-	    ~(dot-helper2 obj-name (cdr reversed-fields))
-	    (quote ~(car (car reversed-fields)))
-	    ~@(cdr (car reversed-fields)))
-	  `(geti ~(dot-helper2 obj-name (cdr reversed-fields)) (quote ~(car reversed-fields))))))
-
-(defmacro .. (obj-name &fields)
-  (dot-helper2 obj-name (reverse fields)))
-
-(print (.. "bazbaz" (slice 1 -1) (slice 1)))
 
 (export 'root *ns*)
