@@ -203,6 +203,13 @@
       (list (format "%0(%1)" (first compiled-fun) (join "," (map first compiled-args)))
 	    (str (second compiled-fun) (join "" (map second compiled-args)))))))
 
+(defmethod compile-method-call compiler-proto (self lexenv lst)
+  (destructuring-bind (method obj &args) lst
+    (let (compiled-obj (. self (compile lexenv obj))
+	  compiled-args (map (partial-method self 'compile lexenv) args))
+      (list (format "(%0)%1(%2)" (first compiled-obj) method (join "," (map first compiled-args)))
+	    (str (second compiled-obj) (join "" (map second compiled-args)))))))
+
 (defmethod compile-body-helper compiler-proto (self lexenv lst target-var-name)
   (let (compiled-body (map (partial-method self 'compile lexenv) lst)
 	reducer (lambda (accum v)
@@ -308,9 +315,14 @@
                 quote     (. self (compile-quoted lexenv (second expr)))
                 setv!     (. self (compile-setv lexenv expr))
                 def       (. self (compile-setv lexenv expr))
-                default   (if (. self (is-macro (. first name)))
-			      (. self (compile lexenv (. self (macroexpand-unsafe lexenv expr))))
-			      (. self (compile-funcall lexenv expr))))
+                default   (cond (. self (is-macro (. first name)))
+				(. self (compile lexenv (. self (macroexpand-unsafe lexenv expr))))
+
+				(= (. first name 0) ".")
+				(. self (compile-method-call lexenv expr))
+				
+				true
+				(. self (compile-funcall lexenv expr))))
 	    (. self (compile-funcall lexenv expr))))
       (. self (compile-atom lexenv expr))))
 
@@ -359,7 +371,7 @@
 			      (set! r (. root (jeval (. r code))))
 			      (seti! target name r))
 			    r)))
-    (seti! sandbox "$$root" (new Proxy root handler))
+    (seti! sandbox "$$root" (Proxy root handler))
     (. VM (createContext sandbox))
     (seti! root "jeval" (lambda (s) (. VM (runInContext s sandbox))))
     (seti! root "*ns*" (. sandbox "$$root"))

@@ -151,6 +151,12 @@ var $$root = {
 	in: function(obj, f) {
 		return f in obj;
 	},
+	"get-document": function() {
+		return document;
+	},
+	"get-window": function() {
+		return window;
+	},
 };
 
 $$root["*ns*"] = $$root;

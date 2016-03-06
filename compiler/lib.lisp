@@ -196,10 +196,6 @@
     (apply-method (geti proto 'init) instance args)
     instance))
 
-(defun new (constructor &args)
-  (let (instance (object (geti constructor 'prototype)))
-    (apply-method constructor instance args)))
-
 (defun call-method-by-name (obj name &args)
   (apply-method (geti obj name) obj args))
 

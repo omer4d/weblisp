@@ -1,19 +1,29 @@
-(def request-frame (or (. window requestAnimationFrame)
-		       (. window webkitRequestAnimationFrame)
-		       (. window mozRequestAnimationFrame)
-		       (. window oRequestAnimationFrame)
-		       (. window msRequestAnimationFrame)
-		       (lambda (callback)
-			 (. window setTimeout (callback (/ 1000 60))))))
+;(.log console "BAZ!")
+;(.log console (doto (object) (seti! 'backgroundColor 1087931)))
 
-(defun dot-helper2 (obj-name reversed-fields)
-  (if (null? reversed-fields)
-      obj-name
-      `(geti ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields)))))
+(def renderer (.autoDetectRenderer PIXI 800 600))
 
-(defmacro . (obj-name &fields)
-  (let (rev-fields (reverse fields))
-    (if (list? (car rev-fields))
-	`(let (target ~(dot-helper obj-name (cdr (cdr rev-fields))))
-	   (call-method (geti target (quote ~(second rev-fields))) target ~@(first rev-fields)))
-	(dot-helper obj-name rev-fields))))
+(. (get-document) body (appendChild (. renderer view)))
+
+(def stage (new (. PIXI Container)))
+
+(def texture (. PIXI Texture (fromImage "res/char.png")))
+
+(def sprite (new (. PIXI Sprite) texture))
+
+(set! (. sprite anchor x) 0.5)
+(set! (. sprite anchor y) 0.5)
+(set! (. sprite position x) 200)
+(set! (. sprite position y) 150)
+
+(.addChild stage sprite)
+
+(defun request-frame (callback)
+  (call-method requestAnimationFrame (get-window) callback))
+
+(defun animate()
+  (inc! (. sprite x) 2)
+  (.render renderer stage)
+  (request-frame animate))
+
+(request-frame animate)

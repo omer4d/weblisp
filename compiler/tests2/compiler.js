@@ -58,6 +58,12 @@ test( "Simple calls", function( assert ) {
 	assert.end();
 });
 
+test( "Method calls", function( assert ) {
+	assert.deepEqual(ev('(.slice "asdf" 1)'), "sdf");
+	assert.deepEqual(ev('(.slice "asdf" 1 -1)'), "sd");
+	assert.end();
+});
+
 test( "Math", function( assert ) {
 	assert.deepEqual(ev("(+)"), 0);
 	assert.deepEqual(ev("(+ 1)"), 1);
