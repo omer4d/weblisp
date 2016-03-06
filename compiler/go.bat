@@ -1,2 +1,2 @@
-node --harmony --harmony_proxies weblisp.js --in=weblisp2.lisp
+node --harmony --harmony_proxies weblisp.js lib.lisp weblisp2.lisp --out=weblisp2.js
 node --harmony --harmony_proxies weblisp2.js

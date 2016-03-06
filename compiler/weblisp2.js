@@ -160,10 +160,6 @@ $$root.__proto__ = Function('return this')();
 // * 
 // *
 
-$$root["VM"]=$$root["require"]("vm");
-$$root["VM"];
-$$root["Reflect"]=$$root["require"]("harmony-reflect");
-$$root["Reflect"];
 $$root["defmacro"]=(function(name,args,...body){
    var $$TMP0;
 $$TMP0=$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["concat"]()),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("def"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"](args),body)))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("setmac!"))),$$root["list"](name))))));
@@ -1828,6 +1824,10 @@ return $$TMP237;
 );
 $$root["iterate"];
 $$root["setmac!"]($$root["iterate"]);
+$$root["VM"]=$$root["require"]("vm");
+$$root["VM"];
+$$root["Reflect"]=$$root["require"]("harmony-reflect");
+$$root["Reflect"];
 $$root["token-proto"]=$$root["object"]();
 $$root["token-proto"];
 $$root["seti!"]($$root["token-proto"],(new $$root.Symbol("init")),(function(src,type,start,len){

@@ -691,10 +691,23 @@ function formatCode(str) {
     }).join("");
 }
 
-if("in" in argv) {
+function replaceExt(s, ext) {
+    return s.slice(0, s.indexOf(".")) + ext;
+}
+
+if(argv._.length > 0) {
     var comp = new StaticCompiler();
-    var output = fs.readFileSync("bootstrap.js", "utf8") + formatCode(comp.compileUnit(fs.readFileSync(argv.in, "utf8")));
-    fs.writeFileSync(argv.in.slice(0, argv.in.indexOf(".")) + ".js", output);
+    var files = argv._; //Array.isArray(argv.) ? argv.in : [argv.in];
+    var output = fs.readFileSync("bootstrap.js", "utf8") + files.map(function(f) {
+	return formatCode(comp.compileUnit(fs.readFileSync(f, "utf8")));
+    }).join("");
+
+    var outputName = argv.out ? argv.out : (files.length === 1 ? replaceExt(files[0], ".js") : undefined);
+
+    if(outputName)
+	fs.writeFileSync(outputName, output);
+    else
+	throw new Error("Output name unspecified!");
 }
 
 module.exports.tokenize = tokenize;
