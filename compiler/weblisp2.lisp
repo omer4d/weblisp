@@ -225,30 +225,51 @@
 	 (second (last compiled-body))
 	 target-var-name "=" (first (last compiled-body)) ";")))
 
-(defun process-args (args)
-  (join ","
-	(reverse
-	 (reduce (lambda (accum v)
-		   (cons (if (= (. v name 0) "&")
-			     (str "..." (mangle-name (. v name (slice 1))))
-			     (mangle-name (. v name)))
-			 accum)) args null))))
+;(defun process-args (args)
+;  (join ","
+;	(reverse
+;	 (reduce (lambda (accum v)
+;		   (cons (if (= (. v name 0) "&")
+;			     (str "..." (mangle-name (. v name (slice 1))))
+;			     (mangle-name (. v name)))
+;			 accum)) args null))))
+
+(defun is-vararg? (sym)
+  (= (. sym name 0) "&"))
 
 (defun lexical-name (sym)
-  (if (= (. sym name 0) "&")
+  (if (is-vararg? sym)
       (. sym name (slice 1))
       (. sym name)))
+
+(defun process-args (args)
+  (join ","
+	(map (lambda (v) (mangle-name (. v name)))
+	     (filter (complement is-vararg?) args))))
+
+(defmethod vararg-helper compiler-proto (self args)
+  (let (last-arg (when (not (null? args)) (last args)))
+    (if (and last-arg (is-vararg? last-arg))
+	(format (str "var %0=Array(arguments.length-%1);"
+		     "for(var %2=%1;%2<arguments.length;++%2)"
+		     "{%0[%2-%1]=arguments[%2];}")
+		(mangle-name (. last-arg name (slice 1)))
+		(dec (count args))
+		(. self (gen-var-name)))
+	"")))
 
 (defmethod compile-lambda compiler-proto (self lexenv lst)
   (destructuring-bind (_ (&args) &body) lst
     (let* (lexenv2 (reduce (lambda (accum v)
 			     (seti! accum (lexical-name v) true)
 			     accum)
-		           args (object lexenv))
+		           args
+			   (object lexenv))
 	   ret-var-name (. self (gen-var-name))
 	   compiled-body (. self (compile-body-helper lexenv2 body ret-var-name)))
       (list (format (str "(function(%0)"
 			 "{"
+			      (. self (vararg-helper args))
 			      "var %1;"
                               "%2"
                               "return %1;"
@@ -415,5 +436,8 @@
 ;  (print (ev (str "(setv! testmac2 (lambda () 'baz))"
 ;		  "(setmac! testmac2)"
 ;		  "((lambda (baz) (+ (testmac2) 5)) 5)"))))
+
+;(let (c (make-instance compiler-proto (object *ns*)))
+;  (print (. c (compile (object) '(lambda (x y z &more) (+ 1 2 3))))))
 
 (export 'root *ns*)

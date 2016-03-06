@@ -1,9 +1,5 @@
 function argReducer(name, r, initial) {
-    return function() {
-	var args = Array(arguments.length);
-	for(var i = 0; i < arguments.length; ++i)
-	    args[i] = arguments[i];
-		
+    return function(...args) {
         if (args.length === 0)
             return initial;
         else if (args.length === 1)
@@ -63,19 +59,11 @@ var $$root = {
         return lst.slice(1);
     },
 
-    list: function list() {
-	var args = Array(arguments.length);
-	for(var i = 0; i < arguments.length; ++i)
-	    args[i] = arguments[i];
-
+    list: function list(...args) {
         return args;
     },
 
-    concat: function concat() {
-	var args = Array(arguments.length);
-	for(var i = 0; i < arguments.length; ++i)
-	    args[i] = arguments[i];
-
+    concat: function concat(...args) {
         return args.reduce(function(accum, arr) {
             return accum.concat(arr);
         }, []);
@@ -105,11 +93,11 @@ var $$root = {
         return Array.isArray(x);
     },
 
-    "=":  function __EQL() {
-        var v = arguments[0];
+    "=":  function __EQL(...args) {
+        var v = args[0];
 
-        for (var i = 1; i < arguments.length; ++i)
-            if (arguments[i] !== v && !($$root["null?"](arguments[i]) && $$root["null?"](v)))
+        for (var i = 1; i < args.length; ++i)
+            if (args[i] !== v && !($$root["null?"](args[i]) && $$root["null?"](v)))
                 return false;
 
         return true;
@@ -128,14 +116,7 @@ var $$root = {
     mod         :   function(x, y) { return x % y; },
     "setmac!"   :   function(x) { return x.isMacro = true; },
     str         :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
-    
-    print: function print() {
-	var args = Array(arguments.length);
-	for(var i = 0; i < arguments.length; ++i)
-	    args[i] = arguments[i];
-
-	console.log(args.map(str1).join(" "));
-    },
+    print       :   function print(...args) { console.log(args.map(str1).join(" ")); },
     regex       :   function regex(str, flags) { return new RegExp(str, flags); },
     
     object      :   function object(proto) { return Object.create(proto || {}); },
@@ -146,11 +127,7 @@ var $$root = {
     "apply-method"  :   function apply__MINUSmethod(method, target, args) {
         return method.apply(target, args);
     },
-    "call-method"   :   function call__MINUSmethod(method, target) {
-	var args = Array(arguments.length - 2);
-	for(var i = 2; i < arguments.length; ++i)
-	    args[i - 2] = arguments[i];
-
+    "call-method"   :   function call__MINUSmethod(method, target, ...args) {
         return method.apply(target, args);
     },
     gensym : function() {

@@ -1,5 +1,9 @@
 function argReducer(name, r, initial) {
-    return function(...args) {
+    return function() {
+	var args = Array(arguments.length);
+	for(var i = 0; i < arguments.length; ++i)
+	    args[i] = arguments[i];
+		
         if (args.length === 0)
             return initial;
         else if (args.length === 1)
@@ -59,11 +63,19 @@ var $$root = {
         return lst.slice(1);
     },
 
-    list: function list(...args) {
+    list: function list() {
+	var args = Array(arguments.length);
+	for(var i = 0; i < arguments.length; ++i)
+	    args[i] = arguments[i];
+
         return args;
     },
 
-    concat: function concat(...args) {
+    concat: function concat() {
+	var args = Array(arguments.length);
+	for(var i = 0; i < arguments.length; ++i)
+	    args[i] = arguments[i];
+
         return args.reduce(function(accum, arr) {
             return accum.concat(arr);
         }, []);
@@ -93,11 +105,11 @@ var $$root = {
         return Array.isArray(x);
     },
 
-    "=":  function __EQL(...args) {
-        var v = args[0];
+    "=":  function __EQL() {
+        var v = arguments[0];
 
-        for (var i = 1; i < args.length; ++i)
-            if (args[i] !== v && !($$root["null?"](args[i]) && $$root["null?"](v)))
+        for (var i = 1; i < arguments.length; ++i)
+            if (arguments[i] !== v && !($$root["null?"](arguments[i]) && $$root["null?"](v)))
                 return false;
 
         return true;
@@ -116,7 +128,14 @@ var $$root = {
     mod         :   function(x, y) { return x % y; },
     "setmac!"   :   function(x) { return x.isMacro = true; },
     str         :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
-    print       :   function print(...args) { console.log(args.map(str1).join(" ")); },
+    
+    print: function print() {
+	var args = Array(arguments.length);
+	for(var i = 0; i < arguments.length; ++i)
+	    args[i] = arguments[i];
+
+	console.log(args.map(str1).join(" "));
+    },
     regex       :   function regex(str, flags) { return new RegExp(str, flags); },
     
     object      :   function object(proto) { return Object.create(proto || {}); },
@@ -127,7 +146,11 @@ var $$root = {
     "apply-method"  :   function apply__MINUSmethod(method, target, args) {
         return method.apply(target, args);
     },
-    "call-method"   :   function call__MINUSmethod(method, target, ...args) {
+    "call-method"   :   function call__MINUSmethod(method, target) {
+	var args = Array(arguments.length - 2);
+	for(var i = 2; i < arguments.length; ++i)
+	    args[i - 2] = arguments[i];
+
         return method.apply(target, args);
     },
     gensym : function() {
@@ -2638,98 +2661,121 @@ return $$TMP376;
 return $$TMP375;
 }
 ));
-$$root["process-args"]=(function(args){
+$$root["is-vararg?"]=(function(sym){
    var $$TMP379;
-$$TMP379=$$root["join"](",",$$root["reverse"]($$root["reduce"]((function(accum,v){
-   var $$TMP380;
-   var $$TMP381;
-if($$root["="]($$root["geti"]($$root["geti"](v,(new $$root.Symbol("name"))),0),"&")){
-$$TMP381=$$root["str"]("...",$$root["mangle-name"]($$root["call-method-by-name"]($$root["geti"](v,(new $$root.Symbol("name"))),(new $$root.Symbol("slice")),1)));
-}
-else{
-$$TMP381=$$root["mangle-name"]($$root["geti"](v,(new $$root.Symbol("name"))));
-}
-$$TMP380=$$root["cons"]($$TMP381,accum);
-return $$TMP380;
-}
-),args,[])));
+$$TMP379=$$root["="]($$root["geti"]($$root["geti"](sym,(new $$root.Symbol("name"))),0),"&");
 return $$TMP379;
 }
 );
-$$root["process-args"];
+$$root["is-vararg?"];
 $$root["lexical-name"]=(function(sym){
-   var $$TMP382;
-   var $$TMP383;
-if($$root["="]($$root["geti"]($$root["geti"](sym,(new $$root.Symbol("name"))),0),"&")){
-$$TMP383=$$root["call-method-by-name"]($$root["geti"](sym,(new $$root.Symbol("name"))),(new $$root.Symbol("slice")),1);
+   var $$TMP380;
+   var $$TMP381;
+if($$root["is-vararg?"](sym)){
+$$TMP381=$$root["call-method-by-name"]($$root["geti"](sym,(new $$root.Symbol("name"))),(new $$root.Symbol("slice")),1);
 }
 else{
-$$TMP383=$$root["geti"](sym,(new $$root.Symbol("name")));
+$$TMP381=$$root["geti"](sym,(new $$root.Symbol("name")));
 }
-$$TMP382=$$TMP383;
-return $$TMP382;
+$$TMP380=$$TMP381;
+return $$TMP380;
 }
 );
 $$root["lexical-name"];
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-lambda")),(function(lexenv,lst){
+$$root["process-args"]=(function(args){
+   var $$TMP382;
+$$TMP382=$$root["join"](",",$$root["map"]((function(v){
+   var $$TMP383;
+$$TMP383=$$root["mangle-name"]($$root["geti"](v,(new $$root.Symbol("name"))));
+return $$TMP383;
+}
+),$$root["filter"]($$root["complement"]($$root["is-vararg?"]),args)));
+return $$TMP382;
+}
+);
+$$root["process-args"];
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("vararg-helper")),(function(args){
    var $$TMP384;
    $$TMP384=(function(self){
       var $$TMP385;
-      $$TMP385=(function(__GS25){
-         var $$TMP386;
-         $$TMP386=(function(__GS26){
-            var $$TMP387;
-            $$TMP387=(function(args,body){
-               var $$TMP388;
-               $$TMP388=(function(lexenv2,ret__MINUSvar__MINUSname){
-                  var $$TMP390;
-                  $$TMP390=(function(compiled__MINUSbody){
-                     var $$TMP391;
-$$TMP391=$$root["list"]($$root["format"]($$root["str"]("(function(%0)","{","var %1;","%2","return %1;","})"),$$root["process-args"](args),ret__MINUSvar__MINUSname,compiled__MINUSbody),"");
-return $$TMP391;
-}
-)($$root["call-method-by-name"](self,(new $$root.Symbol("compile-body-helper")),lexenv2,body,ret__MINUSvar__MINUSname));
-return $$TMP390;
-}
-)($$root["reduce"]((function(accum,v){
-   var $$TMP389;
-$$root["seti!"](accum,$$root["lexical-name"](v),true);
-$$TMP389=accum;
-return $$TMP389;
-}
-),args,$$root["object"](lexenv)),$$root["call-method-by-name"](self,(new $$root.Symbol("gen-var-name"))));
-return $$TMP388;
-}
-)($$root["drop"](0,__GS26),$$root["drop"](2,__GS25));
+      var $$TMP386;
+if($$root["not"]($$root["null?"](args))){
+   $$TMP386=(function(){
+      var $$TMP387;
+$$TMP387=$$root["last"](args);
 return $$TMP387;
 }
-)($$root["nth"](1,__GS25));
-return $$TMP386;
+)();
 }
-)(lst);
+else{
+   $$TMP386=undefined;
+}
+$$TMP385=(function(last__MINUSarg){
+   var $$TMP388;
+   var $$TMP389;
+   var $$TMP390;
+   if(last__MINUSarg){
+      var $$TMP391;
+if($$root["is-vararg?"](last__MINUSarg)){
+   $$TMP391=true;
+}
+else{
+   $$TMP391=false;
+}
+$$TMP390=$$TMP391;
+}
+else{
+   $$TMP390=false;
+}
+if($$TMP390){
+$$TMP389=$$root["format"]($$root["str"]("var %0=Array(arguments.length-%1);","for(var %2=%1;%2<arguments.length;++%2)","{%0[%2-%1]=arguments[%2];}"),$$root["mangle-name"]($$root["call-method-by-name"]($$root["geti"](last__MINUSarg,(new $$root.Symbol("name"))),(new $$root.Symbol("slice")),1)),$$root["dec"]($$root["count"](args)),$$root["call-method-by-name"](self,(new $$root.Symbol("gen-var-name"))));
+}
+else{
+$$TMP389="";
+}
+$$TMP388=$$TMP389;
+return $$TMP388;
+}
+)($$TMP386);
 return $$TMP385;
 }
 )(this);
 return $$TMP384;
 }
 ));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-if")),(function(lexenv,lst){
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-lambda")),(function(lexenv,lst){
    var $$TMP392;
    $$TMP392=(function(self){
       var $$TMP393;
-      $$TMP393=(function(__GS27){
+      $$TMP393=(function(__GS25){
          var $$TMP394;
-         $$TMP394=(function(c,t,f){
+         $$TMP394=(function(__GS26){
             var $$TMP395;
-            $$TMP395=(function(value__MINUSvar__MINUSname,compiled__MINUSc,compiled__MINUSt,compiled__MINUSf){
+            $$TMP395=(function(args,body){
                var $$TMP396;
-$$TMP396=$$root["list"](value__MINUSvar__MINUSname,$$root["format"]($$root["str"]("var %0;","%1","if(%2){","%3","%0=%4;","}else{","%5","%0=%6;","}"),value__MINUSvar__MINUSname,$$root["second"](compiled__MINUSc),$$root["first"](compiled__MINUSc),$$root["second"](compiled__MINUSt),$$root["first"](compiled__MINUSt),$$root["second"](compiled__MINUSf),$$root["first"](compiled__MINUSf)));
+               $$TMP396=(function(lexenv2,ret__MINUSvar__MINUSname){
+                  var $$TMP398;
+                  $$TMP398=(function(compiled__MINUSbody){
+                     var $$TMP399;
+$$TMP399=$$root["list"]($$root["format"]($$root["str"]("(function(%0)","{",$$root["call-method-by-name"](self,(new $$root.Symbol("vararg-helper")),args),"var %1;","%2","return %1;","})"),$$root["process-args"](args),ret__MINUSvar__MINUSname,compiled__MINUSbody),"");
+return $$TMP399;
+}
+)($$root["call-method-by-name"](self,(new $$root.Symbol("compile-body-helper")),lexenv2,body,ret__MINUSvar__MINUSname));
+return $$TMP398;
+}
+)($$root["reduce"]((function(accum,v){
+   var $$TMP397;
+$$root["seti!"](accum,$$root["lexical-name"](v),true);
+$$TMP397=accum;
+return $$TMP397;
+}
+),args,$$root["object"](lexenv)),$$root["call-method-by-name"](self,(new $$root.Symbol("gen-var-name"))));
 return $$TMP396;
 }
-)($$root["call-method-by-name"](self,(new $$root.Symbol("gen-var-name"))),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,c),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,t),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,f));
+)($$root["drop"](0,__GS26),$$root["drop"](2,__GS25));
 return $$TMP395;
 }
-)($$root["nth"](1,__GS27),$$root["nth"](2,__GS27),$$root["nth"](3,__GS27));
+)($$root["nth"](1,__GS25));
 return $$TMP394;
 }
 )(lst);
@@ -2739,608 +2785,634 @@ return $$TMP393;
 return $$TMP392;
 }
 ));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-quoted-atom")),(function(lexenv,x){
-   var $$TMP397;
-   $$TMP397=(function(self){
-      var $$TMP398;
-      var $$TMP399;
-if($$root["symbol?"](x)){
-$$TMP399=$$root["list"]($$root["str"]("(new $$root.Symbol(\"",$$root["geti"](x,(new $$root.Symbol("name"))),"\"))"),"");
-}
-else{
-$$TMP399=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-atom")),lexenv,x);
-}
-$$TMP398=$$TMP399;
-return $$TMP398;
-}
-)(this);
-return $$TMP397;
-}
-));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-quoted-list")),(function(lexenv,lst){
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-if")),(function(lexenv,lst){
    var $$TMP400;
    $$TMP400=(function(self){
       var $$TMP401;
-$$TMP401=$$root["list"]($$root["str"]("$$root.list(",$$root["join"](",",$$root["map"]($$root["partial-method"](self,(new $$root.Symbol("compile-quoted")),lexenv),lst)),")"),"");
+      $$TMP401=(function(__GS27){
+         var $$TMP402;
+         $$TMP402=(function(c,t,f){
+            var $$TMP403;
+            $$TMP403=(function(value__MINUSvar__MINUSname,compiled__MINUSc,compiled__MINUSt,compiled__MINUSf){
+               var $$TMP404;
+$$TMP404=$$root["list"](value__MINUSvar__MINUSname,$$root["format"]($$root["str"]("var %0;","%1","if(%2){","%3","%0=%4;","}else{","%5","%0=%6;","}"),value__MINUSvar__MINUSname,$$root["second"](compiled__MINUSc),$$root["first"](compiled__MINUSc),$$root["second"](compiled__MINUSt),$$root["first"](compiled__MINUSt),$$root["second"](compiled__MINUSf),$$root["first"](compiled__MINUSf)));
+return $$TMP404;
+}
+)($$root["call-method-by-name"](self,(new $$root.Symbol("gen-var-name"))),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,c),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,t),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,f));
+return $$TMP403;
+}
+)($$root["nth"](1,__GS27),$$root["nth"](2,__GS27),$$root["nth"](3,__GS27));
+return $$TMP402;
+}
+)(lst);
 return $$TMP401;
 }
 )(this);
 return $$TMP400;
 }
 ));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-quoted")),(function(lexenv,x){
-   var $$TMP402;
-   $$TMP402=(function(self){
-      var $$TMP403;
-      var $$TMP404;
-if($$root["atom?"](x)){
-$$TMP404=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted-atom")),lexenv,x);
-}
-else{
-$$TMP404=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted-list")),lexenv,x);
-}
-$$TMP403=$$TMP404;
-return $$TMP403;
-}
-)(this);
-return $$TMP402;
-}
-));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-setv")),(function(lexenv,lst){
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-quoted-atom")),(function(lexenv,x){
    var $$TMP405;
    $$TMP405=(function(self){
       var $$TMP406;
-      $$TMP406=(function(__GS28){
-         var $$TMP407;
-         $$TMP407=(function(name,value){
-            var $$TMP408;
-            $$TMP408=(function(var__MINUSname,compiled__MINUSval){
-               var $$TMP409;
-$$TMP409=$$root["list"](var__MINUSname,$$root["str"]($$root["second"](compiled__MINUSval),var__MINUSname,"=",$$root["first"](compiled__MINUSval),";"));
-return $$TMP409;
+      var $$TMP407;
+if($$root["symbol?"](x)){
+$$TMP407=$$root["list"]($$root["str"]("(new $$root.Symbol(\"",$$root["geti"](x,(new $$root.Symbol("name"))),"\"))"),"");
 }
-)($$root["compile-time-resolve"](lexenv,name),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,value));
-return $$TMP408;
+else{
+$$TMP407=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-atom")),lexenv,x);
 }
-)($$root["nth"](1,__GS28),$$root["nth"](2,__GS28));
-return $$TMP407;
-}
-)(lst);
+$$TMP406=$$TMP407;
 return $$TMP406;
 }
 )(this);
 return $$TMP405;
 }
 ));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("macroexpand-unsafe")),(function(lexenv,expr){
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-quoted-list")),(function(lexenv,lst){
+   var $$TMP408;
+   $$TMP408=(function(self){
+      var $$TMP409;
+$$TMP409=$$root["list"]($$root["str"]("$$root.list(",$$root["join"](",",$$root["map"]($$root["partial-method"](self,(new $$root.Symbol("compile-quoted")),lexenv),lst)),")"),"");
+return $$TMP409;
+}
+)(this);
+return $$TMP408;
+}
+));
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-quoted")),(function(lexenv,x){
    var $$TMP410;
    $$TMP410=(function(self){
       var $$TMP411;
-      $$TMP411=(function(__GS29){
-         var $$TMP412;
-         $$TMP412=(function(name,args){
-            var $$TMP413;
-            $$TMP413=(function(tmp){
-               var $$TMP415;
-$$TMP415=$$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("root"))),(new $$root.Symbol("jeval")),$$root["str"]($$root["second"](tmp),$$root["first"](tmp)));
-return $$TMP415;
+      var $$TMP412;
+if($$root["atom?"](x)){
+$$TMP412=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted-atom")),lexenv,x);
 }
-)($$root["call-method-by-name"](self,(new $$root.Symbol("compile-funcall")),lexenv,$$root["cons"](name,$$root["map"]((function(v){
-   var $$TMP414;
-$$TMP414=$$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"](v));
-return $$TMP414;
+else{
+$$TMP412=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted-list")),lexenv,x);
 }
-),args))));
-return $$TMP413;
-}
-)($$root["nth"](0,__GS29),$$root["drop"](1,__GS29));
-return $$TMP412;
-}
-)(expr);
+$$TMP411=$$TMP412;
 return $$TMP411;
 }
 )(this);
 return $$TMP410;
 }
 ));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("is-macro")),(function(name){
-   var $$TMP416;
-   $$TMP416=(function(self){
-      var $$TMP417;
-      var $$TMP418;
-if($$root["in"]($$root["geti"](self,(new $$root.Symbol("root"))),name)){
-   var $$TMP419;
-if($$root["geti"]($$root["geti"]($$root["geti"](self,(new $$root.Symbol("root"))),name),(new $$root.Symbol("isMacro")))){
-   $$TMP419=true;
-}
-else{
-   $$TMP419=false;
-}
-$$TMP418=$$TMP419;
-}
-else{
-   $$TMP418=false;
-}
-$$TMP417=$$TMP418;
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile-setv")),(function(lexenv,lst){
+   var $$TMP413;
+   $$TMP413=(function(self){
+      var $$TMP414;
+      $$TMP414=(function(__GS28){
+         var $$TMP415;
+         $$TMP415=(function(name,value){
+            var $$TMP416;
+            $$TMP416=(function(var__MINUSname,compiled__MINUSval){
+               var $$TMP417;
+$$TMP417=$$root["list"](var__MINUSname,$$root["str"]($$root["second"](compiled__MINUSval),var__MINUSname,"=",$$root["first"](compiled__MINUSval),";"));
 return $$TMP417;
 }
-)(this);
+)($$root["compile-time-resolve"](lexenv,name),$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,value));
 return $$TMP416;
 }
+)($$root["nth"](1,__GS28),$$root["nth"](2,__GS28));
+return $$TMP415;
+}
+)(lst);
+return $$TMP414;
+}
+)(this);
+return $$TMP413;
+}
 ));
-$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile")),(function(lexenv,expr){
-   var $$TMP420;
-   $$TMP420=(function(self){
-      var $$TMP421;
-      var $$TMP422;
-      var $$TMP423;
-if($$root["list?"](expr)){
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("macroexpand-unsafe")),(function(lexenv,expr){
+   var $$TMP418;
+   $$TMP418=(function(self){
+      var $$TMP419;
+      $$TMP419=(function(__GS29){
+         var $$TMP420;
+         $$TMP420=(function(name,args){
+            var $$TMP421;
+            $$TMP421=(function(tmp){
+               var $$TMP423;
+$$TMP423=$$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("root"))),(new $$root.Symbol("jeval")),$$root["str"]($$root["second"](tmp),$$root["first"](tmp)));
+return $$TMP423;
+}
+)($$root["call-method-by-name"](self,(new $$root.Symbol("compile-funcall")),lexenv,$$root["cons"](name,$$root["map"]((function(v){
+   var $$TMP422;
+$$TMP422=$$root["concat"]($$root["list"]((new $$root.Symbol("quote"))),$$root["list"](v));
+return $$TMP422;
+}
+),args))));
+return $$TMP421;
+}
+)($$root["nth"](0,__GS29),$$root["drop"](1,__GS29));
+return $$TMP420;
+}
+)(expr);
+return $$TMP419;
+}
+)(this);
+return $$TMP418;
+}
+));
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("is-macro")),(function(name){
    var $$TMP424;
-if($$root["not"]($$root["null?"](expr))){
-   $$TMP424=true;
-}
-else{
-   $$TMP424=false;
-}
-$$TMP423=$$TMP424;
-}
-else{
-   $$TMP423=false;
-}
-if($$TMP423){
-   $$TMP422=(function(first){
+   $$TMP424=(function(self){
       var $$TMP425;
       var $$TMP426;
-if($$root["symbol?"](first)){
-   $$TMP426=(function(__GS30){
-      var $$TMP427;
-      var $$TMP428;
-if($$root["equal?"](__GS30,(new $$root.Symbol("lambda")))){
-$$TMP428=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-lambda")),lexenv,expr);
+if($$root["in"]($$root["geti"](self,(new $$root.Symbol("root"))),name)){
+   var $$TMP427;
+if($$root["geti"]($$root["geti"]($$root["geti"](self,(new $$root.Symbol("root"))),name),(new $$root.Symbol("isMacro")))){
+   $$TMP427=true;
 }
 else{
-   var $$TMP429;
-if($$root["equal?"](__GS30,(new $$root.Symbol("new")))){
-$$TMP429=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-new")),lexenv,expr);
+   $$TMP427=false;
+}
+$$TMP426=$$TMP427;
 }
 else{
-   var $$TMP430;
-if($$root["equal?"](__GS30,(new $$root.Symbol("if")))){
-$$TMP430=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-if")),lexenv,expr);
-}
-else{
-   var $$TMP431;
-if($$root["equal?"](__GS30,(new $$root.Symbol("quote")))){
-$$TMP431=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted")),lexenv,$$root["second"](expr));
-}
-else{
-   var $$TMP432;
-if($$root["equal?"](__GS30,(new $$root.Symbol("setv!")))){
-$$TMP432=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
-}
-else{
-   var $$TMP433;
-if($$root["equal?"](__GS30,(new $$root.Symbol("def")))){
-$$TMP433=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
-}
-else{
-   var $$TMP434;
-   if(true){
-      var $$TMP435;
-if($$root["call-method-by-name"](self,(new $$root.Symbol("is-macro")),$$root["geti"](first,(new $$root.Symbol("name"))))){
-$$TMP435=$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,$$root["call-method-by-name"](self,(new $$root.Symbol("macroexpand-unsafe")),lexenv,expr));
-}
-else{
-   var $$TMP436;
-if($$root["="]($$root["geti"]($$root["geti"](first,(new $$root.Symbol("name"))),0),".")){
-$$TMP436=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-method-call")),lexenv,expr);
-}
-else{
-   var $$TMP437;
-   if(true){
-$$TMP437=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-funcall")),lexenv,expr);
-}
-else{
-   $$TMP437=undefined;
-}
-$$TMP436=$$TMP437;
-}
-$$TMP435=$$TMP436;
-}
-$$TMP434=$$TMP435;
-}
-else{
-   $$TMP434=undefined;
-}
-$$TMP433=$$TMP434;
-}
-$$TMP432=$$TMP433;
-}
-$$TMP431=$$TMP432;
-}
-$$TMP430=$$TMP431;
-}
-$$TMP429=$$TMP430;
-}
-$$TMP428=$$TMP429;
-}
-$$TMP427=$$TMP428;
-return $$TMP427;
-}
-)(first);
-}
-else{
-$$TMP426=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-funcall")),lexenv,expr);
+   $$TMP426=false;
 }
 $$TMP425=$$TMP426;
 return $$TMP425;
 }
+)(this);
+return $$TMP424;
+}
+));
+$$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("compile")),(function(lexenv,expr){
+   var $$TMP428;
+   $$TMP428=(function(self){
+      var $$TMP429;
+      var $$TMP430;
+      var $$TMP431;
+if($$root["list?"](expr)){
+   var $$TMP432;
+if($$root["not"]($$root["null?"](expr))){
+   $$TMP432=true;
+}
+else{
+   $$TMP432=false;
+}
+$$TMP431=$$TMP432;
+}
+else{
+   $$TMP431=false;
+}
+if($$TMP431){
+   $$TMP430=(function(first){
+      var $$TMP433;
+      var $$TMP434;
+if($$root["symbol?"](first)){
+   $$TMP434=(function(__GS30){
+      var $$TMP435;
+      var $$TMP436;
+if($$root["equal?"](__GS30,(new $$root.Symbol("lambda")))){
+$$TMP436=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-lambda")),lexenv,expr);
+}
+else{
+   var $$TMP437;
+if($$root["equal?"](__GS30,(new $$root.Symbol("new")))){
+$$TMP437=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-new")),lexenv,expr);
+}
+else{
+   var $$TMP438;
+if($$root["equal?"](__GS30,(new $$root.Symbol("if")))){
+$$TMP438=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-if")),lexenv,expr);
+}
+else{
+   var $$TMP439;
+if($$root["equal?"](__GS30,(new $$root.Symbol("quote")))){
+$$TMP439=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted")),lexenv,$$root["second"](expr));
+}
+else{
+   var $$TMP440;
+if($$root["equal?"](__GS30,(new $$root.Symbol("setv!")))){
+$$TMP440=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
+}
+else{
+   var $$TMP441;
+if($$root["equal?"](__GS30,(new $$root.Symbol("def")))){
+$$TMP441=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
+}
+else{
+   var $$TMP442;
+   if(true){
+      var $$TMP443;
+if($$root["call-method-by-name"](self,(new $$root.Symbol("is-macro")),$$root["geti"](first,(new $$root.Symbol("name"))))){
+$$TMP443=$$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,$$root["call-method-by-name"](self,(new $$root.Symbol("macroexpand-unsafe")),lexenv,expr));
+}
+else{
+   var $$TMP444;
+if($$root["="]($$root["geti"]($$root["geti"](first,(new $$root.Symbol("name"))),0),".")){
+$$TMP444=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-method-call")),lexenv,expr);
+}
+else{
+   var $$TMP445;
+   if(true){
+$$TMP445=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-funcall")),lexenv,expr);
+}
+else{
+   $$TMP445=undefined;
+}
+$$TMP444=$$TMP445;
+}
+$$TMP443=$$TMP444;
+}
+$$TMP442=$$TMP443;
+}
+else{
+   $$TMP442=undefined;
+}
+$$TMP441=$$TMP442;
+}
+$$TMP440=$$TMP441;
+}
+$$TMP439=$$TMP440;
+}
+$$TMP438=$$TMP439;
+}
+$$TMP437=$$TMP438;
+}
+$$TMP436=$$TMP437;
+}
+$$TMP435=$$TMP436;
+return $$TMP435;
+}
+)(first);
+}
+else{
+$$TMP434=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-funcall")),lexenv,expr);
+}
+$$TMP433=$$TMP434;
+return $$TMP433;
+}
 )($$root["car"](expr));
 }
 else{
-$$TMP422=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-atom")),lexenv,expr);
+$$TMP430=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-atom")),lexenv,expr);
 }
-$$TMP421=$$TMP422;
-return $$TMP421;
+$$TMP429=$$TMP430;
+return $$TMP429;
 }
 )(this);
-return $$TMP420;
+return $$TMP428;
 }
 ));
 $$root["node-evaluator-proto"]=$$root["object"]();
 $$root["node-evaluator-proto"];
 $$root["default-lexenv"]=(function(){
-   var $$TMP438;
-   $$TMP438=(function(__GS31){
-      var $$TMP439;
+   var $$TMP446;
+   $$TMP446=(function(__GS31){
+      var $$TMP447;
 $$root["seti!"](__GS31,"this",true);
-$$TMP439=__GS31;
-return $$TMP439;
+$$TMP447=__GS31;
+return $$TMP447;
 }
 )($$root["object"]());
-return $$TMP438;
+return $$TMP446;
 }
 );
 $$root["default-lexenv"];
 $$root["seti!"]($$root["node-evaluator-proto"],(new $$root.Symbol("init")),(function(){
-   var $$TMP440;
-   $$TMP440=(function(self){
-      var $$TMP441;
-      $$TMP441=(function(root,sandbox){
-         var $$TMP442;
-$$root["seti!"](sandbox,"$$root",root);
-$$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("createContext")),sandbox);
-$$root["seti!"](root,"jeval",(function(str){
-   var $$TMP443;
-$$TMP443=$$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("runInContext")),str,sandbox);
-return $$TMP443;
-}
-));
-$$TMP442=(function(__GS32){
-   var $$TMP444;
-$$root["seti!"](__GS32,"root",root);
-$$root["seti!"](__GS32,"compiler",$$root["make-instance"]($$root["compiler-proto"],root));
-$$TMP444=__GS32;
-return $$TMP444;
-}
-)(self);
-return $$TMP442;
-}
-)($$root["object"]($$root["*ns*"]),$$root["object"]());
-return $$TMP441;
-}
-)(this);
-return $$TMP440;
-}
-));
-$$root["seti!"]($$root["node-evaluator-proto"],(new $$root.Symbol("eval")),(function(expr){
-   var $$TMP445;
-   $$TMP445=(function(self){
-      var $$TMP446;
-      $$TMP446=(function(tmp){
-         var $$TMP447;
-$$TMP447=$$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("root"))),(new $$root.Symbol("jeval")),$$root["str"]($$root["second"](tmp),$$root["first"](tmp)));
-return $$TMP447;
-}
-)($$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("compiler"))),(new $$root.Symbol("compile")),$$root["default-lexenv"](),expr));
-return $$TMP446;
-}
-)(this);
-return $$TMP445;
-}
-));
-$$root["seti!"]($$root["node-evaluator-proto"],(new $$root.Symbol("eval-str")),(function(s){
    var $$TMP448;
    $$TMP448=(function(self){
       var $$TMP449;
-      $$TMP449=(function(forms){
+      $$TMP449=(function(root,sandbox){
          var $$TMP450;
-         $$TMP450=(function(__GS33,__GS34,form){
-            var $$TMP451;
-            $$TMP451=(function(recur){
-               var $$TMP452;
-               recur=(function(){
-                  var $$TMP453;
-                  var $$TMP454;
-                  var $$TMP455;
-if($$root["not"]($$root["null?"](__GS34))){
-   $$TMP455=true;
-}
-else{
-   $$TMP455=false;
-}
-if($$TMP455){
-   $$TMP454=(function(){
-      var $$TMP456;
-form=$$root["car"](__GS34);
-form;
-__GS33=$$root["call-method-by-name"](self,(new $$root.Symbol("eval")),form);
-__GS33;
-__GS34=$$root["cdr"](__GS34);
-__GS34;
-$$TMP456=recur();
-return $$TMP456;
-}
-)();
-}
-else{
-   $$TMP454=(function(){
-      var $$TMP457;
-      $$TMP457=__GS33;
-      return $$TMP457;
-   }
-   )();
-}
-$$TMP453=$$TMP454;
-return $$TMP453;
-}
-);
-recur;
-$$TMP452=recur();
-return $$TMP452;
-}
-)([]);
+$$root["seti!"](sandbox,"$$root",root);
+$$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("createContext")),sandbox);
+$$root["seti!"](root,"jeval",(function(str){
+   var $$TMP451;
+$$TMP451=$$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("runInContext")),str,sandbox);
 return $$TMP451;
 }
-)(undefined,forms,[]);
+));
+$$TMP450=(function(__GS32){
+   var $$TMP452;
+$$root["seti!"](__GS32,"root",root);
+$$root["seti!"](__GS32,"compiler",$$root["make-instance"]($$root["compiler-proto"],root));
+$$TMP452=__GS32;
+return $$TMP452;
+}
+)(self);
 return $$TMP450;
 }
-)($$root["parse"]($$root["tokenize"](s)));
+)($$root["object"]($$root["*ns*"]),$$root["object"]());
 return $$TMP449;
 }
 )(this);
 return $$TMP448;
 }
 ));
+$$root["seti!"]($$root["node-evaluator-proto"],(new $$root.Symbol("eval")),(function(expr){
+   var $$TMP453;
+   $$TMP453=(function(self){
+      var $$TMP454;
+      $$TMP454=(function(tmp){
+         var $$TMP455;
+$$TMP455=$$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("root"))),(new $$root.Symbol("jeval")),$$root["str"]($$root["second"](tmp),$$root["first"](tmp)));
+return $$TMP455;
+}
+)($$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("compiler"))),(new $$root.Symbol("compile")),$$root["default-lexenv"](),expr));
+return $$TMP454;
+}
+)(this);
+return $$TMP453;
+}
+));
+$$root["seti!"]($$root["node-evaluator-proto"],(new $$root.Symbol("eval-str")),(function(s){
+   var $$TMP456;
+   $$TMP456=(function(self){
+      var $$TMP457;
+      $$TMP457=(function(forms){
+         var $$TMP458;
+         $$TMP458=(function(__GS33,__GS34,form){
+            var $$TMP459;
+            $$TMP459=(function(recur){
+               var $$TMP460;
+               recur=(function(){
+                  var $$TMP461;
+                  var $$TMP462;
+                  var $$TMP463;
+if($$root["not"]($$root["null?"](__GS34))){
+   $$TMP463=true;
+}
+else{
+   $$TMP463=false;
+}
+if($$TMP463){
+   $$TMP462=(function(){
+      var $$TMP464;
+form=$$root["car"](__GS34);
+form;
+__GS33=$$root["call-method-by-name"](self,(new $$root.Symbol("eval")),form);
+__GS33;
+__GS34=$$root["cdr"](__GS34);
+__GS34;
+$$TMP464=recur();
+return $$TMP464;
+}
+)();
+}
+else{
+   $$TMP462=(function(){
+      var $$TMP465;
+      $$TMP465=__GS33;
+      return $$TMP465;
+   }
+   )();
+}
+$$TMP461=$$TMP462;
+return $$TMP461;
+}
+);
+recur;
+$$TMP460=recur();
+return $$TMP460;
+}
+)([]);
+return $$TMP459;
+}
+)(undefined,forms,[]);
+return $$TMP458;
+}
+)($$root["parse"]($$root["tokenize"](s)));
+return $$TMP457;
+}
+)(this);
+return $$TMP456;
+}
+));
 $$root["lazy-def-proto"]=$$root["object"]();
 $$root["lazy-def-proto"];
 $$root["seti!"]($$root["lazy-def-proto"],(new $$root.Symbol("init")),(function(compilation__MINUSresult){
-   var $$TMP458;
-   $$TMP458=(function(self){
-      var $$TMP459;
-$$TMP459=$$root["seti!"](self,(new $$root.Symbol("code")),$$root["str"]($$root["second"](compilation__MINUSresult),$$root["first"](compilation__MINUSresult)));
-return $$TMP459;
+   var $$TMP466;
+   $$TMP466=(function(self){
+      var $$TMP467;
+$$TMP467=$$root["seti!"](self,(new $$root.Symbol("code")),$$root["str"]($$root["second"](compilation__MINUSresult),$$root["first"](compilation__MINUSresult)));
+return $$TMP467;
 }
 )(this);
-return $$TMP458;
+return $$TMP466;
 }
 ));
 $$root["static-compiler-proto"]=$$root["object"]($$root["compiler-proto"]);
 $$root["static-compiler-proto"];
 $$root["seti!"]($$root["static-compiler-proto"],(new $$root.Symbol("init")),(function(){
-   var $$TMP460;
-   $$TMP460=(function(self){
-      var $$TMP461;
-      $$TMP461=(function(root,sandbox,handler,next__MINUSgensym__MINUSsuffix){
-         var $$TMP462;
+   var $$TMP468;
+   $$TMP468=(function(self){
+      var $$TMP469;
+      $$TMP469=(function(root,sandbox,handler,next__MINUSgensym__MINUSsuffix){
+         var $$TMP470;
 $$root["seti!"](handler,(new $$root.Symbol("get")),(function(target,name){
-   var $$TMP463;
-   $$TMP463=(function(r){
-      var $$TMP464;
-      var $$TMP465;
+   var $$TMP471;
+   $$TMP471=(function(r){
+      var $$TMP472;
+      var $$TMP473;
 if($$root["prototype?"]($$root["lazy-def-proto"],r)){
-   $$TMP465=(function(){
-      var $$TMP466;
+   $$TMP473=(function(){
+      var $$TMP474;
 r=$$root["call-method-by-name"](root,(new $$root.Symbol("jeval")),$$root["geti"](r,(new $$root.Symbol("code"))));
 r;
-$$TMP466=$$root["seti!"](target,name,r);
-return $$TMP466;
+$$TMP474=$$root["seti!"](target,name,r);
+return $$TMP474;
 }
 )();
 }
 else{
-   $$TMP465=undefined;
+   $$TMP473=undefined;
 }
-$$TMP465;
-$$TMP464=r;
-return $$TMP464;
+$$TMP473;
+$$TMP472=r;
+return $$TMP472;
 }
 )($$root["geti"](target,name));
-return $$TMP463;
+return $$TMP471;
 }
 ));
 $$root["seti!"](sandbox,"$$root",$$root["Proxy"](root,handler));
 $$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("createContext")),sandbox);
 $$root["seti!"](root,"jeval",(function(s){
-   var $$TMP467;
-$$TMP467=$$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("runInContext")),s,sandbox);
-return $$TMP467;
+   var $$TMP475;
+$$TMP475=$$root["call-method-by-name"]($$root["VM"],(new $$root.Symbol("runInContext")),s,sandbox);
+return $$TMP475;
 }
 ));
 $$root["seti!"](root,"*ns*",$$root["geti"](sandbox,"$$root"));
 $$root["seti!"](root,"gensym",(function(){
-   var $$TMP468;
+   var $$TMP476;
 next__MINUSgensym__MINUSsuffix=$$root["+"](next__MINUSgensym__MINUSsuffix,1);
-$$TMP468=$$root["symbol"]($$root["str"]("__GS",next__MINUSgensym__MINUSsuffix));
+$$TMP476=$$root["symbol"]($$root["str"]("__GS",next__MINUSgensym__MINUSsuffix));
+return $$TMP476;
+}
+));
+$$TMP470=$$root["call-method"]($$root["geti"]($$root["compiler-proto"],(new $$root.Symbol("init"))),self,root);
+return $$TMP470;
+}
+)($$root["object"]($$root["*ns*"]),$$root["object"](),$$root["object"](),0);
+return $$TMP469;
+}
+)(this);
 return $$TMP468;
 }
 ));
-$$TMP462=$$root["call-method"]($$root["geti"]($$root["compiler-proto"],(new $$root.Symbol("init"))),self,root);
-return $$TMP462;
-}
-)($$root["object"]($$root["*ns*"]),$$root["object"](),$$root["object"](),0);
-return $$TMP461;
-}
-)(this);
-return $$TMP460;
-}
-));
 $$root["seti!"]($$root["static-compiler-proto"],(new $$root.Symbol("compile-toplevel")),(function(e){
-   var $$TMP469;
-   $$TMP469=(function(self){
-      var $$TMP470;
-      $$TMP470=(function(lexenv){
-         var $$TMP471;
-         $$TMP471=(function(__GS35){
-            var $$TMP472;
-            var $$TMP473;
-if($$root["matches?"](__GS35,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("def")),[])),$$root.cons((new $$root.Symbol("name")),$$root.cons((new $$root.Symbol("val")),[]))))){
-   $$TMP473=(function(__GS36){
-      var $$TMP474;
-      $$TMP474=(function(name,val){
-         var $$TMP475;
-         $$TMP475=(function(tmp){
-            var $$TMP476;
-$$root["seti!"]($$root["geti"](self,(new $$root.Symbol("root"))),name,$$root["make-instance"]($$root["lazy-def-proto"],tmp));
-$$TMP476=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
-return $$TMP476;
-}
-)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
-return $$TMP475;
-}
-)($$root["nth"](1,__GS36),$$root["nth"](2,__GS36));
-return $$TMP474;
-}
-)(__GS35);
-}
-else{
    var $$TMP477;
-if($$root["matches?"](__GS35,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("setmac!")),[])),$$root.cons((new $$root.Symbol("name")),[])))){
-   $$TMP477=(function(__GS37){
+   $$TMP477=(function(self){
       var $$TMP478;
-      $$TMP478=(function(name){
+      $$TMP478=(function(lexenv){
          var $$TMP479;
-         $$TMP479=(function(tmp){
+         $$TMP479=(function(__GS35){
             var $$TMP480;
-$$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("root"))),(new $$root.Symbol("jeval")),$$root["str"]($$root["second"](tmp),$$root["first"](tmp)));
-$$TMP480=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
-return $$TMP480;
-}
-)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
-return $$TMP479;
-}
-)($$root["nth"](1,__GS37));
-return $$TMP478;
-}
-)(__GS35);
-}
-else{
-   var $$TMP481;
-if($$root["matches?"](__GS35,$$root.cons($$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("lambda")),[])),$$root.cons($$root.cons((new $$root.Symbol("&args")),[]),$$root.cons((new $$root.Symbol("&body")),[]))),[]))){
-   $$TMP481=(function(__GS38){
+            var $$TMP481;
+if($$root["matches?"](__GS35,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("def")),[])),$$root.cons((new $$root.Symbol("name")),$$root.cons((new $$root.Symbol("val")),[]))))){
+   $$TMP481=(function(__GS36){
       var $$TMP482;
-      $$TMP482=(function(__GS39){
+      $$TMP482=(function(name,val){
          var $$TMP483;
-         $$TMP483=(function(__GS40){
+         $$TMP483=(function(tmp){
             var $$TMP484;
-            $$TMP484=(function(args,body){
-               var $$TMP485;
-$$TMP485=$$root["join"]("",$$root["map"]($$root["partial-method"](self,(new $$root.Symbol("compile-toplevel"))),body));
-return $$TMP485;
-}
-)($$root["drop"](0,__GS40),$$root["drop"](2,__GS39));
+$$root["seti!"]($$root["geti"](self,(new $$root.Symbol("root"))),name,$$root["make-instance"]($$root["lazy-def-proto"],tmp));
+$$TMP484=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
 return $$TMP484;
 }
-)($$root["nth"](1,__GS39));
+)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
 return $$TMP483;
 }
-)($$root["nth"](0,__GS38));
+)($$root["nth"](1,__GS36),$$root["nth"](2,__GS36));
 return $$TMP482;
 }
 )(__GS35);
 }
 else{
-   var $$TMP486;
-if($$root["matches?"](__GS35,$$root.cons((new $$root.Symbol("name")),$$root.cons((new $$root.Symbol("&args")),[])))){
-   $$TMP486=(function(__GS41){
-      var $$TMP487;
-      $$TMP487=(function(name,args){
-         var $$TMP488;
-         var $$TMP489;
-if($$root["call-method-by-name"](self,(new $$root.Symbol("is-macro")),name)){
-$$TMP489=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-toplevel")),$$root["call-method-by-name"](self,(new $$root.Symbol("macroexpand-unsafe")),lexenv,e));
-}
-else{
-   $$TMP489=(function(tmp){
-      var $$TMP490;
-$$TMP490=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
-return $$TMP490;
-}
-)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
-}
-$$TMP488=$$TMP489;
+   var $$TMP485;
+if($$root["matches?"](__GS35,$$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("setmac!")),[])),$$root.cons((new $$root.Symbol("name")),[])))){
+   $$TMP485=(function(__GS37){
+      var $$TMP486;
+      $$TMP486=(function(name){
+         var $$TMP487;
+         $$TMP487=(function(tmp){
+            var $$TMP488;
+$$root["call-method-by-name"]($$root["geti"](self,(new $$root.Symbol("root"))),(new $$root.Symbol("jeval")),$$root["str"]($$root["second"](tmp),$$root["first"](tmp)));
+$$TMP488=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
 return $$TMP488;
 }
-)($$root["nth"](0,__GS41),$$root["drop"](1,__GS41));
+)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
 return $$TMP487;
+}
+)($$root["nth"](1,__GS37));
+return $$TMP486;
 }
 )(__GS35);
 }
 else{
-   var $$TMP491;
-if($$root["matches?"](__GS35,(new $$root.Symbol("any")))){
-   $$TMP491=(function(any){
-      var $$TMP492;
-      $$TMP492=(function(tmp){
-         var $$TMP493;
-$$TMP493=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
+   var $$TMP489;
+if($$root["matches?"](__GS35,$$root.cons($$root.cons($$root.cons((new $$root.Symbol("quote")),$$root.cons((new $$root.Symbol("lambda")),[])),$$root.cons($$root.cons((new $$root.Symbol("&args")),[]),$$root.cons((new $$root.Symbol("&body")),[]))),[]))){
+   $$TMP489=(function(__GS38){
+      var $$TMP490;
+      $$TMP490=(function(__GS39){
+         var $$TMP491;
+         $$TMP491=(function(__GS40){
+            var $$TMP492;
+            $$TMP492=(function(args,body){
+               var $$TMP493;
+$$TMP493=$$root["join"]("",$$root["map"]($$root["partial-method"](self,(new $$root.Symbol("compile-toplevel"))),body));
 return $$TMP493;
 }
-)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
+)($$root["drop"](0,__GS40),$$root["drop"](2,__GS39));
 return $$TMP492;
+}
+)($$root["nth"](1,__GS39));
+return $$TMP491;
+}
+)($$root["nth"](0,__GS38));
+return $$TMP490;
 }
 )(__GS35);
 }
 else{
    var $$TMP494;
-   if(true){
-$$TMP494=$$root["error"]("Fell out of case!");
+if($$root["matches?"](__GS35,$$root.cons((new $$root.Symbol("name")),$$root.cons((new $$root.Symbol("&args")),[])))){
+   $$TMP494=(function(__GS41){
+      var $$TMP495;
+      $$TMP495=(function(name,args){
+         var $$TMP496;
+         var $$TMP497;
+if($$root["call-method-by-name"](self,(new $$root.Symbol("is-macro")),name)){
+$$TMP497=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-toplevel")),$$root["call-method-by-name"](self,(new $$root.Symbol("macroexpand-unsafe")),lexenv,e));
 }
 else{
-   $$TMP494=undefined;
+   $$TMP497=(function(tmp){
+      var $$TMP498;
+$$TMP498=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
+return $$TMP498;
 }
-$$TMP491=$$TMP494;
+)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
 }
-$$TMP486=$$TMP491;
+$$TMP496=$$TMP497;
+return $$TMP496;
 }
-$$TMP481=$$TMP486;
+)($$root["nth"](0,__GS41),$$root["drop"](1,__GS41));
+return $$TMP495;
 }
-$$TMP477=$$TMP481;
+)(__GS35);
 }
-$$TMP473=$$TMP477;
+else{
+   var $$TMP499;
+if($$root["matches?"](__GS35,(new $$root.Symbol("any")))){
+   $$TMP499=(function(any){
+      var $$TMP500;
+      $$TMP500=(function(tmp){
+         var $$TMP501;
+$$TMP501=$$root["str"]($$root["second"](tmp),$$root["first"](tmp),";");
+return $$TMP501;
 }
-$$TMP472=$$TMP473;
-return $$TMP472;
+)($$root["call-method-by-name"](self,(new $$root.Symbol("compile")),lexenv,e));
+return $$TMP500;
+}
+)(__GS35);
+}
+else{
+   var $$TMP502;
+   if(true){
+$$TMP502=$$root["error"]("Fell out of case!");
+}
+else{
+   $$TMP502=undefined;
+}
+$$TMP499=$$TMP502;
+}
+$$TMP494=$$TMP499;
+}
+$$TMP489=$$TMP494;
+}
+$$TMP485=$$TMP489;
+}
+$$TMP481=$$TMP485;
+}
+$$TMP480=$$TMP481;
+return $$TMP480;
 }
 )(e);
-return $$TMP471;
+return $$TMP479;
 }
 )($$root["default-lexenv"]());
-return $$TMP470;
+return $$TMP478;
 }
 )(this);
-return $$TMP469;
+return $$TMP477;
 }
 ));
 $$root["seti!"]($$root["static-compiler-proto"],(new $$root.Symbol("compile-unit")),(function(s){
-   var $$TMP495;
-   $$TMP495=(function(self){
-      var $$TMP496;
-$$TMP496=$$root["join"]("",$$root["map"]($$root["partial-method"](self,(new $$root.Symbol("compile-toplevel"))),$$root["parse"]($$root["tokenize"](s))));
-return $$TMP496;
+   var $$TMP503;
+   $$TMP503=(function(self){
+      var $$TMP504;
+$$TMP504=$$root["join"]("",$$root["map"]($$root["partial-method"](self,(new $$root.Symbol("compile-toplevel"))),$$root["parse"]($$root["tokenize"](s))));
+return $$TMP504;
 }
 )(this);
-return $$TMP495;
+return $$TMP503;
 }
 ));
 $$root["export"]((new $$root.Symbol("root")),$$root["*ns*"]);
