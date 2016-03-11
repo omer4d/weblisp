@@ -212,6 +212,14 @@
 (defmacro . (obj-name &fields)
   (dot-helper obj-name (reverse fields)))
 
+(defun at-helper (obj-name reversed-fields)
+  (if (null? reversed-fields)
+      obj-name
+      `(geti ~(at-helper obj-name (cdr reversed-fields)) ~(car reversed-fields))))
+
+(defmacro @ (obj-name &fields)
+  (at-helper obj-name (reverse fields)))
+
 (defun prototype? (p o)
   (. p (isPrototypeOf o)))
 

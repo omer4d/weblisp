@@ -180,6 +180,18 @@ var $$root = {
 	"get-window": function() {
 		return window;
 	},
+	array: function(n, v) {
+		var arr = new Array(n);
+		for(var i = 0; i < n; ++i)
+			arr[i] = v;
+		return arr;
+	},
+	shr: function(x, y) {
+		return x >> y;
+	},
+	shl: function(x, y) {
+		return x << y;
+	}
 };
 
 $$root["*ns*"] = $$root;

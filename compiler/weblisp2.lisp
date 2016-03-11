@@ -7,6 +7,10 @@
 (def fs (require "fs"))
 (def argv ((require "minimist") (. process argv (slice 2))))
 
+;; *************
+;; * Tokenizer *
+;; *************
+
 (def token-proto (object))
 
 (defmethod init token-proto (self src type start len)
@@ -70,6 +74,10 @@
 			      (error (str "Unrecognized token: " s))))))
     (reverse (cons (make-instance token-proto src 'end-tok 0 0) toks))))
 
+;; **********
+;; * Parser *
+;; **********
+
 (def parser-proto (object))
 
 (defmethod init parser-proto (self toks)
@@ -82,6 +90,8 @@
   (let (curr (car (. self pos)))
     (set! (. self pos) (cdr (. self pos)))
     curr))
+
+
 
 (defun escape-str (s)
   (. JSON (stringify s)))
@@ -138,6 +148,10 @@
     (iterate 
      (while (not (equal? (. p (peek-tok) type) 'end-tok)))
      (collecting (. p (parse-expr))))))
+
+;; ************
+;; * Compiler *
+;; ************
 
 (def mangling-table (hashmap))
 
