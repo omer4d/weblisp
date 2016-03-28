@@ -6,7 +6,7 @@ var test = function(title, f) {
 	_test("[Static Compiler] " + title, f);
 }
 
-var wl = require('../weblisp.js');
+var wl = require('../weblisp-node.js');
 var sandbox = {};
 var staticCompiler = wl.root["make-instance"](wl.root["static-compiler-proto"]);
 

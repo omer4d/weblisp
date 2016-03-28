@@ -4,7 +4,7 @@ var test = function(title, f) {
 	_test("[Tokenizer] " + title, f);
 }
 
-var wl = require('../weblisp.js');
+var wl = require('../weblisp-node.js');
 
 function pairs(arr)
 {

@@ -6,7 +6,7 @@ var test = function(title, f) {
 	_test("[Compiler] " + title, f);
 }
 
-var wl = require('../weblisp.js');
+var wl = require('../weblisp-node.js');
 
 var cons = wl.root.cons;
 var list = wl.root.list;

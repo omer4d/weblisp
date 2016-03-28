@@ -2,7 +2,7 @@ var VM = require('vm');
 var Reflect = require('harmony-reflect');
 var fs = require('fs');
 var argv = require('minimist')(process.argv.slice(2));
-var wl = require('./weblisp.js');
+var wl = require('./weblisp-node.js');
 
 function formatCode1(str) {
     var toks = str.split(/(;|{|})/);
