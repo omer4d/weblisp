@@ -1,1 +1,0 @@
-node --harmony --harmony_proxies compiler-front2.js lib.lisp bubbles.lisp --out=bubbles.js

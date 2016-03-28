@@ -1,38 +1,70 @@
-var ev = evalispstr;
+var _test = require('tape');
+const NodeAssert = require('assert');
+const VM = require('vm');
 
-QUnit.module( "Compiler" );
+var test = function(title, f) {
+	_test("[Compiler] " + title, f);
+}
 
-QUnit.test( "Atoms (sans symbol)", function( assert ) {
+var wl = require('../weblisp.js');
+
+var cons = wl.root.cons;
+var list = wl.root.list;
+var symbol = wl.root.symbol;
+
+var evaluator = wl.root["make-instance"](wl.root["node-evaluator-proto"]);
+
+function ev(str) {
+	return evaluator["eval-str"](str);
+}
+
+test( "Atoms (sans symbol)", function( assert ) {
 	assert.deepEqual(ev("1"), 1);
-	assert.deepEqual(ev("'baz"), new Symbol("baz"));
-	assert.deepEqual(ev("null"), null);
+	assert.deepEqual(ev("'baz"), symbol("baz"));
+	assert.deepEqual(ev("null"), []);
 	assert.deepEqual(ev("true"), true);
 	assert.deepEqual(ev("false"), false);
 	assert.deepEqual(ev("undefined"), undefined);
+	assert.deepEqual(ev('""'), "");
+	assert.deepEqual(ev('"abcd"'), "abcd");
+	assert.deepEqual(ev('"abcd\\n\\\\"'), "abcd\n\\");
+	assert.deepEqual(ev('"ab\\"cd"'), "ab\"cd");
+	
+	assert.end();
 });
 
-QUnit.test( "Quote", function( assert ) {
+test( "Quote", function( assert ) {
 	assert.deepEqual(ev("'1"), 1);
-	assert.deepEqual(ev("'baz"), new Symbol("baz"));
+	assert.deepEqual(ev("'baz"), symbol("baz"));
 
-	assert.deepEqual(ev("'null"), null);
+	assert.deepEqual(ev("'null"), []);
 	assert.deepEqual(ev("'true"), true);
 	assert.deepEqual(ev("'false"), false);
 	assert.deepEqual(ev("'undefined"), undefined);
+	assert.deepEqual(ev("'\"baz\""), "baz");
 	
-	assert.deepEqual(ev("'()"), null);
+	assert.deepEqual(ev("'()"), []);
 	assert.deepEqual(ev("'(1 2 3)"), list(1, 2, 3));
-	assert.deepEqual(ev("'(1 baz 3)"), list(1, new Symbol("baz"), 3));
+	assert.deepEqual(ev("'(1 baz 3)"), list(1, symbol("baz"), 3));
 	assert.deepEqual(ev("'(1 (2 3) 4)"), list(1, list(2, 3), 4));
+		
+	assert.end();
 });
 
 
-QUnit.test( "Simple calls", function( assert ) {
-	assert.deepEqual(ev("(cons 1 2)"), cons(1, 2));
-	assert.deepEqual(ev("(cons 1 (cons 2 null))"), cons(1, cons(2, null)));
+test( "Simple calls", function( assert ) {
+	assert.deepEqual(ev("(cons 1 null)"), cons(1, []));
+	assert.deepEqual(ev("(cons 1 (cons 2 null))"), cons(1, cons(2, [])));	
+	assert.end();
 });
 
-QUnit.test( "Math", function( assert ) {
+test( "Method calls", function( assert ) {
+	assert.deepEqual(ev('(.slice "asdf" 1)'), "sdf");
+	assert.deepEqual(ev('(.slice "asdf" 1 -1)'), "sd");
+	assert.end();
+});
+
+test( "Math", function( assert ) {
 	assert.deepEqual(ev("(+)"), 0);
 	assert.deepEqual(ev("(+ 1)"), 1);
 	assert.deepEqual(ev("(+ 1 2)"), 1+2);
@@ -54,9 +86,11 @@ QUnit.test( "Math", function( assert ) {
 	assert.deepEqual(ev("(/ 2 3 4)"), 2/3/4);
 	
 	assert.deepEqual(ev("(/ (- (* 2 (+ 3 1)) 4) 10)"), (2 * (3 + 1) - 4) / 10);
+		
+	assert.end();
 });
 
-QUnit.test( "Comparison", function( assert ) {
+test( "Comparison", function( assert ) {
 	assert.deepEqual(ev("(= 0 0)"), true);
 	assert.deepEqual(ev("(= 0 1)"), false);
 	assert.deepEqual(ev("(= 2 (+ 1 1) 2 (+ 1 1))"), true);
@@ -79,16 +113,20 @@ QUnit.test( "Comparison", function( assert ) {
 	assert.deepEqual(ev("(<= 1 0)"), false);
 	assert.deepEqual(ev("(<= 0 0)"), true);
 	assert.deepEqual(ev("(<= 0 1)"), true);
+		
+	assert.end();
 });
 
-var globalCounter = 0;
 
-function for__MINUSside__MINUSeffect(x) {
-	globalCounter += x;
-	return globalCounter;
-}
 
-QUnit.test( "Progn", function( assert ) {
+evaluator.root.globalCounter = 0;
+evaluator.root["for-side-effect"] = function(x) {
+	evaluator.root.globalCounter += x;
+	return evaluator.root.globalCounter;
+};
+
+/*
+test( "Progn", function( assert ) {
 	assert.deepEqual(ev("(progn 5)"), 5);
 	assert.deepEqual(ev("(progn 1 2 3 4 5)"), 5);
 	assert.deepEqual(ev("(progn (+ 1 2) (+ 3 4) (+ (* 2 3) 6))"), 2*3+6);
@@ -96,30 +134,34 @@ QUnit.test( "Progn", function( assert ) {
 	globalCounter = 0;
 	var tmp = ev("(progn (for-side-effect 1) (for-side-effect 2) (+ 5 5))");
 	assert.ok(tmp === 10 && globalCounter === 3);
-});
+		
+	assert.end();
+});*/
 
-QUnit.test( "If", function( assert ) {
+test( "If", function( assert ) {
 	assert.deepEqual(ev("(if true true false)"), true);
 	assert.deepEqual(ev("(if false true false)"), false);
 	assert.deepEqual(ev("(+ (if (> 1 0) 5 0) 5)"), 10);
 	assert.deepEqual(ev("(+ (if (< 1 0) 5 0) 5)"), 5);
 		
-	globalCounter = 0;
+	evaluator.root.globalCounter = 0;
 	assert.deepEqual(ev(`(if (> 1 0) 
-							 (progn (for-side-effect 5) -6)
-							 (progn (for-side-effect 100) 6))`), -6);
-	assert.deepEqual(globalCounter, 5);
+							 ((lambda () (for-side-effect 5) -6))
+							 ((lambda () (for-side-effect 100) 6)))`), -6);
+	assert.deepEqual(evaluator.root.globalCounter, 5);
 	
-	globalCounter = 0;
+	evaluator.root.globalCounter = 0;
 	assert.deepEqual(ev(`(if (< 1 0) 
-							 (progn (for-side-effect 5) -6)
-							 (progn (for-side-effect 100) 6))`), 6);
-	assert.deepEqual(globalCounter, 100);
+							 ((lambda () (for-side-effect 5) -6))
+							 ((lambda () (for-side-effect 100) 6)))`), 6);
+	assert.deepEqual(evaluator.root.globalCounter, 100);
 	
 	assert.deepEqual(ev("(+ (if (if (> 1 0) false true) 0 (if (> 1 0) 5 0)) 5)"), 10);
+		
+	assert.end();
 });
 
-QUnit.test( "Lambda", function( assert ) {
+test( "Lambda", function( assert ) {
 	assert.deepEqual(ev("(apply (lambda () 5) '())"), 5);
 	assert.deepEqual(ev("(apply (lambda (x) x) '(5))"), 5);
 	assert.deepEqual(ev("(apply (lambda (x y) (+ x y)) '(5 4))"), 9);
@@ -127,22 +169,52 @@ QUnit.test( "Lambda", function( assert ) {
 	assert.deepEqual(ev("(apply (lambda (&etc) (apply + etc)) '(1 2 3))"), 6);
 	assert.deepEqual(ev("(apply (lambda (x &etc) (+ x (apply + etc))) '(1 2 3 4))"), 10);
 	
-	globalCounter = 0;
+	evaluator.root.globalCounter = 0;
 	assert.deepEqual(ev(`(apply (lambda (x) 
 									(for-side-effect 2)
 									(for-side-effect 3)
 									x)
 								'(111))`), 111);
-	assert.deepEqual(globalCounter, 5);
+	assert.deepEqual(evaluator.root.globalCounter, 5);
+		
+	assert.end();
 });
 
-QUnit.test( "Function expression call", function( assert ) {
+test( "Function expression call", function( assert ) {
 	assert.deepEqual(ev("((lambda (x y) (+ x y)) 1 2)"), 3);
 	assert.deepEqual(ev("((if (> 1 0) + *) 1 2)"), 3);
+		
+	assert.end();
 });
 
-QUnit.test( "Defun", function( assert ) {
+
+evaluator.root.globalTestV = 0;
+
+test( "Setv", function( assert ) {
+	assert.deepEqual(ev("(setv! globalTestV 777)"), 777);
+	assert.deepEqual(evaluator.root.globalTestV, 777);
 	
+	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
+	assert.deepEqual(evaluator.root.globalTestV, 14);
+	
+	assert.deepEqual(ev("(setv! globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
+	assert.deepEqual(evaluator.root.globalTestV, 12);
+	
+	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
+	assert.deepEqual(evaluator.root.globalTestV, 14);
+	
+	assert.deepEqual(ev("((lambda (x) (setv! x (+ 7 8)) x) 0)"), 15);
+	
+	assert.deepEqual(ev("((lambda (x) (if (> (setv! x 6) 0) x 0)) 0)"), 6);
+	
+	assert.deepEqual(ev("((lambda (x y z) (setv! z (setv! y (setv! x 3))) (+ x y z)) 0 0 0)"), 9);
+		
+	assert.end();
+});
+
+
+test( "Defun", function( assert ) {
+	/*
 	assert.ok(ev("(defun testf1 () 5)"));
 	assert.deepEqual(ev("(testf1)"), 5);
 	
@@ -167,99 +239,49 @@ QUnit.test( "Defun", function( assert ) {
 					(for-side-effect 3)
 					x)`));
 	assert.deepEqual(ev("(testf7 10)"), 10);
-	assert.deepEqual(globalCounter, 5);
+	assert.deepEqual(globalCounter, 5);*/
 	
-	assert.ok(ev(`(defun testf8 (n)
-					(if (not= n 0)
-						(* n (testf8 (- n 1)))
-						1))`));
+	assert.ok(ev(`(setv! testf8 (lambda (n)
+								  (if (not= n 0)
+									  (* n (testf8 (- n 1)))
+									  1)))`));
 	
 	assert.deepEqual(ev("(testf8 5)"), 1*2*3*4*5);
+		
+	assert.end();
 });
 
-var globalTestV = 0;
 
-QUnit.test( "Setv", function( assert ) {
-	assert.deepEqual(ev("(setv! globalTestV 777)"), 777);
-	assert.deepEqual(globalTestV, 777);
+test( "Defmacro", function( assert ) {
+	assert.ok(evaluator.root["setmac!"]);
 	
-	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
-	assert.deepEqual(globalTestV, 14);
-	
-	assert.deepEqual(ev("(setv! globalTestV (if (> 0 1) 6 (+ 6 6)))"), 12);
-	assert.deepEqual(globalTestV, 12);
-	
-	assert.deepEqual(ev("(setv! globalTestV (+ 7 7))"), 14);
-	assert.deepEqual(globalTestV, 14);
-	
-	assert.deepEqual(ev("((lambda (x) (setv! x (+ 7 8)) x) 0)"), 15);
-	
-	assert.deepEqual(ev("((lambda (x) (if (> (setv! x 6) 0) x 0)) 0)"), 6);
-	
-	assert.deepEqual(ev("((lambda (x y z) (setv! z (setv! y (setv! x 3))) (+ x y z)) 0 0 0)"), 9);
-});
-
-var globalTestObj = {};
-
-function getGlobalTestObj__STAR(..._)
-{
-	return globalTestObj;
-}
-
-QUnit.test( "Seti", function( assert ) {
-	assert.deepEqual(ev("(seti! globalTestObj 'baz 777)"), 777);
-	assert.deepEqual(globalTestObj.baz, 777);
-	
-	assert.deepEqual(ev("(seti! globalTestObj 'baz (+ 7 7))"), 14);
-	assert.deepEqual(globalTestObj.baz, 14);
-	
-	assert.deepEqual(ev("(seti! globalTestObj (+ 3 3) (+ 7 8))"), 15);
-	assert.deepEqual(globalTestObj[6], 15);
-	
-	assert.deepEqual(ev("(seti! (getGlobalTestObj* 1 2 3) '? (+ 8 8))"), 16);
-	assert.deepEqual(globalTestObj["?"], 16);
-});
-
-QUnit.test( "Array Literals", function( assert ) {
-	assert.deepEqual(ev("[]"), []);
-	assert.deepEqual(ev("[1 2 3]"), [1, 2, 3]);
-	assert.deepEqual(ev("[1 (+ 1 1) 3]"), [1, 2, 3]);
-	assert.deepEqual(ev("[1 [2 3] 4]"), [1, [2, 3], 4]);
-	assert.deepEqual(ev("[1 (if (> 1 0) 2 -2) 3]"), [1, 2, 3]);
-	
-	assert.deepEqual(ev("'[]"), []);
-	assert.deepEqual(ev("'[[]]"), [[]]);
-	assert.deepEqual(ev("'[1 2 3]"), [1, 2, 3]);
-	assert.deepEqual(ev("'[1 2 baz]"), [1, 2, new Symbol("baz")]);
-	assert.deepEqual(ev("'[1 2 (3 4)]"), [1, 2, list(3, 4)]);
-	assert.deepEqual(ev("'[1 2 [baz]]"), [1, 2, [new Symbol("baz")]]);
-	
-	assert.deepEqual(ev("`[]"), []);
-	assert.deepEqual(ev("`[1 2 3]"), [1, 2, 3]);
-	assert.deepEqual(ev("`[1 2 [3 4]]"), [1, 2, [3, 4]]);
-	assert.deepEqual(ev("`[1 2 (3 4)]"), [1, 2, list(3, 4)]);
-	assert.deepEqual(ev("`[1 2 ~[3 4]]"), [1, 2, [3, 4]]);
-	assert.deepEqual(ev("`[1 2 ~(+ 3 4)]"), [1, 2, 7]);
-	assert.deepEqual(ev("`[1 2 [3 ~(+ 3 4)]]"), [1, 2, [3, 7]]);
-	assert.deepEqual(ev("`[1 2 ~@'(3 4)]"), [1, 2, 3, 4]);
-});
-
-QUnit.test( "Defmacro", function( assert ) {
-	assert.ok(ev("(defmacro testmac1 () 5)"));
+	assert.ok(ev("(setv! testmac1 (lambda () 5))"));
+	assert.ok(ev("(setmac! testmac1)"));
 	assert.deepEqual(ev("(+ (testmac1) 5)"), 10);
+
+	assert.ok(ev("(setv! **testmac1** (lambda () 5))"));
+	assert.ok(ev("(setmac! **testmac1**)"));
+	assert.deepEqual(ev("(+ (**testmac1**) 5)"), 10);
 	
-	assert.ok(ev("(defmacro testmac2 () 'baz)"));
+	assert.ok(ev("(setv! testmac2 (lambda () 'baz))"));
+	assert.ok(ev("(setmac! testmac2)"));
+	assert.ok(evaluator.root.testmac2);
+	assert.ok(evaluator.root.testmac2.isMacro);
 	assert.deepEqual(ev("((lambda (baz) (+ (testmac2) 5)) 5)"), 10);
 	
-	assert.ok(ev("(defmacro testmac3 (x) (cons '+ x))"));
+	assert.ok(ev("(setv! testmac3 (lambda (x) (cons '+ x)))"));
+	assert.ok(ev("(setmac! testmac3)"));
 	assert.deepEqual(ev("(testmac3 (1 2 3 4))"), 10);
 	
-	assert.ok(ev(`(defmacro testmac4 (x) 
-					 (if (atom? x)
-						  x` +
-						  "`(~(second x) (testmac4 ~(first x)) (testmac4 ~(third x)))))"));
+	assert.ok(ev(`(setv! testmac4 
+						(lambda (x) 
+					 		(if (atom? x)
+						  	x` +
+						  	"`(~(car (cdr x)) (testmac4 ~(car x)) (testmac4 ~(car (cdr (cdr x))))))))"));
+	assert.ok(ev("(setmac! testmac4)"));
 	
 	assert.deepEqual(ev("(testmac4 1)"), 1);
 	assert.deepEqual(ev("(testmac4 (1 + 1))"), 2);
 	assert.deepEqual(ev("(testmac4 ((2 * 3) + (4 * (5 + 6))))"), ((2 * 3) + (4 * (5 + 6))));
+	assert.end();
 });

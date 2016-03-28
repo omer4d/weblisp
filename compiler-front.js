@@ -35,10 +35,10 @@ function replaceExt(s, ext) {
 }
 
 if(argv._.length > 0) {
-    var comp = new wl.StaticCompiler();
+    var comp = wl.root["make-instance"](wl.root["static-compiler-proto"]);
     var files = argv._; //Array.isArray(argv.) ? argv.in : [argv.in];
     var output = fs.readFileSync("bootstrap.js", "utf8") + files.map(function(f) {
-	return formatCode(comp.compileUnit(fs.readFileSync(f, "utf8")));
+	return formatCode(comp["compile-unit"](fs.readFileSync(f, "utf8")));
     }).join("");
 
     var outputName = argv.out ? argv.out : (files.length === 1 ? replaceExt(files[0], ".js") : undefined);
