@@ -54,24 +54,26 @@
 	pos 0
 	s src)
     (while (> (. s length) 0)
-      (iterate (let (res false))
-	       (for i (index-in token-table))
-	       (for entry (in-list token-table))
-	       (while (not res))
-	       (do (set! res (. s (match (first entry)))))
-	       (finally _ (if res
-			      (progn
-				(set! s (. s (substring (. res 0 length))))
-				(when (not= (second entry) -1)
-				  (set! toks
-					(cons (make-instance token-proto
-							     src
-							     (or (geti keywords (. res 0)) (second entry))
-							     pos
-							     (. res 0 length))
-					      toks)))
-				(inc! pos (. res 0 length)))
-			      (error (str "Unrecognized token: " s))))))
+      (iterate
+       (let (res false))
+       (for i (index-in token-table))
+       (for entry (in-list token-table))
+       (while (not res))
+       (do (set! res (. s (match (first entry)))))
+       (finally _
+	 (if res
+	     (progn
+	       (set! s (. s (substring (. res 0 length))))
+	       (when (not= (second entry) -1)
+		 (set! toks
+		       (cons (make-instance token-proto
+					    src
+					    (or (geti keywords (. res 0)) (second entry))
+					    pos
+					    (. res 0 length))
+			     toks)))
+	       (inc! pos (. res 0 length)))
+	     (error (str "Unrecognized token: " s))))))
     (reverse (cons (make-instance token-proto src 'end-tok 0 0) toks))))
 
 ;; **********
@@ -90,8 +92,6 @@
   (let (curr (car (. self pos)))
     (set! (. self pos) (cdr (. self pos)))
     curr))
-
-
 
 (defun escape-str (s)
   (. JSON (stringify s)))
@@ -115,27 +115,30 @@
       default         (error (str "Unexpected token: " (. tok type))))))
 
 (defmethod parse-list parser-proto (self)
-  (iterate (while (and (not (equal? (set! t (. self (peek-tok) type)) 'list-close-tok))
-		       (not (equal? (set! t (. self (peek-tok) type)) 'end-tok))))
-	   (collecting (. self (parse-expr)))
-	   (finally lst
-	      (if (equal? (. self (consume-tok) type) 'list-close-tok)
-		  lst
-		  (error "Unmatched paren!")))))
+  (let (start-pos (. self (peek-tok) pos))
+    (iterate
+     (while (and (not (equal? (set! t (. self (peek-tok) type)) 'list-close-tok))
+		 (not (equal? (set! t (. self (peek-tok) type)) 'end-tok))))
+     (collecting (. self (parse-expr)))
+     (finally lst
+       (if (equal? (. self (consume-tok) type) 'list-close-tok)
+	   lst ;(doto lst (seti! meta (doto  
+	   (error "Unmatched paren!"))))))
 
 (defmethod parse-backquoted-list parser-proto (self)
-  (iterate (while (and (not (equal? (. self (peek-tok) type) 'list-close-tok))
-		       (not (equal? (. self (peek-tok) type) 'end-tok))))
-	   (collecting (case (. self (peek-tok) type)
-			 unquote-tok (progn (. self (consume-tok))
-					    `(list ~(. self (parse-expr))))
-			 splice-tok  (progn (. self (consume-tok))
-					    (. self (parse-expr)))
-			 default     `(list ~(. self (parse-backquoted-expr)))))
-	   (finally lst 
-	      (if (equal? (. self (consume-tok) type) 'list-close-tok)
-		  (cons 'concat lst)
-		  (error "Unmatched paren!")))))
+  (iterate
+   (while (and (not (equal? (. self (peek-tok) type) 'list-close-tok))
+	       (not (equal? (. self (peek-tok) type) 'end-tok))))
+   (collecting (case (. self (peek-tok) type)
+		 unquote-tok (progn (. self (consume-tok))
+				    `(list ~(. self (parse-expr))))
+		 splice-tok  (progn (. self (consume-tok))
+				    (. self (parse-expr)))
+		 default     `(list ~(. self (parse-backquoted-expr)))))
+   (finally lst
+     (if (equal? (. self (consume-tok) type) 'list-close-tok)
+	 (cons 'concat lst)
+	 (error "Unmatched paren!")))))
 
 (defmethod parse-backquoted-expr parser-proto (self)
   (if (equal? (. self (peek-tok) type) 'list-open-tok)
