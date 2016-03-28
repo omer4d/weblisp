@@ -182,6 +182,14 @@
 (defun mangle-name (name)
   (. name (replace mangling-rx mangle)))
 
+;; Each compile____ function must return a pair [v:String, s:String] such that:
+;; - v is a javascript expression that yields the value of the source lisp expression
+;; - v does not contain any statements (and mustn't end with a semicolon)
+;; - s contains zero or more javascript statements to be executed before evaluating v
+;; - Given a result [_, s2] of another compilation, s+s2 must be valid javascript
+;;   i.e. do not rely on automatic semicolon insertion
+;;        do not rely on consumers to insert necessary separators before concat.
+
 (def compiler-proto (object))
 
 (defmethod init compiler-proto (self root)

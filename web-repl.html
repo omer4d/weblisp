@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<script type="text/javascript" src="./jquery-2.1.4.js"></script>
+	<script type="text/javascript" src="./weblisp.js"></script>
+	
+  <style type="text/css">
+    .console-log-line {
+  font-family: monospace;
+  margin: 2px;
+}
+
+.console-error-line {
+  font-family: monospace;
+  margin: 2px;
+  color: #EF0000;
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+#cursor {
+  font-family: monospace;
+    color: white;
+    background-color:#970000;
+    display: table-cell;
+}
+#input {
+  font-family: monospace;
+  outline: none;
+  display: table-cell;
+  min-width: 10px;
+  width: 100%;
+}
+
+#input-row {
+    display: table-row;
+}
+
+
+#console {
+  height: 80%;
+  overflow:scroll;
+  background-color: white;
+}
+
+#editor {
+  font-family: monospace;
+  background-color: white;
+  height: 20%;
+  overflow:scroll;
+  outline: none;
+}
+
+#top {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+  </style>
+
+  <title>Lisp Compiler by StasB</title>
+
+  
+</head>
+
+ <body class="dark_ui">
+  <div id="top">
+
+<div id="editor" contenteditable>
+</div>
+
+  <div id="console">
+  <div id="console-log"></div>
+  <div id="input-row">
+    <div id="cursor"> >> </div>
+    <div id="input" contenteditable></div>
+  </div>
+    </div>
+  
+  </div>
+
+  
+
+
+
+
+<script type='text/javascript'>//<![CDATA[
+
+
+// **********
+// * Editor *
+// **********
+
+var originalConsole = console;
+var format = $$root.format;
+
+function consoleLine(text, cls)
+{
+	var pre = format('<pre class="%0"></pre>', cls);
+	$("#console-log").append($(pre).html(text));
+}
+
+console = {
+  log: function(text) {
+  	originalConsole.log(text);
+    consoleLine(text, "console-log-line");
+  },
+  error: function(text) {
+  	originalConsole.error(text);
+    consoleLine(text, "console-error-line");
+  }
+};
+
+console.debug = console.info = console.log;
+
+window.onerror = function(msg, url, line, col, err) {
+	consoleLine(msg, "console-error-line");
+}
+
+$$root["jeval"] = eval;
+//var global = $$root["jeval"]("this");
+
+function defaultLexenv() {
+	return {"this": true};
+}
+
+var compiler = $$root["make-instance"]($$root["compiler-proto"], $$root);
+
+function evalisp(expr) {
+	var tmp = compiler["compile"](defaultLexenv(), expr);
+	return $$root["jeval"]($$root.second(tmp) + $$root.first(tmp));
+}
+
+function replStep(s) {
+	var forms = $$root.parse($$root.tokenize(s));
+	for(var n = forms; !$$root["null?"](n); n = $$root.cdr(n))
+		$$root.print(evalisp($$root.car(n)));
+}
+
+var inputField = $("#input");
+					
+inputField.keypress(function(event) {
+	if(event.keyCode == 13 && !event.shiftKey)
+	{
+  		console.log(">>" + inputField.html());
+        replStep(inputField.text());
+		inputField.html("");
+	}
+});
+
+function resetCursor(el, start) {
+    el.focus();
+    if (typeof window.getSelection != "undefined"
+            && typeof document.createRange != "undefined") {
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(start);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else if (typeof document.body.createTextRange != "undefined") {
+        var textRange = document.body.createTextRange();
+        textRange.moveToElementText(el);
+        textRange.collapse(start);
+        textRange.select();
+    }
+}
+
+
+inputField.click(function() {
+	return false;
+});
+
+$("#console-log").click(function() {
+	return false;
+});
+
+$("#cursor").click(function() {
+	resetCursor(inputField.get(0), true);
+	return false;
+});
+
+$("#console").click(function() {
+	inputField.focus();
+    resetCursor(inputField.get(0), false);
+    return true;
+});
+
+//]]> 
+
+</script>
+
+</body>
+
+</html>
+
