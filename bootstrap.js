@@ -130,18 +130,18 @@ var $$root = {
     str         :   argReducer("str", function(a, b) { return str1(a) + str1(b); }, ""),
     
     print: function print() {
-	var args = Array(arguments.length);
-	for(var i = 0; i < arguments.length; ++i)
-	    args[i] = arguments[i];
+		var args = Array(arguments.length);
+		for(var i = 0; i < arguments.length; ++i)
+			args[i] = arguments[i];
 
-	console.log(args.map(str1).join(" "));
+		console.log(args.map(str1).join(" "));
     },
     regex       :   function regex(str, flags) { return new RegExp(str, flags); },
     
     object      :   function object(proto) { return Object.create(proto || {}); },
 	"hashmap"	:   function hashmap() { return Object.create(null); },
     geti        :   function geti(obj, idx) { return obj[idx]; },
-    "seti!"     :   function seti__BANG(obj, idx, val) { obj[idx] = val },
+    "seti!"     :   function seti__BANG(obj, idx, val) { obj[idx] = val; return val; },
     
     "apply-method"  :   function apply__MINUSmethod(method, target, args) {
         return method.apply(target, args);

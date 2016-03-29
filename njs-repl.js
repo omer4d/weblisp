@@ -8,11 +8,23 @@ function write(s) {
 	process.stdout.write(util.format.apply(this, arguments));
 }
 
-function parenBalance(str) {
+function parenBalance(line) {
+	var inString = false;
 	var counter = 0;
-	for (var i = 0, len = str.length; i < len; i++) {
-		if(str.charAt(i) == "(") ++counter;
-		else if(str.charAt(i) == ")") --counter;
+	
+	for(var i = 0, len = line.length; i < len; ++i) {
+		if(inString) {
+			if(line.charAt(i) === "\"" && line.charAt(i - 1) !== "\\")
+				inString = false;
+		}
+		else {
+			switch(line.charAt(i)) {
+				case ";": 	return counter;
+				case "\"": 	inString = true; break;
+				case "(":	++counter; 		break;
+				case ")":	--counter;		break;
+			}
+		}
 	}
 	return counter;
 }
@@ -32,7 +44,7 @@ process.stdin.on("data", function(text) {
 		
 	if(currParenBalance <= 0) {
 		try {
-			write(ev["eval-str"](currTextAccum));
+			write(wl.str(ev["eval-str"](currTextAccum)));
 		} catch(e) {
 			write(e);
 		}

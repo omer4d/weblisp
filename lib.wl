@@ -389,6 +389,26 @@
 	      body)
        ~binding-name)))
 
+(defun assoc! (obj &kvs)
+  (loop (kvs kvs)
+     (if (null? kvs)
+	 obj
+	 (progn
+	   (seti! obj (first kvs) (second kvs))
+	   (recur (cdr (cdr kvs)))))))
+
+(defun deep-assoc! (obj path &kvs)
+  (loop (obj obj
+	 path path
+	 kvs kvs)
+     (if (null? path)
+	 (apply assoc! (cons obj kvs))
+	 (recur (if (in obj (car path))
+		    (geti obj (car path))
+		    (seti! obj (car path) (hashmap)))
+		(cdr path) kvs)))
+  obj)
+
 (defmacro while (c &body)
   `(loop ()
       (when ~c

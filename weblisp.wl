@@ -109,15 +109,24 @@
       sym-tok         (symbol (. tok (text)))
       default         (error (str "Unexpected token: " (. tok type))))))
 
+(defun set-source-pos! (o start end)
+  (let (s (assoc! (hashmap)
+	    'start start
+	    'end end))
+    (deep-assoc! o '(meta) 'source-pos s)))
+
+(defun print-meta (x)
+  (print (pfmt (. x meta))))
+
 (defmethod parse-list parser-proto (self)
-  (let (start-pos (. self (peek-tok) pos))
+  (let (start-pos (. self (peek-tok) start))
     (iterate
      (while (and (not (equal? (set! t (. self (peek-tok) type)) 'list-close-tok))
 		 (not (equal? (set! t (. self (peek-tok) type)) 'end-tok))))
      (collecting (. self (parse-expr)))
      (finally lst
-       (if (equal? (. self (consume-tok) type) 'list-close-tok)
-	   lst ;(doto lst (seti! meta (doto  
+       (if (equal? (. self (peek-tok) type) 'list-close-tok)
+	   (set-source-pos! lst start-pos (. self (consume-tok) start))
 	   (error "Unmatched paren!"))))))
 
 (defmethod parse-backquoted-list parser-proto (self)

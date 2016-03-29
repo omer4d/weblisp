@@ -1,2 +1,2 @@
-node --harmony --harmony_proxies compiler-front.js lib.lisp weblisp.lisp --out=weblisp.js
-node --harmony --harmony_proxies compiler-front.js lib.lisp weblisp.lisp weblisp-node.lisp --out=weblisp-node.js
+node --harmony --harmony_proxies compiler-front.js lib.wl weblisp.wl --out=weblisp.js
+node --harmony --harmony_proxies compiler-front.js lib.wl weblisp.wl weblisp-node.wl --out=weblisp-node.js
