@@ -12,7 +12,7 @@
     (seti! "this" true)))
 
 (defmethod init node-evaluator-proto (self)
-  (let (root (object *ns*)
+  (let (root (make-default-ns)
 	sandbox (object))
     (seti! sandbox "$$root" root)
     (. VM (createContext sandbox))
