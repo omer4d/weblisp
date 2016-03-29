@@ -109,26 +109,11 @@
       sym-tok         (symbol (. tok (text)))
       default         (error (str "Unexpected token: " (. tok type))))))
 
-(defun add-meta! (obj &kvs)
-  (let (meta (geti obj 'meta))
-    (when (not meta)
-      (set! meta (hashmap))
-      (set! (. obj meta) meta)
-      (.defineProperty Object obj "meta" (assoc! (hashmap) "enumerable" false "writable" true)))
-    (apply assoc! (cons meta kvs))
-    obj))
-
 (defun set-source-pos! (o start end)
   (let (s (assoc! (hashmap)
 	    'start start
 	    'end end))
     (add-meta! o 'source-pos s)))
-;    (deep-assoc! o '(meta) 'source-pos s)))
-
-(defun print-meta (x)
-  (print (.stringify JSON (. x meta))))
-
-(let (tmp '(1 2 3)) (set-source-pos! tmp 10 20) (print-meta tmp))
 
 (defmethod parse-list parser-proto (self)
   (let (start-pos (. self (peek-tok) start))

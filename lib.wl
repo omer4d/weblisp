@@ -513,3 +513,15 @@
 		    (recur))
 		  (progn
 		    ~@(if (null? final-actions) (list res-name) final-actions)))))))
+
+(defun add-meta! (obj &kvs)
+  (let (meta (geti obj 'meta))
+    (when (not meta)
+      (set! meta (hashmap))
+      (set! (. obj meta) meta)
+      (.defineProperty Object obj "meta" (assoc! (hashmap) "enumerable" false "writable" true)))
+    (apply assoc! (cons meta kvs))
+    obj))
+
+(defun print-meta (x)
+  (print (.stringify JSON (. x meta))))
