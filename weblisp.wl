@@ -188,6 +188,75 @@
 (defun mangle-name (name)
   (. name (replace mangling-rx mangle)))
 
+(defpod source-mapping source-start source-end target-start target-end)
+(defpod tc-str data mappings)
+(defpod tc-frag val init)
+
+(defpod source-mapping source-start source-end target-start target-end)
+(defpod tc-str data mappings)
+(defpod tc-frag val init)
+
+(defun offset-source-mapping (e n)
+  (let (adder (lambda (x) (+ x n)))
+    (update e 'target-start adder 'target-end adder)))
+
+;(let (x 10)
+;(print (inspect (offset-source-mapping 10)))
+;  (print (inspect x)))
+
+(defun concat-tc-str (a b)
+  (if (string? b)
+      (make-tc-str (str (. a data) b) (. a mappings))
+      (make-tc-str
+       (str (. a data) (. b data))
+       (concat (. a mappings)
+	       (map (lambda (e)
+		      (offset-source-mapping e (. a data length)))
+		    (. b mappings))))))
+
+(defun join-tc-frags (sep frags)
+  (let (vals (interpose sep (map (getter 'val) frags))
+	inits (map (getter 'init) frags))
+    (make-tc-frag
+     (reduce concat-tc-str (cdr vals) (car vals))
+     (reduce concat-tc-str (cdr inits) (car inits)))))
+
+(defun concat-tc-frag (a b)
+  (if (string? b)
+      (make-tc-frag (concat-tc-str (. a val) b) (. a init))
+      (make-tc-frag
+       (concat-tc-str (. a val) (. b val))
+       (concat-tc-str (. a init) (. b init)))))
+
+(defun interpolate-tc-frags (fmt &args)
+  (let (rx (regex "(%[ce](?:[0-9]+)?)" "gi"))
+    (iterate
+     (let (accum (make-tc-frag (make-tc-str "" '()) (make-tc-str "" '()))))
+     (for x (in-list (.split fmt rx)))
+     (for n (from 0))
+     (do (if (even? n)
+	     (set! accum (concat-tc-frag accum x))
+	     (set! accum (concat-tc-frag accum (nth (if (empty? (subs x 2)) (idiv n 2) (parseInt (subs x 2))) args))))))))
+
+(defun make-test-frag (a b)
+  (make-tc-frag
+   (make-tc-str a (list (make-source-mapping 0 0 0 (. a length))))
+   (make-tc-str b (list (make-source-mapping 0 0 0 (. b length))))))
+
+(def %inspect% (. (require "util") inspect))
+(defun inspect (obj) (%inspect% obj true 10))
+
+(inspect
+ (interpolate-tc-frags "foo(%c,%c,%c0)"
+		       (make-test-frag "tmp1" "tmp1=10;")
+		       (make-test-frag "tmp2" "tmp2=20;")
+		       (make-test-frag "tmp1" "tmp1=10;")))
+
+(inspect  (join-tc-frags ","
+			     (list (make-test-frag "tmp1" "tmp=10;")
+				   (make-test-frag "tmp2" "tmp=20;")
+				   (make-test-frag "tmp3" "tmp=30;"))))
+
 ;; Each compile____ function must return a pair [v:String, s:String] such that:
 ;; - v is a javascript expression that yields the value of the source lisp expression
 ;; - v does not contain any statements (and mustn't end with a semicolon)

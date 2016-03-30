@@ -38,6 +38,10 @@
 	      (if c c ~(cons 'or (cdr args))))
 	    ~(car args)))))
 
+(defun identity (x) x)
+(defun even? (x) (= (mod x 2) 0))
+(defun odd? (x) (= (mod x 2) 1))
+
 (defun macroexpand-1 (expr)
   (if (and (list? expr) (macro? (geti *ns* (car expr))))
       (apply (geti *ns* (car expr)) (cdr expr))
@@ -140,6 +144,7 @@
 			    (cons v accum))
 			  (cons v (cons x accum))))
 		    lst)))
+
 
 (defun join (sep lst)
   (reduce str (interpose sep lst) ""))
@@ -409,6 +414,20 @@
 		(cdr path) kvs)))
   obj)
 
+(defun hashmap-shallow-copy (h1)
+  (reduce (lambda (h2 key) (seti! h2 key (geti h1 key)) h2) (keys h1) (hashmap)))
+
+(defun assoc (h &kvs)
+  (apply assoc! (cons (hashmap-shallow-copy h) kvs)))
+
+(defun update (h &kfs)
+  (loop (kfs kfs)
+     (if (null? kfs)
+	 h
+	 (let (key (first kfs))
+	   (seti! h key ((second kfs) (geti h key)))
+	   (recur (cdr (cdr kfs)))))))
+
 (defmacro while (c &body)
   `(loop ()
       (when ~c
@@ -424,6 +443,13 @@
     (set! (. data bind) (list binding-name start))
     (set! (. data post) `((inc! ~binding-name ~step)))
     (set! (. data cond) `(< ~binding-name ~end))
+    data))
+
+(defun from (binding-name start step)
+  (set! step (or step 1))
+  (let (data (object null))
+    (set! (. data bind) (list binding-name start))
+    (set! (. data post) `((inc! ~binding-name ~step)))
     data))
 
 (defun index-in (binding-name expr)
@@ -525,3 +551,22 @@
 
 (defun print-meta (x)
   (print (.stringify JSON (. x meta))))
+
+(defmacro defpod (name &fields)
+  `(defun ~(symbol (str "make-" name)) ~fields
+     (doto (hashmap) ~@(map (lambda (field) `(seti! (quote ~field) ~field)) fields))))
+
+(defun subs (s start end)
+  (.substring s start end))
+
+(defun neg? (x) (< x 0))
+
+(defun idiv (a b)
+  (let (t (/ a b))
+    (if (neg? t) (.ceil Math t) (.floor Math t))))
+
+(defun empty? (x)
+  (cond
+    (string? x) (= (. x length) 0)
+    (list? x) (null? x)
+    true (error "Type error in empty?")))

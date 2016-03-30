@@ -9,9 +9,8 @@
   (interactive)
   (save-excursion
     (re-search-backward "[^[:space:]]")
-    (forward-char)
-    (when (eql (following-char) ?\))
-      (backward-char))
+    (when (not (eql (following-char) ?\)))
+      (forward-char))
     (thing-at-point 'sexp)))
 
 (defun append-string-to-buffer (string buffer)
@@ -22,7 +21,7 @@
       (insert string))))
 
 (defun weblisp-eval (str)
-  (process-send-string (get-buffer-process "*weblisp-repl*") (concat str "\n")))
+  (process-send-string (get-buffer-process "*weblisp-repl*") (concat str "\n" (char-to-string 4))))
 
 (defun weblisp-eval-curr-sexp ()
   (interactive)

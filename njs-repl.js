@@ -41,9 +41,11 @@ process.stdin.setEncoding("utf8");
 process.stdin.on("data", function(text) {
 	currParenBalance += parenBalance(text);
 	currTextAccum += text;
-		
-	if(currParenBalance <= 0) {
+	
+	if(currParenBalance <= 0 || currTextAccum.charCodeAt(currTextAccum.length - 1) === 4) {
 		try {
+			if(currTextAccum.charCodeAt(currTextAccum.length - 1) === 4)
+				currTextAccum = currTextAccum.slice(0, -1);
 			write(wl.str(ev["eval-str"](currTextAccum)));
 		} catch(e) {
 			write(e);
