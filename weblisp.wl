@@ -61,11 +61,9 @@
 	       (set! s (. s (substring (. res 0 length))))
 	       (when (not= (second entry) -1)
 		 (set! toks
-		       (cons (make-instance token-proto
-					    src
+		       (cons (make-instance token-proto src 
 					    (or (geti keywords (. res 0)) (second entry))
-					    pos
-					    (. res 0 length))
+					    pos (. res 0 length))
 			     toks)))
 	       (inc! pos (. res 0 length)))
 	     (error (str "Unrecognized token: " s))))))
@@ -192,17 +190,9 @@
 (defpod tc-str data mappings)
 (defpod tc-frag val init)
 
-(defpod source-mapping source-start source-end target-start target-end)
-(defpod tc-str data mappings)
-(defpod tc-frag val init)
-
 (defun offset-source-mapping (e n)
   (let (adder (lambda (x) (+ x n)))
     (update e 'target-start adder 'target-end adder)))
-
-;(let (x 10)
-;(print (inspect (offset-source-mapping 10)))
-;  (print (inspect x)))
 
 (defun concat-tc-str (a b)
   (if (string? b)
@@ -228,6 +218,30 @@
        (concat-tc-str (. a val) (. b val))
        (concat-tc-str (. a init) (. b init)))))
 
+(defun interpolate-tc-%c (accum fmt idx args)
+  (concat-tc-frag
+   accum
+   (nth (if (empty? (subs fmt 2))
+	    (idiv idx 2)
+	    (parseInt (subs fmt 2))) args)))
+
+(defun interpolate-tc-%e (accum fmt idx args)
+  (let (frags (nth (if (empty? (subs fmt 2))
+		       (idiv idx 2)
+		       (parseInt (subs fmt 2))) args))
+    (update accum
+	    'val
+	    (lambda (old-val)
+	      (concat-tc-str
+	       old-val
+	       (reduce (lambda (accum v)
+			 (->> accum
+			      (concat-tc-str (. v init))
+			      (concat-tc-str (. v val))
+			      (concat-tc-str ";")))
+		       frags
+		       (make-tc-str "" '())))))))
+
 (defun interpolate-tc-frags (fmt &args)
   (let (rx (regex "(%[ce](?:[0-9]+)?)" "gi"))
     (iterate
@@ -236,26 +250,13 @@
      (for n (from 0))
      (do (if (even? n)
 	     (set! accum (concat-tc-frag accum x))
-	     (set! accum (concat-tc-frag accum (nth (if (empty? (subs x 2)) (idiv n 2) (parseInt (subs x 2))) args))))))))
-
-(defun make-test-frag (a b)
-  (make-tc-frag
-   (make-tc-str a (list (make-source-mapping 0 0 0 (. a length))))
-   (make-tc-str b (list (make-source-mapping 0 0 0 (. b length))))))
+	     (case (subs x 0 2)
+	       "%c" (set! accum (interpolate-tc-%c accum x n args))
+	       "%e" (set! accum (interpolate-tc-%e accum x n args))
+	       default (error "Unrecognized formatter!")))))))
 
 (def %inspect% (. (require "util") inspect))
 (defun inspect (obj) (%inspect% obj true 10))
-
-(inspect
- (interpolate-tc-frags "foo(%c,%c,%c0)"
-		       (make-test-frag "tmp1" "tmp1=10;")
-		       (make-test-frag "tmp2" "tmp2=20;")
-		       (make-test-frag "tmp1" "tmp1=10;")))
-
-(inspect  (join-tc-frags ","
-			     (list (make-test-frag "tmp1" "tmp=10;")
-				   (make-test-frag "tmp2" "tmp=20;")
-				   (make-test-frag "tmp3" "tmp=30;"))))
 
 ;; Each compile____ function must return a pair [v:String, s:String] such that:
 ;; - v is a javascript expression that yields the value of the source lisp expression

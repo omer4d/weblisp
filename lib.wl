@@ -131,6 +131,11 @@
             null
             (cons (map car args) (apply zip (map cdr args))))) (cons a more)))
 
+(defun interleave (&args)
+  (if (null? args)
+      '()
+      (apply concat (apply zip args))))
+
 (defmacro let (bindings &body)
   `((lambda ~(every-nth 2 bindings) ~@body)
     ~@(every-nth 2 (cdr bindings))))
@@ -380,10 +385,20 @@
 
 (defun push (x lst) (reverse (cons x (reverse lst))))
 
+(defun insert (x pos lst)
+  (if (= pos 0)
+      (cons x lst)
+      (cons (if (null? lst) undefined (car lst)) (insert x (dec pos) (cdr lst)))))
+
 (defmacro -> (x &forms)
   (if (null? forms)
       x
       `(-> ~(push x (car forms)) ~@(cdr forms))))
+
+(defmacro ->> (x &forms)
+  (if (null? forms)
+      x
+      `(->> ~(insert x 1 (car forms)) ~@(cdr forms))))
 
 (defmacro doto (obj-expr &body)
   (let (binding-name (gensym))
@@ -420,13 +435,16 @@
 (defun assoc (h &kvs)
   (apply assoc! (cons (hashmap-shallow-copy h) kvs)))
 
-(defun update (h &kfs)
+(defun update! (h &kfs)
   (loop (kfs kfs)
      (if (null? kfs)
 	 h
 	 (let (key (first kfs))
 	   (seti! h key ((second kfs) (geti h key)))
 	   (recur (cdr (cdr kfs)))))))
+
+(defun update (h &kfs)
+  (apply update! (cons (hashmap-shallow-copy h) kfs)))
 
 (defmacro while (c &body)
   `(loop ()
@@ -557,7 +575,7 @@
      (doto (hashmap) ~@(map (lambda (field) `(seti! (quote ~field) ~field)) fields))))
 
 (defun subs (s start end)
-  (.substring s start end))
+  (.slice s start end))
 
 (defun neg? (x) (< x 0))
 
