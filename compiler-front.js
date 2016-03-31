@@ -23,7 +23,7 @@ function formatCode1(str) {
 }
 
 function formatCode(str) {
-    var strPatt = /("(?:(?:\\")|[^"])*")/;
+    var strPatt = /("(?:(?:\\.)|[^"])*?")/;
     var toks = str.split(strPatt);
     return toks.map(function(tok, idx) {
 	return idx % 2 ? tok : formatCode1(tok);
