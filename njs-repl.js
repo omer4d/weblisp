@@ -48,7 +48,7 @@ process.stdin.on("data", function(text) {
 				currTextAccum = currTextAccum.slice(0, -1);
 			write(wl.str(ev["eval-str"](currTextAccum)));
 		} catch(e) {
-			write(e);
+			write(e.stack);
 		}
 		
 		currParenBalance = 0;

@@ -113,6 +113,8 @@
 	    'end end))
     (add-meta! o 'source-pos s)))
 
+(defun get-source-pos (o) (deep-geti o 'meta 'source-pos))
+
 (defmethod parse-list parser-proto (self)
   (let (start-pos (. self (peek-tok) start))
     (iterate
@@ -188,13 +190,14 @@
 
 (defpod source-mapping source-start source-end target-start target-end)
 (defpod tc-str data mappings)
-(defpod tc-frag val init)
+
+(defun str->tc (s) (make-tc-str s '()))
 
 (defun offset-source-mapping (e n)
   (let (adder (lambda (x) (+ x n)))
     (update e 'target-start adder 'target-end adder)))
 
-(defun concat-tc-str (a b)
+(defun concat-tc-strs1 (a b)
   (if (string? b)
       (make-tc-str (str (. a data) b) (. a mappings))
       (make-tc-str
@@ -204,60 +207,33 @@
 		      (offset-source-mapping e (. a data length)))
 		    (. b mappings))))))
 
-(defun join-tc-frags (sep frags)
-  (let (vals (interpose sep (map (getter 'val) frags))
-	inits (map (getter 'init) frags))
-    (make-tc-frag
-     (reduce concat-tc-str (cdr vals) (car vals))
-     (reduce concat-tc-str (cdr inits) (car inits)))))
+(defun concat-tc-str (&args)
+  (reduce concat-tc-strs1 args (make-tc-str "" '())))
 
-(defun concat-tc-frag (a b)
-  (if (string? b)
-      (make-tc-frag (concat-tc-str (. a val) b) (. a init))
-      (make-tc-frag
-       (concat-tc-str (. a val) (. b val))
-       (concat-tc-str (. a init) (. b init)))))
+(defun join-tc-strs (sep xs)
+  (reduce concat-tc-str (interpose sep xs) (make-tc-str "" '())))
 
-(defun interpolate-tc-%c (accum fmt idx args)
-  (concat-tc-frag
-   accum
-   (nth (if (empty? (subs fmt 2))
-	    (idiv idx 2)
-	    (parseInt (subs fmt 2))) args)))
-
-(defun interpolate-tc-%e (accum fmt idx args)
-  (let (frags (nth (if (empty? (subs fmt 2))
-		       (idiv idx 2)
-		       (parseInt (subs fmt 2))) args))
-    (update accum
-	    'val
-	    (lambda (old-val)
-	      (concat-tc-str
-	       old-val
-	       (reduce (lambda (accum v)
-			 (->> accum
-			      (concat-tc-str (. v init))
-			      (concat-tc-str (. v val))
-			      (concat-tc-str ";")))
-		       frags
-		       (make-tc-str "" '())))))))
-
-(defun interpolate-tc-frags (fmt &args)
-  (let (rx (regex "(%[ce](?:[0-9]+)?)" "gi"))
+(defun format-tc (source-pos fmt &args)
+  (let (rx (regex "%([0-9]+)" "gi"))
     (iterate
-     (let (accum (make-tc-frag (make-tc-str "" '()) (make-tc-str "" '()))))
+     (let (accum (make-tc-str "" '())))
      (for x (in-list (.split fmt rx)))
      (for n (from 0))
-     (do (if (even? n)
-	     (set! accum (concat-tc-frag accum x))
-	     (case (subs x 0 2)
-	       "%c" (set! accum (interpolate-tc-%c accum x n args))
-	       "%e" (set! accum (interpolate-tc-%e accum x n args))
-	       default (error "Unrecognized formatter!")))))))
+     (do (set! accum (concat-tc-str accum (if (even? n) x (nth (parseInt x) args)))))
+     (finally _
+       (when source-pos
+	 (cons! (make-source-mapping (. source-pos start) (. source-pos end) 0 (. accum data length))
+		(. accum mappings)))
+       accum))))
 
 (def %inspect% (. (require "util") inspect))
 (defun inspect (obj) (%inspect% obj true 10))
 
+(defun test-compile (s)
+  (print (inspect (.compile (make-instance compiler-proto *ns*) (hashmap) (@ (parse (tokenize s)) 0)))))
+
+;(defun ttc (s) (make-tc-str s (list (make-source-mapping 0 0 0 (. s length)))))
+;(inspect (interpolate-tc "%0(%1)%2" (ttc "baz") (ttc "100") "&trololo"))
 
 ;; Each compile____ function must return a pair [v:String, s:String] such that:
 ;; - v is a javascript expression that yields the value of the source lisp expression
@@ -285,40 +261,43 @@
       (str "$$root[\"" (. sym name) "\"]")))
 
 (defmethod compile-atom compiler-proto (self lexenv x)
-  (cond (= x true)            (list "true" "")
-	(= x false)           (list "false" "")
-	(null? x)             (list "[]" "")
-	(= x undefined)       (list "undefined" "")
-	(symbol? x)           (list (compile-time-resolve lexenv x) "")
-	(string? x)           (list (escape-str x) "")
-	true                  (list (str x) "")))
+  (cond (= x true)            (list (str->tc "true") (str->tc ""))
+	(= x false)           (list (str->tc "false") (str->tc ""))
+	(null? x)             (list (str->tc "[]") (str->tc ""))
+	(= x undefined)       (list (str->tc "undefined") (str->tc ""))
+	(symbol? x)           (list (str->tc (compile-time-resolve lexenv x)) (str->tc ""))
+	(string? x)           (list (str->tc (escape-str x)) (str->tc ""))
+	true                  (list (str->tc (str x)) (str->tc ""))))
 
 (defmethod compile-funcall compiler-proto (self lexenv lst)
   (destructuring-bind (fun &args) lst
     (let (compiled-args (map (partial-method self 'compile lexenv) args)
 	  compiled-fun (. self (compile lexenv fun)))
-      (list (format "%0(%1)" (first compiled-fun) (join "," (map first compiled-args)))
-	    (str (second compiled-fun) (join "" (map second compiled-args)))))))
+      (list (format-tc (get-source-pos lst)  "%0(%1)"
+		       (first compiled-fun) (join-tc-strs "," (map first compiled-args)))
+	    (concat-tc-str (second compiled-fun) (join-tc-strs "" (map second compiled-args)))))))
 
 (defmethod compile-new compiler-proto (self lexenv lst)
   (destructuring-bind (_ fun &args) lst
     (let (compiled-args (map (partial-method self 'compile lexenv) args)
 	  compiled-fun (. self (compile lexenv fun)))
-      (list (format "(new (%0)(%1))" (first compiled-fun) (join "," (map first compiled-args)))
-	    (str (second compiled-fun) (join "" (map second compiled-args)))))))
+      (list (format-tc undefined "(new (%0)(%1))"
+		       (first compiled-fun) (join-tc-strs "," (map first compiled-args)))
+	    (concat-tc-str (second compiled-fun) (join-tc-strs "" (map second compiled-args)))))))
 
 (defmethod compile-method-call compiler-proto (self lexenv lst)
   (destructuring-bind (method obj &args) lst
     (let (compiled-obj (. self (compile lexenv obj))
 	  compiled-args (map (partial-method self 'compile lexenv) args))
-      (list (format "(%0)%1(%2)" (first compiled-obj) method (join "," (map first compiled-args)))
-	    (str (second compiled-obj) (join "" (map second compiled-args)))))))
+      (list (format-tc undefined "(%0)%1(%2)"
+		       (first compiled-obj) (str method) (join-tc-strs "," (map first compiled-args)))
+	    (concat-tc-str (second compiled-obj) (join-tc-strs "" (map second compiled-args)))))))
 
 (defmethod compile-body-helper compiler-proto (self lexenv lst target-var-name)
   (let (compiled-body (map (partial-method self 'compile lexenv) lst)
 	reducer (lambda (accum v)
-		  (str accum (second v) (first v) ";")))
-    (str (reduce reducer (butlast 1 compiled-body) "")
+		  (concat-tc-str accum (second v) (first v) ";")))
+    (concat-tc-str (reduce reducer (butlast 1 compiled-body) "")
 	 (second (last compiled-body))
 	 target-var-name "=" (first (last compiled-body)) ";")))
 
@@ -364,17 +343,17 @@
 			   (object lexenv))
 	   ret-var-name (. self (gen-var-name))
 	   compiled-body (. self (compile-body-helper lexenv2 body ret-var-name)))
-      (list (format (str "(function(%0)"
-			 "{"
-			      (. self (vararg-helper args))
-			      "var %1;"
-                              "%2"
-                              "return %1;"
-			 "})")
-		    (process-args args)
-		    ret-var-name
-		    compiled-body)
-	    ""))))
+      (list (format-tc undefined (str "(function(%0)"
+				      "{"
+				      (. self (vararg-helper args))
+				      "var %1;"
+				      "%2"
+				      "return %1;"
+				      "})")
+		       (process-args args)
+		       ret-var-name
+		       compiled-body)
+	    (str->tc "")))))
 
 (defmethod compile-if compiler-proto (self lexenv lst)
   (destructuring-bind (_ c t f) lst
@@ -382,34 +361,35 @@
 	  compiled-c (. self (compile lexenv c))
 	  compiled-t (. self (compile lexenv t))
 	  compiled-f (. self (compile lexenv f)))
-      (list value-var-name
-	    (format (str "var %0;"
-			 "%1"
-			 "if(%2){"
-			    "%3"
-                            "%0=%4;"
-			 "}else{"
-			    "%5"
-			    "%0=%6;"
-			 "}")
-		    value-var-name
-		    (second compiled-c)
-		    (first compiled-c)
-		    (second compiled-t)
-		    (first compiled-t)
-		    (second compiled-f)
-		    (first compiled-f))))))
+      (list (str->tc value-var-name)
+	    (format-tc undefined
+		       (str "var %0;"
+			    "%1"
+			    "if(%2){"
+			        "%3"
+				"%0=%4;"
+			    "}else{"
+			       "%5"
+			       "%0=%6;"
+			     "}")
+		       value-var-name
+		       (second compiled-c)
+		       (first compiled-c)
+		       (second compiled-t)
+		       (first compiled-t)
+		       (second compiled-f)
+		       (first compiled-f))))))
 
 (defmethod compile-quoted-atom compiler-proto (self lexenv x)
   (if (symbol? x) 
-      (list (str "(new $$root.Symbol(\"" (. x name) "\"))") "")
+      (list (str->tc (str "(new $$root.Symbol(\"" (. x name) "\"))")) (str->tc ""))
       (. self (compile-atom lexenv x))))
 
 (defmethod compile-quoted-list compiler-proto (self lexenv lst)
-  (list (str "$$root.list("
-	     (join "," (map (partial-method self 'compile-quoted lexenv) lst))
-	     ")")
-	""))
+  (list (concat-tc-str "$$root.list("
+		       (join-tc-strs "," (map (compose first (partial-method self 'compile-quoted lexenv)) lst))
+		       ")")
+	(str->tc "")))
 
 (defmethod compile-quoted compiler-proto (self lexenv x)
   (if (atom? x)
@@ -420,12 +400,12 @@
   (destructuring-bind (_ name value) lst
     (let (var-name (compile-time-resolve lexenv name)
 	  compiled-val (. self (compile lexenv value)))
-      (list var-name (str (second compiled-val) var-name "=" (first compiled-val) ";")))))
+      (list (str->tc var-name) (concat-tc-str (second compiled-val) var-name "=" (first compiled-val) ";")))))
 
 (defmethod macroexpand-unsafe compiler-proto (self lexenv expr)
   (destructuring-bind (name &args) expr
     (let (tmp (. self (compile-funcall lexenv (cons name (map (lambda (v) `(quote ~v)) args)))))
-      (. self root (jeval (str (second tmp) (first tmp)))))))
+      (. self root (jeval (str (. (second tmp) data) (. (first tmp) data)))))))
 
 (defmethod is-macro compiler-proto (self name)
   (and (in (. self root) name) (. (geti (. self root) name) isMacro)))

@@ -385,6 +385,12 @@
 
 (defun push (x lst) (reverse (cons x (reverse lst))))
 
+(defmacro push! (x place)
+  `(set! ~place (push ~x ~place)))
+
+(defmacro cons! (x place)
+  `(set! ~place (cons ~x ~place)))
+
 (defun insert (x pos lst)
   (if (= pos 0)
       (cons x lst)
@@ -428,6 +434,15 @@
 		    (seti! obj (car path) (hashmap)))
 		(cdr path) kvs)))
   obj)
+
+(defun deep-geti* (obj path)
+  (if (null? path)
+      obj
+      (let (tmp (geti obj (car path)))
+	(if tmp (deep-geti* tmp (cdr path)) undefined))))
+
+(defun deep-geti (obj &path)
+  (deep-geti* obj path))
 
 (defun hashmap-shallow-copy (h1)
   (reduce (lambda (h2 key) (seti! h2 key (geti h1 key)) h2) (keys h1) (hashmap)))
