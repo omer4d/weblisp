@@ -7,6 +7,9 @@
 
 (def node-evaluator-proto (object))
 
+(defun gen-jstr (pair)
+  (str (. (second pair) data) (. (first pair) data)))
+
 (defun default-lexenv ()
   (doto (object)
     (seti! "this" true)))
@@ -23,18 +26,17 @@
 
 (defmethod eval node-evaluator-proto (self expr)
   (let (tmp (. self compiler (compile (default-lexenv) expr)))
-    (. self root (jeval (str (second tmp) (first tmp))))))
+    (. self root (jeval (gen-jstr tmp)))))
 
 (defmethod eval-str node-evaluator-proto (self s)
   (let (forms (parse (tokenize s)))
     (iterate (for form (in-list forms))
 	     (do (. self (eval form))))))
 
-
 (def lazy-def-proto (object))
 
 (defmethod init lazy-def-proto (self compilation-result)
-  (seti! self 'code (str (second compilation-result) (first compilation-result))))
+  (seti! self 'code (gen-jstr compilation-result)))
 
 (def static-compiler-proto (object compiler-proto))
 
@@ -61,21 +63,21 @@
     (pattern-case e
       ('def name val) (let (tmp (. self (compile lexenv e)))
 			(seti! (. self root) name (make-instance lazy-def-proto tmp))
-			(str (second tmp) (first tmp) ";"))
+			(str (gen-jstr tmp) ";"))
 
       ('setmac! name) (let (tmp (. self (compile lexenv e)))
-			(. self root (jeval (str (second tmp) (first tmp))))
-			(str (second tmp) (first tmp) ";"))
+			(. self root (jeval (gen-jstr tmp)))
+			(str (gen-jstr tmp) ";"))
 
       (('lambda (&args) &body)) (join "" (map (partial-method self 'compile-toplevel) body))
       
       (name &args) (if (. self (is-macro name))
 		       (. self (compile-toplevel (. self (macroexpand-unsafe lexenv e))))
 		       (let (tmp (. self (compile lexenv e)))
-			 (str (second tmp) (first tmp) ";")))
+			 (str (gen-jstr tmp) ";")))
 
       any (let (tmp (. self (compile lexenv e)))
-	    (str (second tmp) (first tmp) ";")))))
+	    (str (gen-jstr tmp) ";")))))
 
 (defmethod compile-unit static-compiler-proto (self s)
   (join "" (map (partial-method self 'compile-toplevel) (parse (tokenize s)))))
