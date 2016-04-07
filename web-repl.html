@@ -4,6 +4,7 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 	<script type="text/javascript" src="./jquery-2.1.4.js"></script>
+	<script type="text/javascript" src="./stacktrace.min.js"></script>
 	<script type="text/javascript" src="./weblisp.js"></script>
 	
   <style type="text/css">
@@ -118,6 +119,13 @@ console = {
 console.debug = console.info = console.log;
 
 window.onerror = function(msg, url, line, col, err) {
+	console.log(err);
+	console.log(msg);
+	
+	//StackTrace.fromError(err).then(function(frames) {
+		//console.log(frames);
+	//});
+	
 	consoleLine(msg, "console-error-line");
 }
 
@@ -132,7 +140,7 @@ var compiler = $$root["make-instance"]($$root["compiler-proto"], $$root);
 
 function evalisp(expr) {
 	var tmp = compiler["compile"](defaultLexenv(), expr);
-	return $$root["jeval"]($$root.second(tmp) + $$root.first(tmp));
+	return $$root["jeval"]($$root.second(tmp).data + $$root.first(tmp).data);
 }
 
 function replStep(s) {
@@ -147,7 +155,16 @@ inputField.keypress(function(event) {
 	if(event.keyCode == 13 && !event.shiftKey)
 	{
   		console.log(">>" + inputField.html());
-        replStep(inputField.text());
+		
+		try {
+			replStep(inputField.text());
+		}catch(e) {
+			consoleLine(e, "console-error-line");
+			StackTrace.fromError(e).then(function(frames) {
+				consoleLine(frames, "console-error-line");
+			});
+		}
+		
 		inputField.html("");
 	}
 });

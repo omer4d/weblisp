@@ -226,11 +226,11 @@
 		(. accum mappings)))
        accum))))
 
-(def %inspect% (. (require "util") inspect))
-(defun inspect (obj) (%inspect% obj true 10))
+;(def %inspect% (. (require "util") inspect))
+;(defun inspect (obj) (%inspect% obj true 10))
 
-(defun test-compile (s)
-  (print (inspect (.compile (make-instance compiler-proto *ns*) (hashmap) (@ (parse (tokenize s)) 0)))))
+;(defun test-compile (s)
+;  (print (inspect (.compile (make-instance compiler-proto *ns*) (hashmap) (@ (parse (tokenize s)) 0)))))
 
 ;(defun ttc (s) (make-tc-str s (list (make-source-mapping 0 0 0 (. s length)))))
 ;(inspect (interpolate-tc "%0(%1)%2" (ttc "baz") (ttc "100") "&trololo"))

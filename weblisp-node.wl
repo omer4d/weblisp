@@ -4,6 +4,8 @@
 
 (def VM (require "vm"))
 (def Reflect (require "harmony-reflect"))
+(def path (require "path"))
+(def fs (require "fs"))
 
 (def node-evaluator-proto (object))
 
@@ -20,8 +22,10 @@
     (seti! sandbox "$$root" root)
     (. VM (createContext sandbox))
     (seti! root "jeval" (lambda (str) (. VM (runInContext str sandbox))))
+    (seti! root "load-file" (lambda (path) (. self (load-file path))))
     (doto self
        (seti! "root" root)
+       (seti! "dir-stack" (list (.cwd process)))
        (seti! "compiler" (make-instance compiler-proto root)))))
 
 (defmethod eval node-evaluator-proto (self expr)
@@ -32,6 +36,9 @@
   (let (forms (parse (tokenize s)))
     (iterate (for form (in-list forms))
 	     (do (. self (eval form))))))
+
+(defmethod load-file node-evaluator-proto (self path)
+  undefined)
 
 (def lazy-def-proto (object))
 
