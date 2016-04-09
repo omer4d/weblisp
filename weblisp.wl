@@ -256,7 +256,7 @@
     out))
 
 (defun compile-time-resolve (lexenv sym)
-  (if (in lexenv (. sym name))
+  (if (in? (. sym name) lexenv)
       (mangle-name (. sym name))
       (str "$$root[\"" (. sym name) "\"]")))
 
@@ -408,7 +408,7 @@
       (. self root (jeval (str (. (second tmp) data) (. (first tmp) data)))))))
 
 (defmethod is-macro compiler-proto (self name)
-  (and (in (. self root) name) (. (geti (. self root) name) isMacro)))
+  (and (in? name (. self root)) (. (geti (. self root) name) isMacro)))
 
 (defmethod compile compiler-proto (self lexenv expr)
   (if (and (list? expr) (not (null? expr)))

@@ -429,7 +429,7 @@
 	 kvs kvs)
      (if (null? path)
 	 (apply assoc! (cons obj kvs))
-	 (recur (if (in obj (car path))
+	 (recur (if (in? (car path) obj)
 		    (geti obj (car path))
 		    (seti! obj (car path) (hashmap)))
 		(cdr path) kvs)))

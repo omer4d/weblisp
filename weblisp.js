@@ -171,8 +171,19 @@ function makeDefaultNamespace() {
 		require: function(mod) {
 			return require(mod);
 		},
-		in: function(obj, f) {
-			return f in obj;
+		"typeof": function(x) {
+			if(x === null)
+				return "null";
+			else
+				return typeof x;
+		},
+		"in?": function(f, x) {
+			if(x === null || x === undefined)
+				return false;
+			else if(root["typeof"](x) === "object")
+				return f in x;
+			else
+				return x[f] !== undefined;
 		},
 		"get-document": function() {
 			return document;
@@ -1899,7 +1910,7 @@ $$TMP256=$$root["apply"]($$root["assoc!"],$$root["cons"](obj,kvs));
 }
 else{
    var $$TMP257;
-if($$root["in"](obj,$$root["car"](path))){
+if($$root["in?"]($$root["car"](path),obj)){
 $$TMP257=$$root["geti"](obj,$$root["car"](path));
 }
 else{
@@ -3413,7 +3424,7 @@ return $$TMP476;
 $$root["compile-time-resolve"]=(function(lexenv,sym){
    var $$TMP479;
    var $$TMP480;
-if($$root["in"](lexenv,$$root["geti"](sym,(new $$root.Symbol("name"))))){
+if($$root["in?"]($$root["geti"](sym,(new $$root.Symbol("name"))),lexenv)){
 $$TMP480=$$root["mangle-name"]($$root["geti"](sym,(new $$root.Symbol("name"))));
 }
 else{
@@ -3842,7 +3853,7 @@ $$root["seti!"]($$root["compiler-proto"],(new $$root.Symbol("is-macro")),(functi
    $$TMP554=(function(self){
       var $$TMP555;
       var $$TMP556;
-if($$root["in"]($$root["geti"](self,(new $$root.Symbol("root"))),name)){
+if($$root["in?"](name,$$root["geti"](self,(new $$root.Symbol("root"))))){
    var $$TMP557;
 if($$root["geti"]($$root["geti"]($$root["geti"](self,(new $$root.Symbol("root"))),name),(new $$root.Symbol("isMacro")))){
    $$TMP557=true;

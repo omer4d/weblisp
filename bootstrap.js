@@ -171,8 +171,19 @@ function makeDefaultNamespace() {
 		require: function(mod) {
 			return require(mod);
 		},
-		in: function(obj, f) {
-			return f in obj;
+		"typeof": function(x) {
+			if(x === null)
+				return "null";
+			else
+				return typeof x;
+		},
+		"in?": function(f, x) {
+			if(x === null || x === undefined)
+				return false;
+			else if(root["typeof"](x) === "object")
+				return f in x;
+			else
+				return x[f] !== undefined;
 		},
 		"get-document": function() {
 			return document;
