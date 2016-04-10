@@ -219,13 +219,13 @@
     (apply-method (geti proto 'init) instance args)
     instance))
 
-;(defun geti-safe (obj name)
-;  (if (in? name obj)
-;      (geti obj name)
-;      (error (str "Property "))))
+(defun geti-safe (obj name)
+  (if (in? name obj)
+      (geti obj name)
+      (error (str "Property '" name "' does not exist in " obj))))
 
 (defun call-method-by-name (obj name &args)
-  (apply-method (geti obj name) obj args))
+  (apply-method (geti-safe obj name) obj args))
 
 (defun dot-helper (obj-name reversed-fields)
   (if (null? reversed-fields)
@@ -235,7 +235,7 @@
 	    ~(dot-helper obj-name (cdr reversed-fields))
 	    (quote ~(car (car reversed-fields)))
 	    ~@(cdr (car reversed-fields)))
-	  `(geti ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields))))))
+	  `(geti-safe ~(dot-helper obj-name (cdr reversed-fields)) (quote ~(car reversed-fields))))))
 
 (defmacro . (obj-name &fields)
   (dot-helper obj-name (reverse fields)))
