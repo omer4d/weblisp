@@ -26,8 +26,10 @@ function str1(x) {
     	return (x.isMacro ? "Macro " : "Function ") + (x.name || "[Anonymous]");
     else if(Array.isArray(x))
         return "(" + x.map(str1).join(" ") + ")";
-    else
+    else if(typeof x.toString === "function")
     	return x.toString();
+	else
+		return "[Unprintable object]";
 }
 
 function Symbol(name) {

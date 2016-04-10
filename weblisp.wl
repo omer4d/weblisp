@@ -355,6 +355,33 @@
 		       compiled-body)
 	    (str->tc "")))))
 
+(defmethod compile-dumb-loop compiler-proto (self lexenv lst)
+  (destructuring-bind (_ &body) lst
+    (let* (value-var-name (. self (gen-var-name))
+	   compiled-body (. self (compile-body-helper lexenv body value-var-name)))
+      (list (str->tc value-var-name)
+	    (format-tc undefined "var %0;while(true){%1break;}"
+		       value-var-name
+		       compiled-body)))))
+
+(defmethod compile-continue compiler-proto (self lexenv lst)
+  (list (str->tc "undefined") (str->tc "continue;")))
+
+(defmethod compile-progn compiler-proto (self lexenv lst)
+  (destructuring-bind (_ &body) lst
+    (let* (value-var-name (. self (gen-var-name))
+	   compiled-body (. self (compile-body-helper lexenv body value-var-name)))
+      (list (str->tc value-var-name)
+	    (format-tc undefined "var %0;{%1}"
+		       value-var-name
+		       compiled-body)))))
+
+(defun compile (expr)
+  (let* (c (make-instance compiler-proto (object *ns*))
+	 t (.compile c (hashmap) expr))
+    (str (. (second t) data) " -> "
+	 (. (first t) data))))
+
 (defmethod compile-if compiler-proto (self lexenv lst)
   (destructuring-bind (_ c t f) lst
     (let (value-var-name (. self (gen-var-name))
@@ -408,7 +435,7 @@
       (. self root (jeval (str (. (second tmp) data) (. (first tmp) data)))))))
 
 (defmethod is-macro compiler-proto (self name)
-  (and (in? name (. self root)) (. (geti (. self root) name) isMacro)))
+  (and (in? name (. self root)) (geti (geti (. self root) name) 'isMacro)))
 
 (defmethod compile compiler-proto (self lexenv expr)
   (if (and (list? expr) (not (null? expr)))
@@ -416,6 +443,9 @@
         (if (symbol? first)
             (case first
 		lambda    (. self (compile-lambda lexenv expr))
+		progn     (. self (compile-progn lexenv expr))
+		dumb-loop (. self (compile-dumb-loop lexenv expr))
+		continue  (. self (compile-continue lexenv expr))
 		new       (. self (compile-new lexenv expr))
                 if        (. self (compile-if lexenv expr))
                 quote     (. self (compile-quoted lexenv (second expr)))

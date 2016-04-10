@@ -8,11 +8,6 @@
 
 (defmacro defun (name args &body)
   `(def ~name (lambda ~args ~@body)))
-
-(defmacro progn (&body)
-  (if (null? body)
-      undefined
-      `((lambda () ~@body))))
  
 (defmacro when (c &body)
   `(if ~c (progn ~@body) undefined))
@@ -206,6 +201,11 @@
     (apply-method (geti proto 'init) instance args)
     instance))
 
+;(defun geti-safe (obj name)
+;  (if (in? name obj)
+;      (geti obj name)
+;      (error (str "Property "))))
+
 (defun call-method-by-name (obj name &args)
   (apply-method (geti obj name) obj args))
 
@@ -371,6 +371,7 @@
 (defmacro set! (place v)
   (pattern-case (macroexpand place)
      ('geti obj field) `(seti! ~obj ~field ~v)
+     ('geti-safe obj field) `(seti! ~obj ~field ~v)
      any (if (symbol? any)
 	     `(setv! ~any ~v)
 	     `(error "Not a settable place!"))))
