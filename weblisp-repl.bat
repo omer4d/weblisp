@@ -1,0 +1,1 @@
+node --harmony --harmony_proxies %~dp0src\njs-repl.js

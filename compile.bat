@@ -1,1 +1,0 @@
-node --harmony --harmony_proxies compiler-front.js %*

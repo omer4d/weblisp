@@ -1,1 +1,0 @@
-node %~dp0%njs-remote-repl.js
