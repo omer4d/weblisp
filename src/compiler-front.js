@@ -1,6 +1,7 @@
 var VM = require('vm');
 var Reflect = require('harmony-reflect');
 var fs = require('fs');
+var path = require('path');
 var argv = require('minimist')(process.argv.slice(2));
 var wl = require('./weblisp-node.js');
 
@@ -34,11 +35,24 @@ function replaceExt(s, ext) {
     return s.slice(0, s.indexOf(".")) + ext;
 }
 
+function readFile(p) {
+	if(path.isAbsolute(p))
+		return fs.readFileSync(p, "utf8");
+	else
+	{
+		try {
+			return fs.readFileSync(p, "utf8");
+		}catch(e) {
+			return fs.readFileSync(path.resolve(__dirname, p), "utf8");
+		}
+	}
+}
+
 if(argv._.length > 0) {
     var comp = wl.root["make-instance"](wl.root["static-compiler-proto"]);
     var files = argv._; //Array.isArray(argv.) ? argv.in : [argv.in];
-    var output = fs.readFileSync("bootstrap.js", "utf8") + files.map(function(f) {
-	return formatCode(comp["compile-unit"](fs.readFileSync(f, "utf8")));
+    var output = fs.readFileSync(path.resolve(__dirname, "bootstrap.js"), "utf8") + files.map(function(f) {
+	return formatCode(comp["compile-unit"](readFile(f)));
     }).join("");
 
     var outputName = argv.out ? argv.out : (files.length === 1 ? replaceExt(files[0], ".js") : undefined);
