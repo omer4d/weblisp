@@ -166,10 +166,28 @@
      (lambda (accum v) (cons (f v (incv! idx)) accum))
      lst)))
 
+;(defmacro loop (bindings &body)
+;  `(let (recur null)
+;     (setv! recur (lambda ~(every-nth 2 bindings) ~@body))
+;     (recur ~@(every-nth 2 (cdr bindings)))))
+
 (defmacro loop (bindings &body)
-  `(let (recur null)
-     (setv! recur (lambda ~(every-nth 2 bindings) ~@body))
-     (recur ~@(every-nth 2 (cdr bindings)))))
+  (let (binding-names (every-nth 2 bindings)
+	tmp-binding-names (map (lambda (s) (symbol (str "_" (. s name)))) (every-nth 2 bindings))
+        done-flag-sym (gensym)
+        res-sym (gensym))
+    `(let (~done-flag-sym false
+	   ~res-sym undefined
+	   ~@bindings)
+       (let (recur (lambda ~tmp-binding-names
+		     ~@(map (lambda (s) `(setv! ~s ~(symbol (str "_" (. s name))))) binding-names)
+		     (setv! ~done-flag-sym false)))
+	 (dumb-loop
+	  (setv! ~done-flag-sym true)
+	  (setv! ~res-sym ~@body)
+	  (if (not ~done-flag-sym)
+	      (continue)
+	      ~res-sym))))))
 
 (defun partition (n lst)
   (if (null? lst)
