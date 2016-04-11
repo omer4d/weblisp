@@ -64,9 +64,13 @@
   (lambda (obj) (geti obj field)))
 
 (defun reduce (r lst accum)
-  (if (null? lst)
-      accum
-      (reduce r (cdr lst) (r accum (car lst)))))
+  (dumb-loop
+   (if (null? lst)
+       accum
+       (progn
+	 (setv! accum (r accum (car lst)))
+	 (setv! lst (cdr lst))
+	 (continue)))))
 
 (defun reverse (lst) (reduce (lambda (accum v) (cons v accum)) lst '()))
 
@@ -277,7 +281,9 @@
 (defun splitting-pair (binding-names outer pair)
   (any? (map (lambda (sym) (and (= (find equal? sym outer) -1)
 				(not= (find equal? sym binding-names) -1)))
-	     (filter symbol? (flatten (second pair))))))
+	     (filter (lambda (x) (and (symbol? x)
+				      (not (equal? x (first pair)))))
+		     (flatten (second pair))))))
 
 (defun let-helper* (outer binding-pairs body)
   (let (binding-names (map first binding-pairs))
@@ -402,6 +408,9 @@
   (set! amt (or amt 1))
   `(set! ~name (- ~name ~amt)))
 
+(defmacro mul! (name amt)
+  `(set! ~name (* ~name ~amt)))
+
 (defun push (x lst) (reverse (cons x (reverse lst))))
 
 (defmacro push! (x place)
@@ -494,7 +503,7 @@
   (let (data (object null))
     (set! (. data bind) (list binding-name start))
     (set! (. data post) `((inc! ~binding-name ~step)))
-    (set! (. data cond) `(< ~binding-name ~end))
+    (set! (. data cond) `(~(if (> step 0) '< '>) ~binding-name ~end))
     data))
 
 (defun from (binding-name start step)
@@ -613,12 +622,34 @@
 
 (defun neg? (x) (< x 0))
 
-(defun idiv (a b)
-  (let (t (/ a b))
-    (if (neg? t) (.ceil Math t) (.floor Math t))))
+(defun int (x)
+  (if (neg? x) (.ceil Math x) (.floor Math x)))
+
+(defun idiv (a b) (int (/ a b)))
 
 (defun empty? (x)
   (cond
     (string? x) (= (. x length) 0)
     (list? x) (null? x)
     true (error "Type error in empty?")))
+
+(defmacro with-fields (fields obj &body)
+  (let (obj-sym (gensym))
+    `(let* (~obj-sym ~obj
+	    ~@(interleave fields (map (lambda (field) `(. ~obj-sym ~field)) fields)))
+       ~@body)))
+
+(defun inside? (x x0 x1)
+  (and (>= x x0) (<= x x1)))
+
+(defun clamp (x x0 x1)
+  (if (< x x0) x0 (if (> x x1) x1 x)))
+
+(defun randf (min max)
+  (+ min (* (- max min) (.random Math))))
+
+(defun randi (min max)
+  (int (randf min max)))
+
+(defun random-element (lst)
+  (nth (randi 0 (count lst)) lst))

@@ -4,6 +4,7 @@ var webSocketsServerPort = 1337;
 var webSocketServer = require('websocket').server;
 var http = require('http');
 var util = require("util");
+var static = require('node-static');
 
 function write(s) {
 	process.stdout.write(util.format.apply(this, arguments));
@@ -13,7 +14,21 @@ function infoLog(s) {
 	write("---[" + s + "]---" + "\n>");
 }
 
+var fileServer = new static.Server('./');
+
 var server = http.createServer(function(request, response) {
+	request.addListener('end', function () {
+		fileServer.serve(request, response, function (err, result) {
+            if (err) {
+                infoLog("Error serving " + request.url + " - " + err.message);
+                response.writeHead(err.status, err.headers);
+                response.end();
+            }
+			//else {
+			//	infoLog("Served " + request.url);
+			//}
+        });
+    }).resume();
 });
 
 server.listen(webSocketsServerPort, function() {
