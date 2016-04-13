@@ -178,16 +178,17 @@
 ;     (setv! recur (lambda ~(every-nth 2 bindings) ~@body))
 ;     (recur ~@(every-nth 2 (cdr bindings)))))
 
+
 (defmacro loop (bindings &body)
   (let (binding-names (every-nth 2 bindings)
-	tmp-binding-names (map (lambda (s) (symbol (str "_" (. s name)))) (every-nth 2 bindings))
+	tmp-binding-names (map (lambda (s) (symbol (str "_" (geti s 'name)))) (every-nth 2 bindings))
         done-flag-sym (gensym)
         res-sym (gensym))
     `(let (~done-flag-sym false
 	   ~res-sym undefined
 	   ~@bindings)
        (let (recur (lambda ~tmp-binding-names
-		     ~@(map (lambda (s) `(setv! ~s ~(symbol (str "_" (. s name))))) binding-names)
+		     ~@(map (lambda (s) `(setv! ~s ~(symbol (str "_" (geti s 'name))))) binding-names)
 		     (setv! ~done-flag-sym false)))
 	 (dumb-loop
 	  (setv! ~done-flag-sym true)

@@ -376,12 +376,6 @@
 		       value-var-name
 		       compiled-body)))))
 
-(defun compile (expr)
-  (let* (c (make-instance compiler-proto (object *ns*))
-	 t (.compile c (hashmap) expr))
-    (str (. (second t) data) " -> "
-	 (. (first t) data))))
-
 (defmethod compile-if compiler-proto (self lexenv lst)
   (destructuring-bind (_ c t f) lst
     (let (value-var-name (. self (gen-var-name))
@@ -429,10 +423,23 @@
 	  compiled-val (. self (compile lexenv value)))
       (list (str->tc var-name) (concat-tc-str (second compiled-val) var-name "=" (first compiled-val) ";")))))
 
+(defun annotate-macroexpansion (source-pos x)
+  (if (and (list? x)
+	   (not (null? x))
+	   (not (equal? (car x) 'quote))
+	   (= (get-source-pos x) undefined))
+      (deep-assoc! (map (partial annotate-macroexpansion source-pos) x)
+		   '(meta)
+		   'source-pos source-pos)
+      x))
+
 (defmethod macroexpand-unsafe compiler-proto (self lexenv expr)
   (destructuring-bind (name &args) expr
-    (let (tmp (. self (compile-funcall lexenv (cons name (map (lambda (v) `(quote ~v)) args)))))
-      (. self root (jeval (str (. (second tmp) data) (. (first tmp) data)))))))
+    ;(print (inspect (get-source-pos expr)))
+    (annotate-macroexpansion (get-source-pos expr) (apply (geti (. self root) name) args))))
+
+;    (let (tmp (. self (compile-funcall lexenv (cons name (map (lambda (v) `(quote ~v)) args)))))
+;      (. self root (jeval (str (. (second tmp) data) (. (first tmp) data)))))))
 
 (defmethod is-macro compiler-proto (self name)
   (and (in? name (. self root)) (geti (geti (. self root) name) 'isMacro)))
@@ -461,3 +468,14 @@
 				(. self (compile-funcall lexenv expr))))
 	    (. self (compile-funcall lexenv expr))))
       (. self (compile-atom lexenv expr))))
+
+(defun compile (expr)
+  (let* (c (make-instance compiler-proto (object *ns*))
+	 t (.compile c (hashmap) expr))
+    (str (. (second t) data) " -> "
+	 (. (first t) data))))
+
+
+;(let* (c (make-instance compiler-proto (object *ns*))
+;       expr (@ (parse (tokenize "(. foo bar)")) 0))
+;  (inspect (. c (macroexpand-unsafe (hashmap) expr))))
