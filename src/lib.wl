@@ -12,6 +12,9 @@
 (defmacro when (c &body)
   `(if ~c (progn ~@body) undefined))
 
+(defmacro when-not (c &body)
+  `(if ~c undefined (progn ~@body)))
+
 (defmacro cond (&pairs)
   (if (null? pairs)
       undefined
@@ -532,6 +535,18 @@
     (set! (. data cond) `(not (null? ~lst-name)))
     data))
 
+(defun in-array (binding-name expr)
+  (let (arr-name (gensym)
+	idx-name (gensym)
+	data (object null))
+    (set! (. data bind) (list arr-name expr
+			      idx-name 0
+			      binding-name undefined))
+    (set! (. data pre) `((set! ~binding-name (@ ~arr-name ~idx-name))))
+    (set! (. data post) `((inc! ~idx-name)))
+    (set! (. data cond) `(< ~idx-name (. ~arr-name length)))
+    data))
+
 (defun iterate-compile-for (form)
   (destructuring-bind (_ binding-name (func-name &args)) form
     (apply (geti *ns* func-name) (cons binding-name args))))
@@ -653,3 +668,5 @@
 
 (defun random-element (lst)
   (nth (randi 0 (count lst)) lst))
+
+(defun sqrt (x) (. Math (sqrt x)))

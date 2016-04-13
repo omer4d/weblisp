@@ -4,7 +4,7 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 	<script type="text/javascript" src="./jquery-2.1.4.js"></script>
-	<script type="text/javascript" src="./stacktrace.min.js"></script>
+	<script type="text/javascript" src="./error-stack-parser.min.js"></script>
 	<script type="text/javascript" src="./src/weblisp.js"></script>
 	
   <style type="text/css">
@@ -118,16 +118,58 @@ console = {
 
 console.debug = console.info = console.log;
 
+function findClosest(mappings, col) {
+	var closestMapping = null;
+	var closest = -1;
+	
+	mappings.forEach(function(m) {
+		if(col > m["target-start"] && m["target-start"] > closest)
+		{
+			closestMapping = m;
+			closest = m["target-start"];
+		}
+	});
+	
+	return closestMapping;
+}
+
 window.onerror = function(msg, url, line, col, err) {
-	console.log(err);
-	console.log(msg);
+	//console.log(err);
+	//console.log(msg);
 	
 	//StackTrace.fromError(err).then(function(frames) {
 		//console.log(frames);
 	//});
 	
 	consoleLine(msg, "console-error-line");
-}
+	
+	var stackFrames = ErrorStackParser.parse(err);
+	//console.log(stackFrames);
+	//console.log(lineOffsetTable);
+	
+	stackFrames.forEach(function(f) {
+		//f.lineNumber += lineOffsetTable[parseInt(f.fileName)];
+		if(f.fileName in debugTable)
+		{
+			var src = debugTable[f.fileName].src;
+			var z = findClosest(debugTable[f.fileName].mappings, f.columnNumber);
+			
+			if(z !== null) {
+				consoleLine(src, "console-error-line");
+				consoleLine(" ".repeat(z["source-start"]) + "^", "console-error-line");
+			}
+			
+			//console.log(f.columnNumber);
+			//console.log(debugTable[f.fileName].mappings);
+			
+			
+			
+			//console.log(src.substring(z["source-start"] - 1, z["source-end"] + 1));
+			//console.log(f.lineNumber + lineOffsetTable[f.fileName]);
+		}
+	});
+};
+
 
 $$root["jeval"] = eval;
 //var global = $$root["jeval"]("this");
@@ -138,15 +180,23 @@ function defaultLexenv() {
 
 var compiler = $$root["make-instance"]($$root["compiler-proto"], $$root);
 
-function evalisp(expr) {
+var evalCounter = 0;
+var debugTable = {};
+
+function evalisp(src, expr) {
 	var tmp = compiler["compile"](defaultLexenv(), expr);
-	return $$root["jeval"]($$root.second(tmp).data + $$root.first(tmp).data);
+	//console.log($$root.first(tmp).mappings);
+	//console.log($$root.second(tmp).mappings);
+	
+	var tmp2 = $$root["concat-tc-str"]($$root.second(tmp), $$root.first(tmp));
+	debugTable[evalCounter] = {src: src, mappings: tmp2.mappings};
+	return $$root["jeval"]("//# sourceURL=" + (evalCounter++) + "\n" + tmp2.data);
 }
 
 function replStep(s) {
 	var forms = $$root.parse($$root.tokenize(s));
 	for(var n = forms; !$$root["null?"](n); n = $$root.cdr(n))
-		$$root.print(evalisp($$root.car(n)));
+		$$root.print(evalisp(s, $$root.car(n)));
 }
 
 var inputField = $("#input");
@@ -156,14 +206,11 @@ inputField.keypress(function(event) {
 	{
   		console.log(">>" + inputField.html());
 		
-		try {
-			replStep(inputField.text());
-		}catch(e) {
-			consoleLine(e, "console-error-line");
-			StackTrace.fromError(e).then(function(frames) {
-				consoleLine(frames, "console-error-line");
-			});
-		}
+		//try {
+		replStep(inputField.text());
+		//}catch(e) {
+		//	consoleLine(e, "console-error-line");
+		//}
 		
 		inputField.html("");
 	}
