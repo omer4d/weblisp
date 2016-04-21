@@ -415,6 +415,11 @@
 (defmacro mul! (name amt)
   `(set! ~name (* ~name ~amt)))
 
+(defmacro div! (name amt)
+  `(set! ~name (/ ~name ~amt)))
+
+
+
 (defun push (x lst) (reverse (cons x (reverse lst))))
 
 (defmacro push! (x place)
@@ -582,8 +587,6 @@
     (set! (. data finally) `((reverse ~accum-name)))
     data))
 
-
-
 (defun collect-field (field objs)
   (filter (lambda (x) (not= x undefined))
 	  (map (getter field) objs)))
@@ -638,10 +641,22 @@
 
 (defun neg? (x) (< x 0))
 
-(defun int (x)
+(defun truncate (x)
   (if (neg? x) (.ceil Math x) (.floor Math x)))
 
-(defun idiv (a b) (int (/ a b)))
+(defun byte (x)
+  (let (y (mod (truncate x) 256))
+    (if (neg? y) (+ 256 y) y)))
+
+(defun short (x)
+  (let (y (mod (truncate x) 65536))
+    (if (neg? y) (+ 65536 y) y)))
+
+(defun int (x)
+  (let (y (mod (truncate x) 4294967296))
+    (if (neg? y) (+ 4294967296 y) y)))
+
+(defun idiv (a b) (truncate (/ a b)))
 
 (defun empty? (x)
   (cond

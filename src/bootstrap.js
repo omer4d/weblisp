@@ -193,10 +193,16 @@ function makeDefaultNamespace() {
 		"get-window": function() {
 			return window;
 		},
-		array: function(n, v) {
+		"sized-array": function(n, v) {
 			var arr = new Array(n);
 			for(var i = 0; i < n; ++i)
 				arr[i] = v;
+			return arr;
+		},
+		"array": function(n, v) {
+			var arr = Array(arguments.length);
+			for(var i = 0; i < arguments.length; ++i)
+				arr[i] = arguments[i];
 			return arr;
 		},
 		shr: function(x, y) {
