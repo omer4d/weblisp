@@ -367,6 +367,19 @@
 (defmethod compile-continue compiler-proto (self lexenv lst)
   (list (str->tc "undefined") (str->tc "continue;")))
 
+(defmethod compile-break compiler-proto (self lexenv lst)
+  (list (str->tc "undefined") (str->tc "break;")))
+
+(defmethod compile-return compiler-proto (self lexenv lst)
+  (cond
+    (null? (cdr lst)) (list (str->tc "undefined") (str->tc "return;"))
+    (null? (cdr (cdr lst))) (let (compiled-ret-val (. self (compile lexenv (second lst))))
+			      (list (str->tc "undefined")
+				    (format-tc undefined "%0return %1;"
+					       (second compiled-ret-val)
+					       (first compiled-ret-val))))
+    true (error "Can't return more than on value!")))
+
 (defmethod compile-progn compiler-proto (self lexenv lst)
   (destructuring-bind (_ &body) lst
     (let* (value-var-name (. self (gen-var-name))
@@ -453,6 +466,8 @@
 		progn     (. self (compile-progn lexenv expr))
 		dumb-loop (. self (compile-dumb-loop lexenv expr))
 		continue  (. self (compile-continue lexenv expr))
+		break     (. self (compile-break lexenv expr))
+		return    (. self (compile-return lexenv expr))
 		new       (. self (compile-new lexenv expr))
                 if        (. self (compile-if lexenv expr))
                 quote     (. self (compile-quoted lexenv (second expr)))

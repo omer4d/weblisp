@@ -192,7 +192,7 @@
 		     (setv! ~done-flag-sym false)))
 	 (dumb-loop
 	  (setv! ~done-flag-sym true)
-	  (setv! ~res-sym ~@body)
+	  (setv! ~res-sym (progn ~@body))
 	  (if (not ~done-flag-sym)
 	      (continue)
 	      ~res-sym))))))
