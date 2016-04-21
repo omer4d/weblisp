@@ -4,11 +4,29 @@ function defaultLexenv() {
 	return {"this": true};
 }
 
-var compiler = $$root["make-instance"]($$root["compiler-proto"], $$root);
+function findClosest(mappings, col) {
+	var closestMapping = null;
+	var closest = -1;
+	
+	mappings.forEach(function(m) {
+		if(col > m["target-start"] && col < m["target-end"] && m["target-start"] > closest) {
+			closestMapping = m;
+			closest = m["target-start"];
+		}
+	});
+	
+	return closestMapping;
+}
 
-function evalisp(expr) {
-	var tmp = compiler["compile"](defaultLexenv(), expr);
-	return $$root["jeval"]($$root.second(tmp).data + $$root.first(tmp).data);
+var compiler = $$root["make-instance"]($$root["compiler-proto"], $$root);
+var evalCounter = 0;
+var debugTable = {};
+
+function evalisp(src, expr) {
+	var res = compiler["compile"](defaultLexenv(), expr);
+	res = $$root["concat-tc-str"]($$root.second(res), $$root.first(res));
+	debugTable[evalCounter] = {src: src, mappings: res.mappings};
+	return $$root["jeval"]("//# sourceURL=" + (evalCounter++) + "\n" + res.data);
 }
 
 function replStep(s) {
@@ -16,7 +34,7 @@ function replStep(s) {
 	var output = "";
 	
 	for(var n = forms; !$$root["null?"](n); n = $$root.cdr(n))
-		output += $$root.str(evalisp($$root.car(n)), "\n");
+		output += $$root.str(evalisp(s, $$root.car(n)), "\n");
 	return output;
 }
 
@@ -30,6 +48,26 @@ $(function () {
 
     var connection = new WebSocket('ws://127.0.0.1:1337');
 
+	window.onerror = function(msg, url, line, col, err) {
+		var stackFrames = ErrorStackParser.parse(err);
+		var output = msg + "\n";
+	
+		stackFrames.forEach(function(f) {
+			if(f.fileName in debugTable) {
+				var src = debugTable[f.fileName].src;
+				var mapping = findClosest(debugTable[f.fileName].mappings, f.columnNumber);
+				
+				if(mapping !== null) {
+					output += (src + "\n");
+					output += (" ".repeat(mapping["source-start"]) + "^\n");
+				}
+			}
+		});
+		
+		console.log(output);
+		connection.send(output);
+	};
+	
     connection.onopen = function () {
 		console.log("Connected!");
     };
@@ -40,12 +78,7 @@ $(function () {
 
     connection.onmessage = function (message) {
 		console.log(">>" + message.data);
-		try {
-			var res = replStep(message.data);
-		}catch(e) {
-			res = e.stack + "\n";
-		}
-		
+		var res = replStep(message.data);		
 		console.log(res);
 		connection.send(res);
     };
