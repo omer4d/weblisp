@@ -92,9 +92,9 @@ test("Misc.", function( assert ) {
     
     comp(`(def testmac4
                 (lambda ()
-                    '((lambda ()
+                    '(progn
                         (def id3 (lambda (x) x))
-                        (def id4 (lambda (x) x))))))
+                        (def id4 (lambda (x) x)))))
             (setmac! testmac4)
             (testmac4)`);
                      

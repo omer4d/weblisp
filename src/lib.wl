@@ -1,8 +1,8 @@
 (def defmacro
     (lambda (name args &body)
-      `((lambda ()
-	  (def ~name (lambda ~args ~@body))
-	  (setmac! ~name)))))
+      `(progn
+	 (def ~name (lambda ~args ~@body))
+	 (setmac! ~name))))
 
 (setmac! defmacro)
 

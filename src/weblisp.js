@@ -233,7 +233,7 @@ $$root["defmacro"]=(function(name,args){
       body[$$TMP1-2]=arguments[$$TMP1];
    }
    var $$TMP0;
-$$TMP0=$$root["concat"]($$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"]($$root["concat"]()),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("def"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"](args),body)))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("setmac!"))),$$root["list"](name))))));
+$$TMP0=$$root["concat"]($$root["list"]((new $$root.Symbol("progn"))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("def"))),$$root["list"](name),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("lambda"))),$$root["list"](args),body)))),$$root["list"]($$root["concat"]($$root["list"]((new $$root.Symbol("setmac!"))),$$root["list"](name))));
 return $$TMP0;
 }
 );
@@ -4606,53 +4606,53 @@ $$TMP676=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-lambda")
 }
 else{
    var $$TMP677;
-if($$root["equal?"](__GS59,(new $$root.Symbol("progn")))){
-$$TMP677=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-progn")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("dumb-loop")))){
+$$TMP677=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-dumb-loop")),lexenv,expr);
 }
 else{
    var $$TMP678;
-if($$root["equal?"](__GS59,(new $$root.Symbol("dumb-loop")))){
-$$TMP678=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-dumb-loop")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("continue")))){
+$$TMP678=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-continue")),lexenv,expr);
 }
 else{
    var $$TMP679;
-if($$root["equal?"](__GS59,(new $$root.Symbol("continue")))){
-$$TMP679=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-continue")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("break")))){
+$$TMP679=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-break")),lexenv,expr);
 }
 else{
    var $$TMP680;
-if($$root["equal?"](__GS59,(new $$root.Symbol("break")))){
-$$TMP680=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-break")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("return")))){
+$$TMP680=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-return")),lexenv,expr);
 }
 else{
    var $$TMP681;
-if($$root["equal?"](__GS59,(new $$root.Symbol("return")))){
-$$TMP681=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-return")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("new")))){
+$$TMP681=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-new")),lexenv,expr);
 }
 else{
    var $$TMP682;
-if($$root["equal?"](__GS59,(new $$root.Symbol("new")))){
-$$TMP682=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-new")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("if")))){
+$$TMP682=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-if")),lexenv,expr);
 }
 else{
    var $$TMP683;
-if($$root["equal?"](__GS59,(new $$root.Symbol("if")))){
-$$TMP683=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-if")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("quote")))){
+$$TMP683=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted")),lexenv,$$root["second"](expr));
 }
 else{
    var $$TMP684;
-if($$root["equal?"](__GS59,(new $$root.Symbol("quote")))){
-$$TMP684=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-quoted")),lexenv,$$root["second"](expr));
+if($$root["equal?"](__GS59,(new $$root.Symbol("setv!")))){
+$$TMP684=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
 }
 else{
    var $$TMP685;
-if($$root["equal?"](__GS59,(new $$root.Symbol("setv!")))){
+if($$root["equal?"](__GS59,(new $$root.Symbol("def")))){
 $$TMP685=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
 }
 else{
    var $$TMP686;
-if($$root["equal?"](__GS59,(new $$root.Symbol("def")))){
-$$TMP686=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-setv")),lexenv,expr);
+if($$root["equal?"](__GS59,(new $$root.Symbol("progn")))){
+$$TMP686=$$root["call-method-by-name"](self,(new $$root.Symbol("compile-progn")),lexenv,expr);
 }
 else{
    var $$TMP687;

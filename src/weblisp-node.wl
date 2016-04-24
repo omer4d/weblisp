@@ -80,7 +80,7 @@
 			(. self root (jeval (gen-jstr tmp)))
 			(str (gen-jstr tmp) ";"))
 
-      (('lambda () &body)) (join "" (map (partial-method self 'compile-toplevel) body))
+      ('progn &body) (join "" (map (partial-method self 'compile-toplevel) body))
       
       (name &args) (if (. self (is-macro name))
 		       (. self (compile-toplevel (. self (macroexpand-unsafe lexenv e))))

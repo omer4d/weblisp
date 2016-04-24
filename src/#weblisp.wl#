@@ -463,6 +463,7 @@
         (if (symbol? first)
             (case first
 		lambda    (. self (compile-lambda lexenv expr))
+		progn     (. self (compile-progn lexenv expr))
 		dumb-loop (. self (compile-dumb-loop lexenv expr))
 		continue  (. self (compile-continue lexenv expr))
 		break     (. self (compile-break lexenv expr))
@@ -472,7 +473,6 @@
                 quote     (. self (compile-quoted lexenv (second expr)))
                 setv!     (. self (compile-setv lexenv expr))
                 def       (. self (compile-setv lexenv expr))
-		progn     (. self (compile-progn lexenv expr))
                 default   (cond (. self (is-macro (. first name)))
 				(. self (compile lexenv (. self (macroexpand-unsafe lexenv expr))))
 
