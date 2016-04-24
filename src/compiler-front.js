@@ -51,14 +51,26 @@ function readFile(p) {
 if(argv._.length > 0) {
     var comp = wl.root["make-instance"](wl.root["static-compiler-proto"]);
     var files = argv._; //Array.isArray(argv.) ? argv.in : [argv.in];
-    var output = fs.readFileSync(path.resolve(__dirname, "bootstrap.js"), "utf8") + files.map(function(f) {
-	return formatCode(comp["compile-unit"](readFile(f)));
-    }).join("");
+	
+    //var output = fs.readFileSync(path.resolve(__dirname, "bootstrap.js"), "utf8") + files.map(function(f) {
+	//	return formatCode((comp["compile-unit"](readFile(f))).data);
+    //}).join("");
 
+	var debugInfo = {};
+	var output = fs.readFileSync(path.resolve(__dirname, "bootstrap.js"), "utf8");
+	
+	files.forEach(function(f) {
+		var res = comp["compile-unit"](readFile(f));
+		output += res.data;
+		debugInfo[f] = res.mappings;
+	});
+	
     var outputName = argv.out ? argv.out : (files.length === 1 ? replaceExt(files[0], ".js") : undefined);
 
-    if(outputName)
-	fs.writeFileSync(outputName, output);
+    if(outputName) {
+		fs.writeFileSync(outputName, output);
+		fs.writeFileSync(replaceExt(outputName, ".debug.js"), JSON.stringify(debugInfo));
+	}
     else
-	throw new Error("Output name unspecified!");
+		throw new Error("Output name unspecified!");
 }

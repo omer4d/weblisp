@@ -74,24 +74,29 @@
     (pattern-case e
       ('def name val) (let (tmp (. self (compile lexenv e)))
 			(seti! (. self root) name (make-instance lazy-def-proto tmp))
-			(str (gen-jstr tmp) ";"))
+			(concat-tc-str (second tmp) (first tmp)))
 
       ('setmac! name) (let (tmp (. self (compile lexenv e)))
 			(. self root (jeval (gen-jstr tmp)))
-			(str (gen-jstr tmp) ";"))
+			(concat-tc-str (second tmp) (first tmp)))
 
-      ('progn &body) (join "" (map (partial-method self 'compile-toplevel) body))
+      ('progn &body) (join-tc-strs ";" (map (partial-method self 'compile-toplevel) body))
       
       (name &args) (if (. self (is-macro name))
 		       (. self (compile-toplevel (. self (macroexpand-unsafe lexenv e))))
 		       (let (tmp (. self (compile lexenv e)))
-			 (str (gen-jstr tmp) ";")))
+			 (concat-tc-str (second tmp) (first tmp))))
 
       any (let (tmp (. self (compile lexenv e)))
-	    (str (gen-jstr tmp) ";")))))
+	    (concat-tc-str (second tmp) (first tmp))))))
 
 (defmethod compile-unit static-compiler-proto (self s)
-  (join "" (map (partial-method self 'compile-toplevel) (parse (tokenize s)))))
+  (reduce (lambda (accum v)
+	    (concat-tc-str accum v (str->tc ";")))
+	  (map (partial-method self 'compile-toplevel) (parse (tokenize s)))
+	  (str->tc "")))
+
+  ;(join-tc-strs ";" (map (partial-method self 'compile-toplevel) (parse (tokenize s)))))
 
 ;(let* (e (make-node-evaluator)
 ;       ev (lambda (s) (. e eval-str (s))))
@@ -99,7 +104,15 @@
 ;		  "(setmac! testmac2)"
 ;		  "((lambda (baz) (+ (testmac2) 5)) 5)"))))
 
+(def %inspect% (. (require "util") inspect))
+(defun inspect (obj) (%inspect% obj true 10))
+
 ;(let (c (make-instance compiler-proto (object *ns*)))
+;  (print (. c (compile (object) '(lambda (x y z &more) (+ 1 2 3))))))
+
+;(let (c (make-instance static-compiler-proto ()))
+;  (inspect (. c (compile-unit "(progn (+ 1 2 3) (+ 4 5 6)) (progn (+ 5 6))"))))
+
 ;  (print (. c (compile (object) '(lambda (x y z &more) (+ 1 2 3))))))
 
 (export 'root *ns*)

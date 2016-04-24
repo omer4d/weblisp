@@ -25,7 +25,7 @@ jeval(fs.readFileSync("./bootstrap.js", "utf8"));
 sandbox.$$root.jeval = jeval;
 
 function comp(str) {
-    return staticCompiler["compile-unit"](str);
+    return staticCompiler["compile-unit"](str).data;
 }
 
 test("Misc.", function( assert ) {
