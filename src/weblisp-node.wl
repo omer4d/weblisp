@@ -40,6 +40,10 @@
 (defmethod load-file node-evaluator-proto (self path)
   undefined)
 
+;; *******************
+;; * Static Compiler *
+;; *******************
+
 (def lazy-def-proto (object))
 
 (defmethod init lazy-def-proto (self compilation-result)
@@ -48,7 +52,7 @@
 (def static-compiler-proto (object compiler-proto))
 
 (defmethod init static-compiler-proto (self)
-  (let* (root (object *ns*)
+  (let* (root (make-default-ns)
 	 sandbox (object)
 	 handler (object)
 	 next-gensym-suffix 0)
@@ -76,7 +80,7 @@
 			(. self root (jeval (gen-jstr tmp)))
 			(str (gen-jstr tmp) ";"))
 
-      (('lambda (&args) &body)) (join "" (map (partial-method self 'compile-toplevel) body))
+      (('lambda () &body)) (join "" (map (partial-method self 'compile-toplevel) body))
       
       (name &args) (if (. self (is-macro name))
 		       (. self (compile-toplevel (. self (macroexpand-unsafe lexenv e))))
