@@ -57,19 +57,28 @@ if(argv._.length > 0) {
     //}).join("");
 
 	var debugInfo = {};
-	var output = fs.readFileSync(path.resolve(__dirname, "bootstrap.js"), "utf8");
+	var output = "";
 	
 	files.forEach(function(f) {
 		var res = comp["compile-unit"](readFile(f));
+		
+		for(var i = 0; i < res.mappings.length; ++i) {
+			res.mappings[i]["target-start"] += output.length;
+			res.mappings[i]["target-end"] += output.length;
+		}
+		
 		output += res.data;
 		debugInfo[f] = res.mappings;
 	});
+	
+	if(!argv.n)
+		output = fs.readFileSync(path.resolve(__dirname, "bootstrap.js"), "utf8") + output;
 	
     var outputName = argv.out ? argv.out : (files.length === 1 ? replaceExt(files[0], ".js") : undefined);
 
     if(outputName) {
 		fs.writeFileSync(outputName, output);
-		fs.writeFileSync(replaceExt(outputName, ".debug.js"), JSON.stringify(debugInfo));
+		fs.writeFileSync(replaceExt(outputName, ".debug.js"), "$$DEBUG=" + JSON.stringify(debugInfo, null, 3));
 	}
     else
 		throw new Error("Output name unspecified!");

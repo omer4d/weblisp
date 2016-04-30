@@ -6,27 +6,39 @@
 ;; * Tokenizer *
 ;; *************
 
-(def token-proto (object))
+(def substring-proto (object))
 
-(defmethod init token-proto (self src type start len)
+(defmethod init substring-proto (self str start len)
   (doto self
-    (seti! 'src src)
-    (seti! 'type type)
+    (seti! 'str str)
     (seti! 'start start)
     (seti! 'len len)))
 
+(defmethod toString substring-proto (self)
+  (. self str (substr (. self start) (. self len))))
+
+(def token-proto (object))
+
+(defmethod init token-proto (self type line col code-substr)
+  (doto self
+    (seti! 'type type)
+    (seti! 'source-pos (assoc! (hashmap) 'line line 'col col))
+    (seti! 'code-substr code-substr)
+    (seti! 'len len)))
+
 (defmethod text token-proto (self)
-  (. self src (substr (. self start) (. self len))))
+  (. self code-substr (toString)))
 
 (defun lit(s)
   (regex (str "^" (. s (replace (regex "[.*+?^${}()|[\\]\\\\]" "g") "\\$&")))))
 
-(def space-patt (regex "^\\s+"))
+(def space-patt (regex "^[ \t\r]+")) ;(regex "^\\s+"))
 (def number-patt (regex "^[+\\-]?\\d+(\\.\\d*)?|^[+\\-]?\\.\\d+"))
 (def sym-patt (regex "^[_.<>?+\\-=!@#$%\\^&*/a-zA-Z][_.<>?+\\-=!@#$%\\^&*/a-zA-Z0-9]*"))
 (def str-patt (regex "^\"(?:(?:\\\\.)|[^\"])*\""))
 
-(def token-table (list (list space-patt           -1)
+(def token-table (list (list (regex "^\n")        -2)
+		       (list space-patt           -1)
 		       (list (regex "^;[^\\n]*")  -1)
 		       (list number-patt          'num-tok)
 		       (list str-patt             'str-tok)
@@ -47,6 +59,8 @@
 (defun tokenize (src)
   (let (toks '()
 	pos 0
+	line 1
+	col 1
 	s src)
     (while (> (. s length) 0)
       (iterate
@@ -59,15 +73,20 @@
 	 (if res
 	     (progn
 	       (set! s (. s (substring (. res 0 length))))
-	       (when (not= (second entry) -1)
-		 (set! toks
-		       (cons (make-instance token-proto src 
-					    (or (geti keywords (. res 0)) (second entry))
-					    pos (. res 0 length))
-			     toks)))
-	       (inc! pos (. res 0 length)))
+	       (cond
+		 (= (second entry) -1) undefined
+		 (= (second entry) -2) (progn
+					 (inc! line)
+					 (set! col 0))
+		 true (set! toks
+			    (cons (make-instance token-proto
+						 (or (geti keywords (. res 0)) (second entry))
+						 line col (make-instance substring-proto src pos (. res 0 length)))
+				  toks)))
+	       (inc! pos (. res 0 length))
+	       (inc! col (. res 0 length)))
 	     (error (str "Unrecognized token: " s))))))
-    (reverse (cons (make-instance token-proto src 'end-tok 0 0) toks))))
+    (reverse (cons (make-instance token-proto 'end-tok 0 0 null) toks))))
 
 ;; **********
 ;; * Parser *
@@ -107,23 +126,20 @@
       sym-tok         (symbol (. tok (text)))
       default         (error (str "Unexpected token: " (. tok type))))))
 
-(defun set-source-pos! (o start end)
-  (let (s (assoc! (hashmap)
-	    'start start
-	    'end end))
-    (add-meta! o 'source-pos s)))
+(defun set-source-pos! (o source-pos)
+  (add-meta! o 'source-pos source-pos))
 
 (defun get-source-pos (o) (deep-geti o 'meta 'source-pos))
 
 (defmethod parse-list parser-proto (self)
-  (let (start-pos (. self (peek-tok) start))
+  (let (source-pos (. self (peek-tok) source-pos))
     (iterate
      (while (and (not (equal? (set! t (. self (peek-tok) type)) 'list-close-tok))
 		 (not (equal? (set! t (. self (peek-tok) type)) 'end-tok))))
      (collecting (. self (parse-expr)))
      (finally lst
-       (if (equal? (. self (peek-tok) type) 'list-close-tok)
-	   (set-source-pos! lst start-pos (. self (consume-tok) start))
+       (if (equal? (. self (consume-tok) type) 'list-close-tok)
+	   (set-source-pos! lst source-pos)
 	   (error "Unmatched paren!"))))))
 
 (defmethod parse-backquoted-list parser-proto (self)
@@ -188,7 +204,7 @@
 (defun mangle-name (name)
   (. name (replace mangling-rx mangle)))
 
-(defpod source-mapping source-start source-end target-start target-end)
+(defpod source-mapping source-line source-col target-start target-end)
 (defpod tc-str data mappings)
 
 (defun str->tc (s) (make-tc-str s '()))
@@ -222,7 +238,7 @@
      (do (set! accum (concat-tc-str accum (if (even? n) x (nth (parseInt x) args)))))
      (finally _
        (when source-pos
-	 (cons! (make-source-mapping (. source-pos start) (. source-pos end) 0 (. accum data length))
+	 (cons! (make-source-mapping (. source-pos line) (. source-pos col) 0 (. accum data length))
 		(. accum mappings)))
        accum))))
 

@@ -4,6 +4,7 @@ var webSocketsServerPort = 1337;
 var webSocketServer = require('websocket').server;
 var http = require('http');
 var util = require("util");
+var fs = require('fs');
 var static = require('node-static');
 
 function write(s) {
@@ -19,15 +20,50 @@ var fileServer = new static.Server('./');
 var server = http.createServer(function(request, response) {
 	request.addListener('end', function () {
 		fileServer.serve(request, response, function (err, result) {
-            if (err) {
-                infoLog("Error serving " + request.url + " - " + err.message);
-                response.writeHead(err.status, err.headers);
-                response.end();
-            }
+			if (err) {
+				infoLog("Error serving " + request.url + " - " + err.message);
+				response.writeHead(err.status, err.headers);
+				response.end();
+			}
 			//else {
 			//	infoLog("Served " + request.url);
 			//}
-        });
+		});
+		
+		/*
+		var routeParts = request.url.match(/^.?([^\/]*)\/(.*)/);
+		
+		if(routeParts[1] === "raw") {
+			request.url = routeParts[2];
+			fileServer.serve(request, response, function (err, result) {
+				if (err) {
+					infoLog("Error serving " + request.url + " - " + err.message);
+					response.writeHead(err.status, err.headers);
+					response.end();
+				}
+			//else {
+			//	infoLog("Served " + request.url);
+			//}
+			});
+		}
+		
+		else if(routeParts[1] === "view") {
+			var parts = routeParts[2].match(/^(.*?):([0-9]+):([0-9]+)/);
+			var path = parts !== null ? parts[1] : routeParts[2];
+			
+			try {
+				response.writeHead(200, {"Content-Type": "text/plain"});
+				response.end(fs.readFileSync(path));
+			} catch (e) {
+				response.writeHead(400, {"Content-Type": "text/plain"});
+				response.end("File not found:" + path);
+			}
+		}
+		
+		else {
+			response.writeHead(400, {"Content-Type": "text/plain"});
+			response.end("Unknown specifier:" + routeParts[1]);
+		}*/
     }).resume();
 });
 

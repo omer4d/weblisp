@@ -219,7 +219,7 @@ function makeDefaultNamespace() {
 	return root;
 }
 
-var $$root = makeDefaultNamespace();
+var $$root = $$root || makeDefaultNamespace();
 
 // *
 // * 
